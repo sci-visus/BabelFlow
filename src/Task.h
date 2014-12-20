@@ -60,11 +60,17 @@ public:
   //! Return a reference to the incoming tasks
   std::vector<TaskId>& incoming() {return mIncoming;}
 
+  //! Set the incoming tasks
+  void incoming(std::vector<TaskId>& in) {mIncoming = in;}
+
   //! Return a reference to the outgoing tasks
   const std::vector<std::vector<TaskId> >& outputs() const {return mOutgoing;}
 
   //! Return a reference to the outgoing tasks
   std::vector<std::vector<TaskId> >& outputs() {return mOutgoing;}
+
+  //! Set the outgoing tasks
+  void outputs(const std::vector<std::vector<TaskId> >& out) {mOutgoing = out;}
 
   //! Return a list of tasks for the given output
   const std::vector<TaskId>& outgoing(uint32_t i) const {return mOutgoing[i];}

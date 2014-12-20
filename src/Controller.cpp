@@ -252,7 +252,7 @@ int Controller::initiateSend(TaskId source, const std::vector<TaskId>& destinati
     tIt = mTasks.find(*it);
     if (tIt != mTasks.end()) {// If it is a local task
       tIt->second.addInput(source,data); // Pass on the data
-      if (tIt->second.ready()) { // If this task is now ready to execute start it
+      if (tIt->second.ready()) { // If this task is now ready to execute stage it
         stageTask(*it); // Note that we can't start the task as that would require locks on the threads
       }
     }

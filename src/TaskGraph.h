@@ -9,6 +9,7 @@
 #define TASKGRAPH_H
 
 #include <vector>
+#include <cstdio>
 
 #include "Task.h"
 
