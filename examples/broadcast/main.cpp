@@ -7,6 +7,8 @@
 
 #include <cstdio>
 #include <unistd.h>
+#include <cstring>
+#include <iostream>
 
 #include "mpi.h"
 
@@ -55,6 +57,7 @@ int main(int argc, char* argv[])
   uint32_t valence = atoi(argv[2]);
 
   Broadcast graph(leafs,valence);
+  std::cout << "graph size " << graph.size() << "\n";
   ModuloMap task_map(mpi_width,graph.size());
 
   Controller master;
@@ -66,19 +69,24 @@ int main(int argc, char* argv[])
   master.initialize(graph,&task_map);
   master.registerCallback(1,print_message);
 
+  
   std::map<TaskId,DataBlock> inputs;
-  DataBlock data;
-  data.size = strlen(argv[3]) + 1;
-  data.buffer = new char[data.size];
-  memcpy(data.buffer,argv[3],data.size);
 
-  inputs[0] = data;
+  if (rank ==0 ) {
+    DataBlock data;
+    data.size = strlen(argv[3]) + 1;
+    data.buffer = new char[data.size];
+    memcpy(data.buffer,argv[3],data.size);
+
+    inputs[0] = data;
+  }
 
   master.run(inputs);
+  
 
   fprintf(stderr,"Done\n");
   MPI_Finalize();
-  return 1;
+  return 0;
 }
 
 

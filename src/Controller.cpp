@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <cstring>
 #include "mpi.h"
+#include <iostream>
 
 #include "Controller.h"
 #include "RelayTask.h"
@@ -82,9 +83,9 @@ int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map,
 
 
   //! First lets find our id
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  mId = mControllerMap->controller(rank);
+  MPI_Comm_rank(MPI_COMM_WORLD, &mRank);
+  mId = mControllerMap->controller(mRank);
+    std::cout << "rank : " << mRank << " mId :: " << mId << "\n";
 
   // Get all tasks assigned to this controller
   std::vector<Task> tasks = graph.localGraph(mId,task_map);
@@ -92,13 +93,16 @@ int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map,
   std::vector<TaskId>::const_iterator it;
   std::map<int,uint32_t>::iterator mIt;
   ControllerId cId;
+  int c_rank;
 
   // Now collect the message log
   // For all tasks
   for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
+    //std::cout << "initialize mRank : " << mRank << " task id :: " << tIt->id() << "\n";
     // Loop through all incoming tasks
     for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
 
+      //std::cout << "Incoming task: " << *it << "\n";
       // If this is an input that will come from the dataflow
       if (*it != TNULL) {
         cId = mTaskMap->controller(*it);
@@ -106,14 +110,16 @@ int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map,
         // And one that comes from the outside
         if (cId != mId) {
 
-          rank = mControllerMap->rank(cId);
-          mIt = mMessageLog.find(rank);
+          c_rank = mControllerMap->rank(cId);
+          mIt = mMessageLog.find(c_rank);
 
           // If we have not seen a message from this rank before
           if (mIt == mMessageLog.end())
             mMessageLog[*it] = 1; // Create an entry
           else // Otherwise
             mIt->second = mIt->second+1; // just increase the count
+
+          //std::cout << "Dest mID:: " << mId << " source  cID: " <<cId <<  " Incoming from :: " << *it <<  " To " << tIt->id() << "\n";
         }
       }
     } //end-for all incoming messages
@@ -144,16 +150,26 @@ int Controller::run(std::map<TaskId,DataBlock>& initial_inputs)
   std::map<TaskId,DataBlock>::iterator tIt;
   std::map<TaskId,TaskWrapper>::iterator wIt;
 
-  // First we post receives for all ranks
-  for (mIt=mMessageLog.begin();mIt!=mMessageLog.end();mIt++) {
-    // Post receive
-    postRecv(mIt->first);
+  int num_processes;
+  MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
+
+  if (num_processes > 1) {
+    // First we post receives for all ranks
+    for (mIt=mMessageLog.begin();mIt!=mMessageLog.end();mIt++) {
+      // Post receive
+      postRecv(mIt->first);
+    }
   }
 
+  //if (!initial_inputs.empty()) {//std::cout << "Input EMPTY for rank :: " << mRank << "\n";
   // For all of the initial inputs assign the corresponding input
   // and start the task
   for (tIt=initial_inputs.begin();tIt!=initial_inputs.end();tIt++) {
     // First make sure that we are even responsible for this task
+    //for (wIt = mTasks.begin(); wIt != mTasks.end(); wIt++) {
+    //  std::cout << wIt->first << " " << mRank << " Searching for " << tIt->first << "\n";
+   // }
+
     wIt = mTasks.find(tIt->first);
     assert (wIt != mTasks.end());
 
@@ -162,8 +178,18 @@ int Controller::run(std::map<TaskId,DataBlock>& initial_inputs)
 
     // Start the task (note that for now we assume that all leaf tasks
     // have only a single input)
+    std::cout << "tIt:: " << tIt->first << "\n";
+    std::cout << "Start task:: " << wIt->second.task().id() << "\n";
     startTask(wIt->second);
   }
+ // } 
+ // else {
+ //   wIt = mTasks.begin();
+ //   wIt->second.addInput(TNULL, NULL);
+ //   std::cout << "Start task:: " << wIt->second.task().id() << "\n";
+
+ //   startTask(wIt->second);
+ // }
 
   // Finally, start the while loop that tests for MPI events and
   // asynchronously starts inputs
@@ -171,7 +197,9 @@ int Controller::run(std::map<TaskId,DataBlock>& initial_inputs)
 
     // Test for MPI stuff happening
     //testIncoming();
-    testMPI();
+    if (num_processes > 1) {
+      testMPI();
+    }
 
     // Send all outstanding messages
     //sendOutgoing();
@@ -237,6 +265,8 @@ int Controller::startTask(TaskWrapper& task)
 
   std::thread* t = new std::thread(&execute,this,task);
 
+  std::cout << "Task Started:: " << task.task().id() << "\n";
+
   mThreads.push_back(t);
 
   return 1;
@@ -297,11 +327,12 @@ int Controller::initiateSend(TaskId source,
     //*((uint32_t*)msg->buffer) = static_cast<uint32_t>(pIt->second.size());
     *((uint32_t*)ptr) = static_cast<uint32_t>(pIt->second.size());
 
-    TaskId* t = (TaskId*)(ptr + sizeof(uint32_t));
+    TaskId* source_task = (TaskId*)(ptr + sizeof(uint32_t));
+    *source_task = source; // Store the source taskId first
 
-    t[0] = source; // Store the source taskId first
     // Now store the dest taskIds
-    for (uint32_t i=1;i<pIt->second.size();i++)
+    TaskId* t = source_task + 1; 
+    for (uint32_t i=0;i<pIt->second.size();i++)
       t[i] = pIt->second[i];
 
     // This memcpy is annoying but appears necessary if we want to encode multiple
@@ -323,6 +354,7 @@ int Controller::postRecv(int32_t source_rank) {
   MPI_Request req;
   char* buffer = new char[mRecvBufferSize];
 
+  std::cout << "Posting recv:: " << source_rank << "\n";
   MPI_Irecv((void*)buffer, mRecvBufferSize, MPI_BYTE, source_rank, 0,
             MPI_COMM_WORLD, &req);
 
@@ -373,22 +405,35 @@ int Controller::testMPI()
       TaskId* task_ids= (TaskId*)(message + 3*sizeof(uint32_t) + sizeof(TaskId));
       char* data_ptr = (char*)(task_ids + num_tasks_msg);
 
+      //printf("%s\n", data_ptr);
       // Create DataBlock from message
       DataBlock data_block;
-      data_block.size = message_size - 
-        (sizeof(uint32_t)*3 - sizeof(TaskId)*(1 + num_tasks_msg));
+      data_block.size = (int)message_size - 
+                    (sizeof(uint32_t)*3 + sizeof(TaskId)*(1 + num_tasks_msg));
+      data_block.buffer = new char[data_block.size];
       memcpy(data_block.buffer, data_ptr, data_block.size);
 
+      //if (mRank == 1) {
+      //std::cout << "Data Size :: " << data_block.size << "\n";
+      //std::cout << "Msg Size :: " << message_size << "\n";
+      //std::cout << "Source task :: " << source_task << "\n";
+      //std::cout << "Num task :: " << num_tasks_msg << "\n";
+      //std::cout << "task :: " << task_ids[0] << "\n";
+      //}
       // Add DataBlock to TaskWrapper
       std::map<TaskId,TaskWrapper>::iterator wIt;
       for (int i=0; i< num_tasks_msg; i++) {
         wIt = mTasks.find(task_ids[i]);
         wIt->second.addInput(source_task, data_block);
+        if (wIt->second.ready()) {
+          stageTask(wIt->first);
+        }
+      std::cout << "****Revced:: " << mRank << "\n";
       }
 
       // Delete message
-      delete[] mMessages[index];
-      mFreeMessagesQ.push(index);
+      //delete[] mMessages[index];
+      //mFreeMessagesQ.push(index);
       
       // Update the message log and check for more messages from this rank
       std::map<int,uint32_t>::iterator mIt;
@@ -405,33 +450,32 @@ int Controller::testMPI()
       // Delete the completed send message
       delete[] mMessages[index];
       mFreeMessagesQ.push(index);
-
-      // Now post the Isends
-      mOutgoingMutex.lock();
-      for (int i=0; i < mOutgoing.size(); i++) {
-
-        MPI_Request req;
-        // Get the dest rank and size from the message header
-        if (!mFreeMessagesQ.empty()) {
-          mMessages[mFreeMessagesQ.front()] = (char*)mOutgoing[i];
-          mMPIreq[mFreeMessagesQ.front()] = req;
-          mFreeMessagesQ.pop();
-        }
-        else {
-          mMessages.push_back((char*)mOutgoing[i]);
-          mMPIreq.push_back(req);
-        }
-
-        uint32_t destination = *(uint32_t*)mOutgoing[i];
-        uint32_t size = *(uint32_t*)(mOutgoing[i] + sizeof(uint32_t));
-        MPI_Isend((void*)mOutgoing[i], size, MPI_BYTE, destination, 0, 
-                  MPI_COMM_WORLD, &req);
-      }
-      mOutgoing.clear();
-      mOutgoingMutex.unlock();
-
     }
   }
+  // Now post the Isends
+  mOutgoingMutex.lock();
+  for (int i=0; i < mOutgoing.size(); i++) {
+
+    MPI_Request req;
+    // Get the dest rank and size from the message header
+    if (!mFreeMessagesQ.empty()) {
+      mMessages[mFreeMessagesQ.front()] = (char*)mOutgoing[i];
+      mMPIreq[mFreeMessagesQ.front()] = req;
+      mFreeMessagesQ.pop();
+    }
+    else {
+      mMessages.push_back((char*)mOutgoing[i]);
+      mMPIreq.push_back(req);
+    }
+
+    uint32_t destination = *(uint32_t*)mOutgoing[i];
+    uint32_t size = *(uint32_t*)(mOutgoing[i] + sizeof(uint32_t));
+    std::cout << "Sending from: " << mRank << " to " << destination << "\n";
+    MPI_Isend((void*)mOutgoing[i], size, MPI_BYTE, destination, 0, 
+              MPI_COMM_WORLD, &req);
+  }
+  mOutgoing.clear();
+  mOutgoingMutex.unlock();
 
   return 1;
 }

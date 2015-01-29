@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include "Broadcast.h"
+#include <iostream>
 
 Broadcast::Broadcast(uint32_t endpoints, uint32_t valence) : TaskGraph(),
     mValence(valence)
@@ -27,6 +28,9 @@ std::vector<Task> Broadcast::localGraph(ControllerId id, const TaskMap* task_map
 
   // First get all the ids we need
   std::vector<TaskId> ids = task_map->tasks(id);
+//  for (int i=0; i< ids.size(); i++) {
+//    std::cout << "tasks:: " << ids[i] << " id:: " << id <<"\n";
+//  }
 
   // The create the required number of tasks
   std::vector<Task> tasks(ids.size());
