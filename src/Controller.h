@@ -44,7 +44,7 @@ public:
  * @param outputs A set of DataBlocks storing the outputs
  * @return 1 if successful and 0 otherwise
  */
-typedef int (*Callback)(std::vector<DataBlock>& inputs, std::vector<DataBlock>& outputs);
+typedef int (*Callback)(std::vector<DataBlock>& inputs, std::vector<DataBlock>& outputs, TaskId task);
 
 /*! A controller handles the communication as well as thread
  *  management for the tasks assigned to it
@@ -173,12 +173,6 @@ private:
   //! The mutex controlling access to the outgoing messages
   std::mutex mOutgoingMutex;
 
-  //! A mutex for accessing the messages
-  //std::mutex mMessagesMutex;
-
-  //! A list of incomming messages each of size mRecvBufferSize
-  //std::vector<char*> mIncoming;
-
   //! A list of message buffers for sending and receiveing
   std::vector<char*> mMessages;
 
@@ -188,13 +182,16 @@ private:
   //! A list of MPI request handles for sends and recvs
   std::vector<MPI_Request> mMPIreq;
 
-  //! Test for MPI events to guarantee progress and handle receives
-  //int testIncoming();
-
   //! Send all outstanding messages
-  //int sendOutgoing();
+  char* packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator pIt,
+                    TaskId source, DataBlock data ) ;
 
+  TaskId* unPackMessage(char* messsage, DataBlock* data_block, 
+                        TaskId* source_task, uint32_t* num_tasks_msg);
+
+  //! Test for MPI events to guarantee progress and handle receives
   int testMPI();
+
   //! Post MPI receives for incomming messages
   int postRecv(int32_t source_rank);
 };

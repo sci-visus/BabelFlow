@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <iostream>
+#include <cstdlib>
 
 #include "mpi.h"
 
@@ -18,13 +19,13 @@
 
 uint32_t gCount = 0;
 
-int print_message(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output)
+int print_message(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, TaskId task)
 {
   char* str = (char*)inputs[0].buffer;
 
   int r = rand() % 3000000;
   usleep(r);
-  printf("Got message \"%s\"  %d\n",str,gCount++);
+  printf("Got message \"%s\"  %d\n",str,task);
 
   return 1;
 }

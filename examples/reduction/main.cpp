@@ -7,6 +7,7 @@
 
 #include <cstdio>
 #include <unistd.h>
+#include <cstdlib>
 
 #include "mpi.h"
 
