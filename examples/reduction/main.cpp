@@ -16,7 +16,7 @@
 #include "Controller.h"
 
 
-int add_int(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output)
+int add_int(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, TaskId task)
 {
 
   output[0].buffer = new uint32_t[1];
@@ -34,7 +34,7 @@ int add_int(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output)
   return 1;
 }
 
-int report_sum(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output)
+int report_sum(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, TaskId task)
 {
   uint32_t result = 0;
 
