@@ -230,13 +230,15 @@ int Controller::run(std::map<TaskId,DataBlock>& initial_inputs)
           break; // Otherwise, we are done
       } // end-while(true)
       PRINT("Done processing messages");
-      break; // Break out of the main message loop
+
+      if (mOutgoing.empty())
+        break; // Break out of the main message loop
     } // end-if !mMessageLog.empty()
     else { // we are waiting for more messages
       //PRINT("Rank:: " << mRank << " Waiting for more messages");
       usleep(100); // Given them time to arrive
     }
-  }
+  } // end-while main processing loop
 
   return 1;
 }
