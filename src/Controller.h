@@ -91,13 +91,18 @@ public:
     const Task& task() const {return mTask;}
 
     //! Add an input
-    int addInput(TaskId source, DataBlock data);
+    bool addInput(TaskId source, DataBlock data);
 
     //! Return whether this task is ready to be executed
     bool ready() const;
 
     //! The task
     Task mTask;
+
+    //! Mutex to check if task is ready. We use this in the addInput routine as
+    //! both the master and the worker thready can check if a task is ready and
+    //! could potentially start the same task if this mutex is not used.
+    std::mutex mTaskReadyMutex;
 
     //! The input buffers
     std::vector<DataBlock> mInputs;
@@ -154,6 +159,9 @@ private:
   //! The mutex protecting task queue
   std::mutex mQueueMutex;
   
+  //! The mutex to check if all incoming data is received
+  std::mutex mReadyMutex;
+  
   //! Stage task indicating that this task is ready to run
   int stageTask(TaskId t);
 
@@ -194,6 +202,7 @@ private:
 
   //! Post MPI receives for incomming messages
   int postRecv(int32_t source_rank);
+  
 };
 
 //! Execute the given task and send the outputs

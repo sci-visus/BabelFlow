@@ -15,7 +15,7 @@
 #include "RelayTask.h"
 
 //#define DEBUG_PRINTS
-const int RANKID=1;
+const int RANKID=6;
 #ifdef DEBUG_PRINTS
 # define PRINT(x) do { std::cerr << x << std::endl; } while (0)
 # define PRINT_RANK(x) if (mRank == RANKID) \
@@ -46,37 +46,34 @@ Controller::TaskWrapper& Controller::TaskWrapper::operator=(const TaskWrapper& t
   return *this;
 }
 
-
-int Controller::TaskWrapper::addInput(TaskId source, DataBlock data)
+//! Adds the new input to the task. If all inputs have arrived returns true as
+//! this task can now be staged
+bool Controller::TaskWrapper::addInput(TaskId source, DataBlock data)
 {
   TaskId i;
-
+  bool is_ready = true;
+  bool input_added = false;
+  
+  mTaskReadyMutex.lock();
   for (i=0;i<mTask.fanin();i++) {
     if (mTask.incoming()[i] == source) {
+      assert(mInputs[i].buffer == NULL);
       mInputs[i] = data;
-      break;
+      input_added = true;
     }
+    if (mInputs[i].buffer == NULL)
+      is_ready = false;
   }
+  mTaskReadyMutex.unlock();
 
-  if (i == mTask.fanin()) {
+  if (!input_added) {
     fprintf(stderr,"Unknown sender %d in TaskWrapper::addInput for task %d\n",source,mTask.id());
     assert (false);
   }
 
-  return 1;
+  return is_ready;
 }
 
-bool Controller::TaskWrapper::ready() const
-{
-  TaskId i;
-
-  for (i=0;i<mTask.fanin();i++) {
-    if (mInputs[i].buffer == NULL)
-      return false;
-  }
-
-  return true;
-}
 
 Controller::Controller():mRecvBufferSize(1024*1024)
 {
@@ -97,7 +94,7 @@ int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map,
   //! First lets find our id
   MPI_Comm_rank(MPI_COMM_WORLD, &mRank);
   mId = mControllerMap->controller(mRank);
-  PRINT(" mId :: " << mId);
+ // PRINT(" mId :: " << mId);
 
   // Get all tasks assigned to this controller
   std::vector<Task> tasks = graph.localGraph(mId,task_map);
@@ -114,6 +111,7 @@ int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map,
     // Loop through all incoming tasks
     for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
 
+      PRINT_RANK(" Incoming: " << *it);
       // If this is an input that will come from the dataflow
       if (*it != TNULL) {
         cId = mTaskMap->controller(*it);
@@ -187,57 +185,35 @@ int Controller::run(std::map<TaskId,DataBlock>& initial_inputs)
 
   // Finally, start the while loop that tests for MPI events and
   // asynchronously starts inputs
-  while (true) {
+  do {
 
     // Test for MPI stuff happening
-    if (num_processes > 1) {
-      testMPI();
-    }
+    testMPI();
 
     // Start all recently ready tasks
     processQueuedTasks();
 
-    // If there are no more incoming messages
-    if (mMessageLog.empty()) {
-      // We wait for all threads we have created to finish
-      while (true) {
+    // Check for completed threads and join them
+    uint32_t i = 0;
+    while (i < mThreads.size()) {
+      if (mThreads[i]->joinable()) {// If we have found a thread that is finished
+        mThreads[i]->join(); // Join it to the main thread
 
-        uint32_t i = 0;
-        while (i < mThreads.size()) {
-          if (mThreads[i]->joinable()) {// If we have found a thread that is finished
-            mThreads[i]->join(); // Join it to the main thread
+        std::swap(mThreads[i],mThreads.back());
+        PRINT_RANK("Joining thread: " << i ); 
 
-            std::swap(mThreads[i],mThreads.back());
-            PRINT_RANK("Joining thread: " << i ); 
+        delete mThreads.back();
+        mThreads.pop_back();
+      }
+      else {
+        i++;
+      }
+    } // end-while
+  
+  } while ((mFreeMessagesQ.size() != mMPIreq.size()) || 
+            !mOutgoing.empty() || !mThreads.empty()); 
 
-            delete mThreads.back();
-            mThreads.pop_back();
-          }
-          else {
-            i++;
-          }
-        } // end-while
-
-        // Test whether there are new threads we need to start
-        processQueuedTasks();
-
-        if (!mThreads.empty()) { // If there are still some threads going
-          //fprintf(stderr,"Waiting for %d tasks\n",mThreads.size());
-
-          //usleep(100); // Give them time to finish
-        }
-        else
-          break; // Otherwise, we are done
-      } // end-while(true)
-      PRINT("Done processing messages");
-      break; // Break out of the main message loop
-    } // end-if !mMessageLog.empty()
-    else { // we are waiting for more messages
-      //PRINT("Rank:: " << mRank << " Waiting for more messages");
-      usleep(100); // Given them time to arrive
-    }
-  }
-
+  PRINT_RANK("***Done with run");
   return 1;
 }
 
@@ -253,7 +229,7 @@ int Controller::stageTask(TaskId t)
 
 int Controller::startTask(TaskWrapper& task)
 {
-  assert (task.ready());
+  //assert (task.ready());
 
   std::thread* t = new std::thread(&execute,this,task);
 
@@ -339,16 +315,18 @@ int Controller::initiateSend(TaskId source,
 
   for (it=destinations.begin();it!=destinations.end();it++) {
 
+    PRINT_RANK("Source task: " << source << " Dest Task: " << *it);
     // First, we check whether the destination is a local task
     tIt = mTasks.find(*it);
     if (tIt != mTasks.end()) {// If it is a local task
-      tIt->second.addInput(source,data); // Pass on the data
-      if (tIt->second.ready()) { // If this task is now ready to execute stage it
+      bool task_ready =  tIt->second.addInput(source,data); // Pass on the data
+      if (task_ready) { // If this task is now ready to execute stage it
         stageTask(*it); // Note that we can't start the task as that would 
         // require locks on the threads
       }
     }
     else { // If this is a remote task
+      PRINT_RANK("Source task: " << source << " Dest Task: " << *it);
 
       // Figure out where it needs to go
       rank = mControllerMap->rank(mTaskMap->controller(*it));
@@ -368,11 +346,13 @@ int Controller::initiateSend(TaskId source,
   for (pIt=packets.begin();pIt!=packets.end();pIt++) {
 
     char* msg = packMessage(pIt, source, data);
+    PRINT_RANK("Packing: Rank: " << pIt->first << " dest task :: " << pIt->second[0]);
     // Now we need to post this for sending
     // First, get the lock
     mOutgoingMutex.lock();
     mOutgoing.push_back(msg);
     mOutgoingMutex.unlock();
+    PRINT_RANK("Outgoing : " << mOutgoing.size());
   }
 
   return 1;
@@ -400,6 +380,7 @@ int Controller::postRecv(int32_t source_rank) {
   return 1;
 }
 
+
 int Controller::testMPI()
 {
   int index = -1;
@@ -412,6 +393,7 @@ int Controller::testMPI()
   status = MPI_Testany(mMPIreq.size(), &mMPIreq[0], &index, &req_complete_flag,
                        &mpi_status);
 
+  //PRINT_RANK("Testing MPI");
   if (status != MPI_SUCCESS) {
     fprintf(stderr, "Error in Test any!!\n");
     assert(status != MPI_SUCCESS);
@@ -423,6 +405,9 @@ int Controller::testMPI()
     char* message = mMessages[index];
     uint32_t dest = (*(uint32_t*)message);
     
+    // Set request to NULL
+    //mMPIreq[index] = MPI_REQUEST_NULL;
+
     if (dest == mRank) { // This is a received message
 
       // Unpack the message
@@ -437,8 +422,8 @@ int Controller::testMPI()
       std::map<TaskId,TaskWrapper>::iterator wIt;
       for (int i=0; i< num_tasks_msg; i++) {
         wIt = mTasks.find(task_ids[i]);
-        wIt->second.addInput(source_task, data_block);
-        if (wIt->second.ready()) {
+        bool task_ready = wIt->second.addInput(source_task, data_block);
+        if (task_ready) {
           stageTask(wIt->first);
         }
       }
@@ -458,14 +443,14 @@ int Controller::testMPI()
       if (mIt->second == 0) 
         mMessageLog.erase(mIt->first);
     }
-    else { // This is a completed send message
+    //else { // This is a completed send message
 
       // Delete the completed send message
       delete[] mMessages[index];
       mFreeMessagesQ.push(index);
       mMPIreq[index] = MPI_REQUEST_NULL;
-      PRINT_RANK("Deleting message!");
-    }
+      PRINT_RANK("Send complete... Deleting message!");
+    //}
   }
   // Now post the Isends
   mOutgoingMutex.lock();
@@ -478,6 +463,7 @@ int Controller::testMPI()
     uint32_t size = *(uint32_t*)(mOutgoing[i] + sizeof(uint32_t));
     MPI_Isend((void*)mOutgoing[i], size, MPI_BYTE, destination, 0, 
               MPI_COMM_WORLD, &req);
+    PRINT_RANK("Sending to " << destination << " : Req : " << req);
 
     if (!mFreeMessagesQ.empty()) {
       mMessages[mFreeMessagesQ.front()] = (char*)mOutgoing[i];
@@ -488,13 +474,12 @@ int Controller::testMPI()
       mMessages.push_back((char*)mOutgoing[i]);
       mMPIreq.push_back(req);
     }
-
-    PRINT_RANK("Sending to " << destination << " : Req : " << req);
-    
   }
-  mOutgoing.clear();
+  
+  if (!mOutgoing.empty())
+    mOutgoing.clear();
+  
   mOutgoingMutex.unlock();
-
   return 1;
 }
 
