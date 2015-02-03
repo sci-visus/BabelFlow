@@ -18,7 +18,7 @@ int relay_message(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output
   assert (outputs.size() == 1);
 
 
-  fprintf(stderr,"Relay message: %d \n", task);
+  //fprintf(stderr,"Relay message: %d \n", task);
   outputs[0] = inputs[0];
 
   return 1;
