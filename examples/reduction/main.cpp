@@ -19,7 +19,7 @@
 int add_int(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, TaskId task)
 {
 
-  output[0].buffer = new uint32_t[1];
+  output[0].buffer = (char*)(new uint32_t[1]);
   uint32_t* result = (uint32_t*)output[0].buffer;
 
   *result = 0;
@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
   for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
     DataBlock data;
     data.size = sizeof(uint32_t);
-    data.buffer = new uint32_t[1];
+    data.buffer = (char*)(new uint32_t[1]);
 
     *((uint32_t*)data.buffer) = count;
     inputs[i] = data;

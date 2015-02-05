@@ -26,9 +26,9 @@ class DataBlock
 {
 public:
 
-  DataBlock(void *b=NULL, uint32_t s=0) : buffer(b), size(s) {}
+  DataBlock(char *b=NULL, uint32_t s=0) : buffer(b), size(s) {}
 
-  void* buffer;
+  char* buffer;
   uint32_t size;
 };
 
