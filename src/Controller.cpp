@@ -15,7 +15,7 @@
 #include "RelayTask.h"
 
 //#define DEBUG_PRINTS
-const int RANKID=6;
+const int RANKID=0;
 #ifdef DEBUG_PRINTS
 # define PRINT(x) do { std::cerr << x << std::endl; } while (0)
 # define PRINT_RANK(x) if (mRank == RANKID) \
@@ -107,11 +107,11 @@ int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map,
   // Now collect the message log
   // For all tasks
   for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-    PRINT_RANK(" task id :: " << tIt->id());
+    PRINT("Rank : " << mRank << "cid : " << mId << " task id :: " << tIt->id());
     // Loop through all incoming tasks
     for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
 
-      PRINT_RANK(" Incoming: " << *it);
+      //PRINT_RANK(" Incoming: " << *it);
       // If this is an input that will come from the dataflow
       if (*it != TNULL) {
         cId = mTaskMap->controller(*it);
@@ -124,7 +124,7 @@ int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map,
 
           // If we have not seen a message from this rank before
           if (mIt == mMessageLog.end())
-            mMessageLog[*it] = 1; // Create an entry
+            mMessageLog[c_rank] = 1; // Create an entry
           else // Otherwise
             mIt->second = mIt->second+1; // just increase the count
         }
@@ -210,10 +210,10 @@ int Controller::run(std::map<TaskId,DataBlock>& initial_inputs)
       }
     } // end-while
   
-  } while ((mFreeMessagesQ.size() != mMPIreq.size()) || 
+  } while ((mFreeMessagesQ.size() != mMPIreq.size()) || !mTaskQueue.empty() || 
             !mOutgoing.empty() || !mThreads.empty()); 
 
-  PRINT_RANK("***Done with run");
+  PRINT("Rank : " << mRank << "***Done with run");
   return 1;
 }
 
@@ -233,7 +233,7 @@ int Controller::startTask(TaskWrapper& task)
 
   std::thread* t = new std::thread(&execute,this,task);
 
-  PRINT_RANK("Task Started:: " << task.task().id());
+  PRINT("Task Started:: " << task.task().id());
 
   mThreads.push_back(t);
 
@@ -257,7 +257,7 @@ TaskId* Controller::unPackMessage(char* message, DataBlock* data_block,
   data_block->buffer = new char[data_block->size];
   memcpy(data_block->buffer, data_ptr, data_block->size);
 
-  PRINT_RANK("Data Size :: " << data_block->size << \
+  //PRINT("Rank : " << mRank << "Data Size :: " << data_block->size << \
    " Msg Size :: " << message_size << \
    " Source task :: " << *source_task << \
    " Num task :: " << *num_tasks_msg << \
@@ -314,8 +314,8 @@ int Controller::initiateSend(TaskId source,
   int rank;
 
   for (it=destinations.begin();it!=destinations.end();it++) {
-
-    PRINT_RANK("Source task: " << source << " Dest Task: " << *it);
+    
+    if (*it == TNULL) return 1;
     // First, we check whether the destination is a local task
     tIt = mTasks.find(*it);
     if (tIt != mTasks.end()) {// If it is a local task
@@ -326,7 +326,7 @@ int Controller::initiateSend(TaskId source,
       }
     }
     else { // If this is a remote task
-      PRINT_RANK("Source task: " << source << " Dest Task: " << *it);
+      //PRINT_RANK("Source task: " << source << " Dest Task: " << *it);
 
       // Figure out where it needs to go
       rank = mControllerMap->rank(mTaskMap->controller(*it));
@@ -346,13 +346,13 @@ int Controller::initiateSend(TaskId source,
   for (pIt=packets.begin();pIt!=packets.end();pIt++) {
 
     char* msg = packMessage(pIt, source, data);
-    PRINT_RANK("Packing: Rank: " << pIt->first << " dest task :: " << pIt->second[0]);
+    //PRINT_RANK("Packing: Rank: " << pIt->first << " dest task :: " << pIt->second[0]);
     // Now we need to post this for sending
     // First, get the lock
     mOutgoingMutex.lock();
     mOutgoing.push_back(msg);
     mOutgoingMutex.unlock();
-    PRINT_RANK("Outgoing : " << mOutgoing.size());
+    //PRINT_RANK("Outgoing : " << mOutgoing.size());
   }
 
   return 1;
@@ -364,7 +364,7 @@ int Controller::postRecv(int32_t source_rank) {
 
   MPI_Irecv((void*)buffer, mRecvBufferSize, MPI_BYTE, source_rank, 0,
             MPI_COMM_WORLD, &req);
-  PRINT_RANK("Posting recv for rank :: " << source_rank << " : Req : " << req);
+  PRINT_RANK(" Posting recv for rank :: " << source_rank << " : Req : " << req);
 
   // Since only the master thread accesses the message buffer, no need to lock
   if (!mFreeMessagesQ.empty()) {
@@ -393,7 +393,6 @@ int Controller::testMPI()
   status = MPI_Testany(mMPIreq.size(), &mMPIreq[0], &index, &req_complete_flag,
                        &mpi_status);
 
-  //PRINT_RANK("Testing MPI");
   if (status != MPI_SUCCESS) {
     fprintf(stderr, "Error in Test any!!\n");
     assert(status != MPI_SUCCESS);
@@ -405,16 +404,13 @@ int Controller::testMPI()
     char* message = mMessages[index];
     uint32_t dest = (*(uint32_t*)message);
     
-    // Set request to NULL
-    //mMPIreq[index] = MPI_REQUEST_NULL;
-
     if (dest == mRank) { // This is a received message
 
       // Unpack the message
       DataBlock data_block;
       TaskId* task_ids;
       uint32_t num_tasks_msg;
-      TaskId source_task=7;
+      TaskId source_task=0;
 
       task_ids = unPackMessage(message, &data_block, &source_task, &num_tasks_msg);
 
@@ -428,7 +424,7 @@ int Controller::testMPI()
         }
       }
 
-      PRINT_RANK("Message recved!");
+      //PRINT("Rank " << mRank << " Message recved!");
 
       // Update the message log and check for more messages from this rank
       std::map<int,uint32_t>::iterator mIt;
@@ -449,7 +445,7 @@ int Controller::testMPI()
       delete[] mMessages[index];
       mFreeMessagesQ.push(index);
       mMPIreq[index] = MPI_REQUEST_NULL;
-      PRINT_RANK("Send complete... Deleting message!");
+      //PRINT("Rank " << mRank << " Send complete... Deleting message!");
     //}
   }
   // Now post the Isends
@@ -463,7 +459,7 @@ int Controller::testMPI()
     uint32_t size = *(uint32_t*)(mOutgoing[i] + sizeof(uint32_t));
     MPI_Isend((void*)mOutgoing[i], size, MPI_BYTE, destination, 0, 
               MPI_COMM_WORLD, &req);
-    PRINT_RANK("Sending to " << destination << " : Req : " << req);
+    PRINT_RANK(" Sending to " << destination << " : Req : " << req);
 
     if (!mFreeMessagesQ.empty()) {
       mMessages[mFreeMessagesQ.front()] = (char*)mOutgoing[i];
@@ -508,7 +504,9 @@ int execute(Controller *c,Controller::TaskWrapper task)
 
   // Now we "own" all the BlockData for the outputs and we must send
   // them onward. So for all outputs we start a send
+  PRINT_RANK("Task : " << task.task().id() << " Outputs : " << task.task().fanout());
   for (uint32_t i=0;i<task.task().fanout();i++) {
+    //PRINT("Task : " << task.task().id() << " sending output");
     c->initiateSend(task.task().id(),task.task().outgoing(i),task.mOutputs[i]);
   }
 
