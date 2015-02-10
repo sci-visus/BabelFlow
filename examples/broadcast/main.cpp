@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
   if (rank ==0 ) {
     DataBlock data;
     data.size = arr_length*sizeof(int);
-    data.buffer = new int[data.size];
+    data.buffer = (char*)(new int[data.size]);
 
     int *arr = (int*)data.buffer;
     // Initialize the array with ints
