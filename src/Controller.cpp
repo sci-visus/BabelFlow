@@ -363,8 +363,9 @@ int Controller::initiateSend(TaskId source,
     mOutgoingMutex.unlock();
     //PRINT_RANK("Outgoing : " << mOutgoing.size());
   }
-
-  delete[] data.buffer;
+  
+  //TODO: enable the delete after full parallelMT code has been ported
+  //delete[] data.buffer;
   return 1;
 }
 
