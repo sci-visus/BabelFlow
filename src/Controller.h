@@ -190,6 +190,9 @@ private:
   //! A list of MPI request handles for sends and recvs
   std::vector<MPI_Request> mMPIreq;
 
+  //! Makes a copy of the data block
+  DataBlock makeDataCopy(DataBlock data);
+
   //! Send all outstanding messages
   char* packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator pIt,
                     TaskId source, DataBlock data ) ;

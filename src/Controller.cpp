@@ -301,6 +301,15 @@ char* Controller::packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator 
   return msg;
 }
 
+DataBlock Controller::makeDataCopy(DataBlock data) {
+
+  DataBlock data_copy;
+  data_copy.size = data.size;
+  data_copy.buffer = new char[data_copy.size];
+
+  memcpy(data_copy.buffer, data.buffer, data_copy.size);
+  return data_copy;
+}
 
 
 int Controller::initiateSend(TaskId source, 
@@ -319,7 +328,7 @@ int Controller::initiateSend(TaskId source,
     // First, we check whether the destination is a local task
     tIt = mTasks.find(*it);
     if (tIt != mTasks.end()) {// If it is a local task
-      bool task_ready =  tIt->second.addInput(source,data); // Pass on the data
+      bool task_ready =  tIt->second.addInput(source,makeDataCopy(data)); // Pass on the data
       if (task_ready) { // If this task is now ready to execute stage it
         stageTask(*it); // Note that we can't start the task as that would 
         // require locks on the threads
@@ -355,6 +364,7 @@ int Controller::initiateSend(TaskId source,
     //PRINT_RANK("Outgoing : " << mOutgoing.size());
   }
 
+  delete[] data.buffer;
   return 1;
 }
 
@@ -416,9 +426,21 @@ int Controller::testMPI()
 
       // Add DataBlock to TaskWrapper
       std::map<TaskId,TaskWrapper>::iterator wIt;
+
+      // We make copies of the data block and give it to the tasks. Tasks are
+      // responsible for destroying the block after use and can modify
+      // the data blocks
+      bool task_ready = false;
       for (int i=0; i< num_tasks_msg; i++) {
         wIt = mTasks.find(task_ids[i]);
-        bool task_ready = wIt->second.addInput(source_task, data_block);
+
+        // We make copies for all the tasks that need this data except for the
+        // last one to whom we pass the original data block
+        if (i < num_tasks_msg-1)
+          task_ready = wIt->second.addInput(source_task, makeDataCopy(data_block));
+        else
+          task_ready = wIt->second.addInput(source_task, data_block);
+
         if (task_ready) {
           stageTask(wIt->first);
         }
@@ -504,7 +526,6 @@ int execute(Controller *c,Controller::TaskWrapper task)
 
   // Now we "own" all the BlockData for the outputs and we must send
   // them onward. So for all outputs we start a send
-  PRINT_RANK("Task : " << task.task().id() << " Outputs : " << task.task().fanout());
   for (uint32_t i=0;i<task.task().fanout();i++) {
     //PRINT("Task : " << task.task().id() << " sending output");
     c->initiateSend(task.task().id(),task.task().outgoing(i),task.mOutputs[i]);
