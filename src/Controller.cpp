@@ -365,7 +365,7 @@ int Controller::initiateSend(TaskId source,
   }
   
   //TODO: enable the delete after full parallelMT code has been ported
-  //delete[] data.buffer;
+  delete[] data.buffer;
   return 1;
 }
 
