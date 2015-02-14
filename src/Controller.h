@@ -28,6 +28,9 @@ public:
 
   DataBlock(char *b=NULL, uint32_t s=0) : buffer(b), size(s) {}
 
+  //! Makes a copy of the data block
+  DataBlock clone() const;
+
   char* buffer;
   uint32_t size;
 };
@@ -189,9 +192,6 @@ private:
   
   //! A list of MPI request handles for sends and recvs
   std::vector<MPI_Request> mMPIreq;
-
-  //! Makes a copy of the data block
-  DataBlock makeDataCopy(DataBlock data);
 
   //! Send all outstanding messages
   char* packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator pIt,

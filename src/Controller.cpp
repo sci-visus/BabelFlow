@@ -26,6 +26,17 @@ const int RANKID=0;
 # define PRINT_RANK(x) do {} while (0)
 #endif
 
+DataBlock DataBlock::clone() const
+{
+  DataBlock data_copy;
+  data_copy.size = size;
+  data_copy.buffer = new char[size];
+
+  memcpy(data_copy.buffer, buffer, size);
+  return data_copy;
+}
+
+
 Controller::TaskWrapper::TaskWrapper(const Task& t) : mTask(t)
 {
   mInputs.resize(t.fanin());
@@ -243,7 +254,7 @@ int Controller::startTask(TaskWrapper& task)
 
 
 TaskId* Controller::unPackMessage(char* message, DataBlock* data_block, 
-                               TaskId* source_task, uint32_t* num_tasks_msg) { 
+                                  TaskId* source_task, uint32_t* num_tasks_msg) {
 
   uint32_t message_size = *(uint32_t*)(message + sizeof(uint32_t));
   *num_tasks_msg        = *(uint32_t*)(message + 2*sizeof(uint32_t));
@@ -301,16 +312,6 @@ char* Controller::packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator 
   return msg;
 }
 
-DataBlock Controller::makeDataCopy(DataBlock data) {
-
-  DataBlock data_copy;
-  data_copy.size = data.size;
-  data_copy.buffer = new char[data_copy.size];
-
-  memcpy(data_copy.buffer, data.buffer, data_copy.size);
-  return data_copy;
-}
-
 
 int Controller::initiateSend(TaskId source, 
                              const std::vector<TaskId>& destinations, 
@@ -328,7 +329,7 @@ int Controller::initiateSend(TaskId source,
     // First, we check whether the destination is a local task
     tIt = mTasks.find(*it);
     if (tIt != mTasks.end()) {// If it is a local task
-      bool task_ready =  tIt->second.addInput(source,makeDataCopy(data)); // Pass on the data
+      bool task_ready =  tIt->second.addInput(source,data.clone()); // Pass on the data
       if (task_ready) { // If this task is now ready to execute stage it
         stageTask(*it); // Note that we can't start the task as that would 
         // require locks on the threads
@@ -438,7 +439,7 @@ int Controller::testMPI()
         // We make copies for all the tasks that need this data except for the
         // last one to whom we pass the original data block
         if (i < num_tasks_msg-1)
-          task_ready = wIt->second.addInput(source_task, makeDataCopy(data_block));
+          task_ready = wIt->second.addInput(source_task, data_block.clone());
         else
           task_ready = wIt->second.addInput(source_task, data_block);
 
