@@ -86,7 +86,7 @@ bool Controller::TaskWrapper::addInput(TaskId source, DataBlock data)
 }
 
 
-Controller::Controller():mRecvBufferSize(1024*1024)
+Controller::Controller():mRecvBufferSize(1024*1024*128)
 {
   mId = CNULL;
   mTaskMap = NULL;
