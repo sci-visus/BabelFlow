@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
   graph.output_graph(mpi_width,&task_map,output);
   fclose(output);
 
-  master.initialize(graph,&task_map);
+  master.initialize(graph,&task_map,rank);
   master.registerCallback(1,print_message);
 
   

@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
   graph.output_graph(mpi_width,&task_map,output);
   fclose(output);
 
-  master.initialize(graph,&task_map);
+  master.initialize(graph,&task_map,MPI_COMM_WORLD);
   master.registerCallback(1,add_int);
   master.registerCallback(2,report_sum);
 

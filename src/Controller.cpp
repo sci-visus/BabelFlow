@@ -95,15 +95,16 @@ Controller::Controller():mRecvBufferSize(1024*1024*128)
   mRank = TNULL;
 }
 
-int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map,
-                           const ControllerMap* controller_map)
+int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map, 
+                           MPI_Comm comm, const ControllerMap* controller_map)
 {
   mTaskMap = task_map;
   mControllerMap = controller_map;
+  mComm = comm;
 
-
+  //mRank = rank;
   //! First lets find our id
-  MPI_Comm_rank(MPI_COMM_WORLD, &mRank);
+  MPI_Comm_rank(mComm, &mRank);
   mId = mControllerMap->controller(mRank);
  // PRINT(" mId :: " << mId);
 
@@ -169,7 +170,8 @@ int Controller::run(std::map<TaskId,DataBlock>& initial_inputs)
   std::map<TaskId,TaskWrapper>::iterator wIt;
 
   int num_processes;
-  MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
+  //MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
+  MPI_Comm_size(mComm, &num_processes);
 
   if (num_processes > 1) {
     // First we post receives for all ranks
@@ -184,7 +186,10 @@ int Controller::run(std::map<TaskId,DataBlock>& initial_inputs)
   for (tIt=initial_inputs.begin();tIt!=initial_inputs.end();tIt++) {
     // First make sure that we are even responsible for this task
     wIt = mTasks.find(tIt->first);
-    assert (wIt != mTasks.end());
+    if (wIt == mTasks.end()) {
+      std::cout << "Controller ID: " << mId << " Rank: " << mRank << "\n"; 
+      assert (wIt != mTasks.end());
+    }
 
     // Pass on the input using TNULL as source indicating an outside input
     wIt->second.addInput(TNULL,tIt->second);
@@ -375,7 +380,8 @@ int Controller::postRecv(int32_t source_rank) {
   char* buffer = new char[mRecvBufferSize];
 
   MPI_Irecv((void*)buffer, mRecvBufferSize, MPI_BYTE, source_rank, 0,
-            MPI_COMM_WORLD, &req);
+            mComm, &req);
+            //MPI_COMM_WORLD, &req);
   PRINT_RANK(" Posting recv for rank :: " << source_rank << " : Req : " << req);
 
   // Since only the master thread accesses the message buffer, no need to lock
@@ -482,7 +488,8 @@ int Controller::testMPI()
     uint32_t destination = *(uint32_t*)mOutgoing[i];
     uint32_t size = *(uint32_t*)(mOutgoing[i] + sizeof(uint32_t));
     MPI_Isend((void*)mOutgoing[i], size, MPI_BYTE, destination, 0, 
-              MPI_COMM_WORLD, &req);
+              mComm, &req);
+              //MPI_COMM_WORLD, &req);
     PRINT_RANK(" Sending to " << destination << " : Req : " << req);
 
     if (!mFreeMessagesQ.empty()) {

@@ -63,7 +63,7 @@ public:
   ~Controller() {}
 
   //! Initialize the controller
-  int initialize(const TaskGraph& graph, const TaskMap* task_map,
+  int initialize(const TaskGraph& graph, const TaskMap* task_map, MPI_Comm comm,
                  const ControllerMap* controller_map = new ControllerMap());
 
   //! Register a callback for the given id
@@ -128,6 +128,9 @@ private:
 
   //! The MPI rank used by the controller. If no MPI rank its TNULL
   int mRank;
+
+  //! The MPI Comm used by the controller. If no MPI rank its TNULL
+  MPI_Comm mComm;
 
   //! A map from TaskId to TaskWrapper for all tasks assigned to this 
   //! controller
