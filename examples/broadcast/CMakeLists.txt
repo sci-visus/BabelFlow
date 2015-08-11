@@ -11,4 +11,7 @@ include_directories(
 
 add_executable(broadcast ${SRC})
 target_link_libraries(broadcast dataflow ${MPI_CXX_LIBRARIES})
+
+INSTALL(TARGETS broadcast
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
     

@@ -63,7 +63,7 @@ public:
   ~Controller() {}
 
   //! Initialize the controller
-  int initialize(const TaskGraph& graph, const TaskMap* task_map, MPI_Comm comm,
+  int initialize(const TaskGraph& graph, const TaskMap* task_map, MPI_Comm comm = MPI_COMM_WORLD,
                  const ControllerMap* controller_map = new ControllerMap());
 
   //! Register a callback for the given id
