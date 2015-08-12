@@ -26,6 +26,13 @@ const int RANKID=0;
 # define PRINT_RANK(x) do {} while (0)
 #endif
 
+DataBlock::DataBlock(const DataBlock& block)
+{
+  size = block.size;
+  buffer = block.buffer;
+}
+
+
 DataBlock DataBlock::clone() const
 {
   DataBlock data_copy;
@@ -86,7 +93,7 @@ bool Controller::TaskWrapper::addInput(TaskId source, DataBlock data)
 }
 
 
-Controller::Controller():mRecvBufferSize(1024*1024*128)
+Controller::Controller() : mRecvBufferSize(1024*1024*128)
 {
   mId = CNULL;
   mTaskMap = NULL;
@@ -286,9 +293,9 @@ TaskId* Controller::unPackMessage(char* message, DataBlock* data_block,
 
 
 char* Controller::packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator pIt,
-                           TaskId source, DataBlock data ) {
+                              TaskId source, DataBlock data ) {
 
-  uint32_t size = 3*sizeof(uint32_t)                  // dest, size, no. dest tasks
+  uint32_t size = 3*sizeof(uint32_t)                  // dest rank, size, no. dest tasks
                   + sizeof(TaskId)                    // source taskId
                   + pIt->second.size()*sizeof(TaskId) // the destination tasks
                   + data.size;                        // payload
@@ -330,7 +337,11 @@ int Controller::initiateSend(TaskId source,
 
   for (it=destinations.begin();it!=destinations.end();it++) {
     
-    if (*it == TNULL) return 1;
+    if (*it == TNULL) {
+      assert (false);
+      return 1;
+    }
+
     // First, we check whether the destination is a local task
     tIt = mTasks.find(*it);
     if (tIt != mTasks.end()) {// If it is a local task

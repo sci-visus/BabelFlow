@@ -12,5 +12,5 @@ include_directories(
 add_executable(reduction ${SRC})
 target_link_libraries(reduction dataflow ${MPI_CXX_LIBRARIES})
     
-INSTALL(TARGETS broadcast
+INSTALL(TARGETS reduction
         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

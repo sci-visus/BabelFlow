@@ -16,7 +16,7 @@ class TaskGraph;
 
 /*! A task is the abstract description of a piece of idempotent
  *  computation in a dataflow. Each task is identified by a unique
- *  id and stores how many inputs from how it needs to run and
+ *  id and stores how many inputs from whom, it needs to run and
  *  how many outputs it will produce and to which task(s) these must
  *  be send.
  */

@@ -18,15 +18,15 @@
 
 int add_int(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, TaskId task)
 {
-
+  output[0].size = sizeof(uint32_t);
   output[0].buffer = (char*)(new uint32_t[1]);
   uint32_t* result = (uint32_t*)output[0].buffer;
 
   *result = 0;
 
-  for (uint32_t i=0;i<inputs.size();i++)
+  for (uint32_t i=0;i<inputs.size();i++) {
     *result += *((uint32_t *)inputs[i].buffer);
-
+  }
 
   int r = rand() % 100000;
   usleep(r);
