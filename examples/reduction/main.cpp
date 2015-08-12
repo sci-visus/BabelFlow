@@ -58,6 +58,8 @@ int main(int argc, char* argv[])
     return 0;
   }
 
+  srand(100);
+
   MPI_Init(&argc, &argv);
 
   fprintf(stderr,"After MPI_Init\n");
@@ -110,7 +112,7 @@ int main(int argc, char* argv[])
 
   fprintf(stderr,"The result was supposed to be %d\n",sum);
   MPI_Finalize();
-  return 1;
+  return 0;
 }
 
 

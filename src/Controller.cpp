@@ -126,7 +126,7 @@ int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map,
   // Now collect the message log
   // For all tasks
   for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-    PRINT("Rank : " << mRank << "cid : " << mId << " task id :: " << tIt->id());
+    PRINT("Rank : " << mRank << " cid : " << mId << " task id :: " << tIt->id());
     // Loop through all incoming tasks
     for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
 
@@ -188,22 +188,28 @@ int Controller::run(std::map<TaskId,DataBlock>& initial_inputs)
     }
   }
 
-  // For all of the initial inputs assign the corresponding input
-  // and start the task
-  for (tIt=initial_inputs.begin();tIt!=initial_inputs.end();tIt++) {
-    // First make sure that we are even responsible for this task
-    wIt = mTasks.find(tIt->first);
-    if (wIt == mTasks.end()) {
-      std::cout << "Controller ID: " << mId << " Rank: " << mRank << "\n"; 
-      assert (wIt != mTasks.end());
+  // Look through all tasks to find leaf tasks that need outside inputs
+  for (wIt=mTasks.begin();wIt!=mTasks.end();wIt++) {
+
+    // For now we assume that leaf tasks only hvae a single input
+    // indicated by TNULL task id
+    if (wIt->second.task().incoming()[0] == TNULL) { // If this is a leaf task
+      // Look for the approriate input
+      tIt = initial_inputs.find(wIt->second.task().id());
+
+      if (tIt == initial_inputs.end()) { // If you can't find one
+        fprintf(stderr,"Error. Found leaf task without input. Controller %d Rank %d Task %d\n",
+                mId,mRank,wIt->second.task().id());
+        assert (false);
+      }
+
+      // Pass on the input using TNULL as source indicating an outside input
+      wIt->second.addInput(TNULL,tIt->second);
+
+      // Start the task (note that for now we assume that all leaf tasks
+      // have only a single input)
+      startTask(wIt->second);
     }
-
-    // Pass on the input using TNULL as source indicating an outside input
-    wIt->second.addInput(TNULL,tIt->second);
-
-    // Start the task (note that for now we assume that all leaf tasks
-    // have only a single input)
-    startTask(wIt->second);
   }
 
   // Finally, start the while loop that tests for MPI events and
