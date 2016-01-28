@@ -93,8 +93,4 @@ private:
   std::vector<std::vector<TaskId> > mOutgoing;
 };
 
-
-
-
-
 #endif /* TASK_H_ */
