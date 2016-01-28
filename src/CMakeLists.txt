@@ -9,6 +9,9 @@ SET (DATAFLOW_HEADERS
     Controller.h
    
     ModuloMap.h
+
+    HierarchicalTask.h
+    HierarchicalTaskGraph.h
 )
 
 SET (DATAFLOW_SRC
@@ -16,6 +19,8 @@ SET (DATAFLOW_SRC
     TaskGraph.cpp
     Controller.cpp
     ModuloMap.cpp
+    
+    HierarchicalTask.cpp
 )
 
 include_directories(${MPI_CXX_INCLUDE_PATH})

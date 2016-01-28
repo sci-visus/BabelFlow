@@ -14,6 +14,7 @@
 #include "Controller.h"
 
 #include "HierarchicalReduction.h"
+#include "HierarchicalTaskGraph.h"
 
 
 int add_int(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, TaskId task)
@@ -98,33 +99,48 @@ int main(int argc, char* argv[])
   graph.output_hierarchical_graph(output);
   fclose(output);
   
-  ModuloMap task_map(mpi_width,graph.size());
+  FILE* houtput = fopen("htask_graph.dot","w");
+  HierarchicalTaskGraph htg(graph.getAllTasks(), 2, 1);
+  printf("------REDUCE-----\n");
+  htg.reduce();
+  printf("------REDUCE-----\n");
+  htg.reduce();
+  printf("------REDUCE-----\n");
+  htg.reduce();
+  printf("------EXPAND-----\n");
+  htg.expand();
+  htg.output_hierarchical_graph(houtput);
+  fclose(houtput);
   
-  Controller master;
-  master.initialize(graph,&task_map);
-  master.registerCallback(1,add_int);
-  master.registerCallback(2,report_sum);
-
-  std::vector<TaskId> inputsIds = graph.getInputsIds();
-  std::map<TaskId,DataBlock> inputs;
-
-  uint32_t count=1;
-  uint32_t sum = 0;
-
-  for (uint32_t i=0;i<inputsIds.size();i++) {
-    DataBlock data;
-    data.size = sizeof(uint32_t);
-    data.buffer = (char*)(new uint32_t[1]);
-
-    *((uint32_t*)data.buffer) = count;
-    inputs[inputsIds[i]] = data;
-
-    sum += count++;
-  }
-
-  master.run(inputs);
-
-  fprintf(stderr,"The result was supposed to be %d\n",sum);
+//  
+//  
+//  ModuloMap task_map(mpi_width,graph.size());
+//  
+//  Controller master;
+//  master.initialize(graph,&task_map);
+//  master.registerCallback(1,add_int);
+//  master.registerCallback(2,report_sum);
+//
+//  std::vector<TaskId> inputsIds = graph.getInputsIds();
+//  std::map<TaskId,DataBlock> inputs;
+//
+//  uint32_t count=1;
+//  uint32_t sum = 0;
+//
+//  for (uint32_t i=0;i<inputsIds.size();i++) {
+//    DataBlock data;
+//    data.size = sizeof(uint32_t);
+//    data.buffer = (char*)(new uint32_t[1]);
+//
+//    *((uint32_t*)data.buffer) = count;
+//    inputs[inputsIds[i]] = data;
+//
+//    sum += count++;
+//  }
+//
+//  master.run(inputs);
+//
+//  fprintf(stderr,"The result was supposed to be %d\n",sum);
   MPI_Finalize();
   return 0;
 }

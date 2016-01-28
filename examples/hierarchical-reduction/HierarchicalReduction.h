@@ -16,18 +16,26 @@
 #include "HierarchicalTaskGraph.h"
 #include "Reduction.h"
 
+/**
+** This class is a skeleton for a possible Legion implementation of a reduce dataflow.
+** It is a serial recursive implementation of a hierarchical reduce graph construction.
+** At each level of reduction the runtime system is supposed to generate and execute 
+** the level's tasks and generate the input for the next level
+**/
+
 class HierarchicalReduction : public TaskGraph{
 public:
   HierarchicalReduction(uint32_t leafs, uint32_t valence);
   
-  // These functions were
+  // These functions were done to create the same graph but in a reversed fashion (starting from the root)
   void computeHierarchicalGraphReversed(Task& super_task);
   void computeHierarchicalGraphReversed(Task& super_task, Task& red_task, uint32_t level, uint32_t offset = 0);
   
+  // Computes the graph hierarchically, saved in the local variable alltasks
   void computeHierarchicalGraph();
   void computeHierarchicalGraph(std::vector<Task>& level_tasks, uint32_t level);
   
-  // this function doesn't make sense here, in this implementation we have only 1 graph builder
+  // This function doesn't make sense here, in this implementation we have only 1 graph builder
   std::vector<Task> localGraph(ControllerId id, const TaskMap* task_map) const{
     return alltasks;
   }
@@ -51,6 +59,10 @@ public:
   std::vector<TaskId>& getInputsIds(){
     return inputs;
   };
+  
+  std::vector<Task>& getAllTasks(){
+    return alltasks;
+  }
   
   ~HierarchicalReduction(){};
   
