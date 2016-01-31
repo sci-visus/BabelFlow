@@ -20,6 +20,7 @@ public:
     
     mHfactor = hfactor;
     mVfactor = vfactor;
+    reduction_level = 0;
     
     for(uint32_t i=0; i < tasks.size(); i++){
       supertask.addSubTask(tasks[i]);
@@ -30,20 +31,52 @@ public:
 //    }
     
     printf("%lu tasks inserted\n", supertask.mSubtasks.size());
-    supertask.checkUnresolvedReduce(&supertask);
+//    supertask.checkUnresolvedReduce(&supertask);
+    incoming_map.push_back(std::map<TaskId,TaskId>());
+    outgoing_map.push_back(std::map<TaskId,TaskId>());
+    checkUnresolvedReduce();
     
   };
   
-  std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const{
-    return std::vector<Task>();
+  void checkUnresolvedReduce();
+  void checkUnresolvedExpand();
+  
+  std::vector<Task> localGraph(ControllerId id, const TaskMap* task_map) const{
+    return std::vector<Task>(); // TODO adapt or ignore
+  }
+  
+  void reduceAll(){
+    while(supertask.mSubtasks.size() != mHfactor+mVfactor)
+      reduce();
   }
   
   void reduce(){
-    supertask = supertask.reduce(mHfactor, mVfactor);
+    
+    reduction_level++;
+    
+    if(reduction_level > incoming_map.size()-1){
+      incoming_map.push_back(std::map<TaskId,TaskId>());
+      outgoing_map.push_back(std::map<TaskId,TaskId>());
+    }
+//    supertask = supertask.reduce(mHfactor, mVfactor);
+    supertask.reduce(mHfactor, mVfactor);
+    
+    checkUnresolvedReduce();
+
   }
   
   void expand(){
-    supertask = supertask.expand(mHfactor, mVfactor);
+   
+    //supertask = supertask.expand(mHfactor, mVfactor);
+    supertask.expand(mHfactor, mVfactor);
+    checkUnresolvedExpand();
+    reduction_level--;
+
+  }
+  
+  void expandAll(){
+    while(reduction_level > 0)
+      expand();
   }
   
   ~HierarchicalTaskGraph(){}; // TODO
@@ -117,6 +150,10 @@ private:
   HierarchicalTask supertask;
   int32_t mHfactor;
   int32_t mVfactor;
+  int32_t reduction_level;
+  
+  std::vector<std::map<TaskId,TaskId> > incoming_map;
+  std::vector<std::map<TaskId,TaskId> > outgoing_map;
   
 };
 

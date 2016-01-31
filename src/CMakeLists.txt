@@ -19,6 +19,7 @@ SET (DATAFLOW_SRC
     ModuloMap.cpp
     
     HierarchicalTask.cpp
+    HierarchicalTaskGraph.cpp
 )
 
 

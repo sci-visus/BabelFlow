@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
   FILE* output = fopen("task_graph.dot","w");
   graph.output_hierarchical_graph(output);
   fclose(output);
-  
+
   FILE* houtput = fopen("htask_graph.dot","w");
   HierarchicalTaskGraph htg(graph.getAllTasks(), 2, 1);
   printf("------REDUCE-----\n");
@@ -107,8 +107,14 @@ int main(int argc, char* argv[])
   htg.reduce();
   printf("------REDUCE-----\n");
   htg.reduce();
+//  htg.reduceAll();
   printf("------EXPAND-----\n");
   htg.expand();
+  printf("------EXPAND-----\n");
+  htg.expand();
+  printf("------EXPAND-----\n");
+  htg.expand();
+//  htg.expandAll();
   htg.output_hierarchical_graph(houtput);
   fclose(houtput);
   

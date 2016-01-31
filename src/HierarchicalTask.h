@@ -33,25 +33,25 @@ public:
     addSubTask(newt);
   };
   
-  HierarchicalTask reduce(int32_t hfactor, int32_t vfactor);
-  HierarchicalTask expand(int32_t hfactor, int32_t vfactor);
+  void reduce(int32_t hfactor, int32_t vfactor);
+  void expand(int32_t hfactor, int32_t vfactor);
   
     // Recursive subtask search
-  TaskId isSubTask(TaskId tid);
+  TaskId isSubTask(TaskId tid, bool recursive = true);
   
-  void updateMapping();
+//  void updateMapping();
 
   void checkUnresolvedReduce(HierarchicalTask* supertask);
   void checkUnresolvedExpand(HierarchicalTask* supertask);
 
-  void addSubTask(HierarchicalTask task);
+  bool addSubTask(HierarchicalTask task, bool recursive = true);
 
   bool isLeafTask();
   
   std::vector<HierarchicalTask> mSubtasks;
   
-  std::map<TaskId,TaskId> incoming_map;
-  std::map<TaskId,TaskId> outgoing_map;
+//  std::map<TaskId,TaskId> incoming_map;
+//  std::map<TaskId,TaskId> outgoing_map;
 
 };
 
