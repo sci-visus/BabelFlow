@@ -1,5 +1,5 @@
 /*
- * HierarchicalTaskGraph.cpp
+ * HierarchicalTask.cpp
  *
  *  Created on: Jan 27, 2016
  *      Author: petruzza
@@ -23,6 +23,56 @@ TaskId HierarchicalTask::isSubTask(TaskId tid, bool recursive){
   return TNULL;
 }
 
+bool HierarchicalTask::isInternalTask(TaskId tid, bool recursive){
+  for(uint32_t i=0; i < mSubtasks.size(); i++){
+    if(mSubtasks[i].id() == tid){
+      return true;
+    }
+    else if(recursive){
+      bool internal = mSubtasks[i].isInternalTask(tid);
+      if(internal)
+        return true;
+    }
+  }
+  
+  return false;
+}
+
+HierarchicalTask* HierarchicalTask::getParentTask(TaskId tid, bool recursive){
+  for(uint32_t i=0; i < mSubtasks.size(); i++){
+    if(mSubtasks[i].id() == tid){
+      return this;
+    }
+    else if(recursive){
+//      for(uint32_t j=0; j < mSubtasks[i].mSubtasks.size(); j++){
+//        HierarchicalTask* parent = mSubtasks[i].mSubtasks[j].getParentTask(tid);
+//        if(parent != NULL)
+//          return &mSubtasks[i];
+//      }
+      HierarchicalTask* parent = mSubtasks[i].getParentTask(tid);
+      if(parent != NULL)
+        return parent;
+    }
+  }
+  
+  return NULL;
+}
+
+HierarchicalTask* HierarchicalTask::getTask(TaskId tid, bool recursive){
+  for(uint32_t i=0; i < mSubtasks.size(); i++){
+    if(mSubtasks[i].id() == tid){
+      return &mSubtasks[i];
+    }
+    else if(recursive){
+      HierarchicalTask* parent = mSubtasks[i].getParentTask(tid);
+      if(parent != NULL)
+        return parent;
+    }
+  }
+  
+  return NULL;
+}
+
 //void HierarchicalTask::updateMapping(){
 //  for(uint32_t sb=0; sb < mSubtasks.size(); sb++){
 //    const std::vector<TaskId>& task_incoming = mSubtasks[sb].incoming();
@@ -40,6 +90,7 @@ TaskId HierarchicalTask::isSubTask(TaskId tid, bool recursive){
 //    
 //  }
 //}
+
 
 //void HierarchicalTask::checkUnresolvedReduce(HierarchicalTask* supertask){
 //  for(uint32_t sb=0; sb < mSubtasks.size(); sb++){
@@ -106,38 +157,142 @@ TaskId HierarchicalTask::isSubTask(TaskId tid, bool recursive){
 ////    mSubtasks[i].checkUnresolved();
 //
 //}
-//
-//void HierarchicalTask::checkUnresolvedExpand(HierarchicalTask* supertask){
-//
-//  for(uint32_t sb=0; sb < mSubtasks.size(); sb++){
-//    
-//    const std::vector<TaskId>& task_incoming = mSubtasks[sb].incoming();
-//    const std::vector<std::vector<TaskId> >& task_outgoing = mSubtasks[sb].outputs();
-//    
-//    for(uint32_t i=0; i < task_incoming.size(); i++){
-//      if(mSubtasks[sb].incoming_map.find(task_incoming[i]) != mSubtasks[sb].incoming_map.end()){
-//        printf("in mapping back %d to %d\n", mSubtasks[sb].incoming()[i], mSubtasks[sb].incoming_map[task_incoming[i]]);
-//        mSubtasks[sb].incoming()[i] = mSubtasks[sb].incoming_map[task_incoming[i]];
-//      }
-//    }
-//    
-//    for(uint32_t i=0; i < task_outgoing.size(); i++){
-//      for(uint32_t j=0; j < task_outgoing[i].size(); j++){
-//        if(mSubtasks[sb].outgoing_map.find(mSubtasks[sb].outputs()[i][j]) != mSubtasks[sb].outgoing_map.end()){
-//          printf("out mapping back %d to %d\n", mSubtasks[sb].outputs()[i][j], mSubtasks[sb].outgoing_map[mSubtasks[sb].outputs()[i][j]]);
-//          mSubtasks[sb].outputs()[i][j] = mSubtasks[sb].outgoing_map[mSubtasks[sb].outputs()[i][j]];
+
+void HierarchicalTask::checkUnresolvedReduce(HierarchicalTask* supertask){
+  for(uint32_t sb=0; sb < mSubtasks.size(); sb++){
+    
+    const std::vector<TaskId>& task_incoming = mSubtasks[sb].incoming();
+    const std::vector<std::vector<TaskId> >& task_outgoing = mSubtasks[sb].outputs();
+    
+    for(uint32_t i=0; i < task_incoming.size(); i++){
+      
+      if(task_incoming[i] == TNULL ){
+        incoming().push_back(TNULL);
+        continue;
+      }
+      
+      // If parent not found or internal continue
+      if(isInternalTask(task_incoming[i]))
+        continue;
+//      if(parent == NULL || parent->id() == id())
+//        continue;
+      
+//      printf("%d in:look for %d found parent %d\n", mSubtasks[sb].id(), task_incoming[i], parent->id() );
+//      if(parent->id() == id())
+//        continue;
+      
+        HierarchicalTask* parent = supertask->getParentTask(task_incoming[i]);
+   //   if(parent->id() != TNULL || task_incoming[i] == TNULL){ // has a parent task or is a leaf
+        //        mSubtasks[sb].incoming().push_back(parent);
+        printf("%d mapping in %d to %d\n", id(), mSubtasks[sb].incoming()[i], parent->id());
+        //        mSubtasks[sb].incoming_map[parent] = mSubtasks[sb].incoming()[i];
+//        mSubtasks[sb].incoming()[i] = parent;
+      
+        // The incoming edge comes from outside, we need to map to the new parent
+        TaskId swap_id = mSubtasks[sb].incoming()[i];
+        incoming_map[parent->id()] = swap_id;
+      
+        // This supernode add the new external incoming edge from A
+        incoming().push_back(parent->id());
+        //mSubtasks[sb].incoming()[i] = parent->id();
+      
+        // We need now to change the corresponding outgoing edge from A to point to this new node
+        HierarchicalTask* task = supertask->getTask(swap_id);
+        
+        for(uint32_t k=0; k < task->outputs().size(); k++){
+          for(uint32_t z=0; z < task->outputs()[k].size(); z++){
+            if(isInternalTask(task->outputs()[k][z])){// == swap_id){
+              task->outputs()[k][z] = id();
+              
+            }
+          }
+        }
+        
+        printf("%d: add in %d\n",mSubtasks[sb].id(), parent->id());
+        
+      }
+      
+  //  }
+    
+    for(uint32_t i=0; i < task_outgoing.size(); i++){
+      for(uint32_t j=0; j < task_outgoing[i].size(); j++){
+     
+        // If parent not found or internal continue
+        if(isInternalTask(task_outgoing[i][j]))
+          continue;
+//        if(parent == NULL || parent->id() == id())
+//          continue;
+      
+//        printf("%d out:look for %d found parent %d\n", mSubtasks[sb].id(), task_outgoing[i][j], parent->id() );
+//        if(parent->id() == id())
+//          continue;
+        
+//        if(parent->id() != TNULL){
+        
+          HierarchicalTask* parent = supertask->getTask(task_outgoing[i][j]);
+        
+          printf("%d mapping out %d to %d\n", id(), mSubtasks[sb].outputs()[i][j], parent->id());
+        
+          // The output is external we need to map it
+          TaskId swap_id = mSubtasks[sb].outputs()[i][j];
+          outgoing_map[parent->id()] = swap_id;
+        
+          // Add the external output to this supertask
+          std::vector<TaskId> new_out(1);
+          new_out.resize(1);
+          new_out[0] = parent->id();
+          outputs().push_back(new_out);
+          //mSubtasks[sb].outputs()[i][j] = parent->id();
+        
+          // Need to map back the incoming task
+          HierarchicalTask* task = supertask->getTask(swap_id);
+          for(uint32_t k=0; k < task->incoming().size(); k++){
+            if(isInternalTask(task->incoming()[k]))// == swap_id)
+              task->incoming()[k] = id();
+          }
+          
+          //          mSubtasks[sb].outgoing_map[parent] = mSubtasks[sb].outputs()[i][j];
+//          mSubtasks[sb].outputs()[i][j] = parent;
 //        }
-//
-//      }
-//      
-//    }
-//  }
-//  
-//  
-//  //  for(uint32_t i=0; i < mSubtasks.size(); i++)
-//  //    mSubtasks[i].checkUnresolved();
-//  
-//}
+      
+      }
+      
+    }
+  }
+  
+}
+
+void HierarchicalTask::checkUnresolvedExpand(HierarchicalTask* supertask){
+
+  for(uint32_t sb=0; sb < mSubtasks.size(); sb++){
+    
+    const std::vector<TaskId>& task_incoming = mSubtasks[sb].incoming();
+    const std::vector<std::vector<TaskId> >& task_outgoing = mSubtasks[sb].outputs();
+    
+    for(uint32_t i=0; i < task_incoming.size(); i++){
+      if(mSubtasks[sb].incoming_map.find(task_incoming[i]) != mSubtasks[sb].incoming_map.end()){
+        printf("in mapping back %d to %d\n", mSubtasks[sb].incoming()[i], mSubtasks[sb].incoming_map[task_incoming[i]]);
+        mSubtasks[sb].incoming()[i] = mSubtasks[sb].incoming_map[task_incoming[i]];
+      }
+    }
+    
+    for(uint32_t i=0; i < task_outgoing.size(); i++){
+      for(uint32_t j=0; j < task_outgoing[i].size(); j++){
+        if(mSubtasks[sb].outgoing_map.find(mSubtasks[sb].outputs()[i][j]) != mSubtasks[sb].outgoing_map.end()){
+          printf("out mapping back %d to %d\n", mSubtasks[sb].outputs()[i][j], mSubtasks[sb].outgoing_map[mSubtasks[sb].outputs()[i][j]]);
+          mSubtasks[sb].outputs()[i][j] = mSubtasks[sb].outgoing_map[mSubtasks[sb].outputs()[i][j]];
+        }
+
+      }
+      
+    }
+  }
+  
+  
+  //  for(uint32_t i=0; i < mSubtasks.size(); i++)
+  //    mSubtasks[i].checkUnresolved();
+  
+}
 
 
 bool HierarchicalTask::addSubTask(HierarchicalTask task, bool recursive){
@@ -187,6 +342,7 @@ void HierarchicalTask::reduce(int32_t hfactor, int32_t vfactor){
   
   // Find the leaves
   std::vector<HierarchicalTask> leaves;
+  std::vector<HierarchicalTask*> new_leaves;
   std::vector<HierarchicalTask> therest;
   
   std::vector<TaskId> toRemove;
@@ -207,13 +363,13 @@ void HierarchicalTask::reduce(int32_t hfactor, int32_t vfactor){
   
   printf("Found %lu leaves \n", leaves.size());
   
-//  int32_t new_nodes = 0;
+  int32_t new_nodes = 0;
   
   // collapse horizontally
   for(uint32_t i=0; i<leaves.size(); i+=hfactor){
     HierarchicalTask leaft;
     
-    for(int32_t hf=0; hf < hfactor; hf++){
+    for(uint32_t hf=0; hf < hfactor; hf++){
       uint32_t curr_t = i+hf;
       
       HierarchicalTask& sht = leaves[curr_t];
@@ -223,12 +379,12 @@ void HierarchicalTask::reduce(int32_t hfactor, int32_t vfactor){
       
       // collapse vertically
       for(uint32_t vf=0; vf < vfactor; vf++){
-//        if(leaves[curr_t].outputs().size()>0){
+     //   if(sht->outputs().size()>0){
         if(sht.outputs()[0].size() > vf){
           //            bool found = false;
           for(uint32_t st=0; st < therest.size(); st++){
             if(therest[st].id() == sht.outputs()[0][vf]){
-              leaft.outputs().push_back(therest[st].outputs()[0]);
+             // leaft.outputs().push_back(therest[st]->outputs()[0]);
               leaft.addSubTask(therest[st]);
               toRemove.push_back(therest[st].id());
               
@@ -236,30 +392,43 @@ void HierarchicalTask::reduce(int32_t hfactor, int32_t vfactor){
               break;
             }
             
-//          }
           }
+  //        }
           
         } // end if any output
       } // end collapse vertically
+      
+      toRemove.push_back(sht.id());
       
       leaft.addSubTask(sht);
     } // end collapse horizontally
 
     printf("grouped %lu nodes\n", leaft.mSubtasks.size());
 //    leaft.checkUnresolved(this);
-    leaft.incoming().push_back(TNULL);
+//    leaft.incoming().push_back(TNULL);
 //    leaft.outputs().push_back(std::vector<TaskId>());
    // leaft.checkUnresolvedReduce(&leaft); /// TODO CONTINUE do mapping per level of reduction in the graph
 //    if(addSubTask(leaft))
 //      new_nodes++;
     
-    addSubTask(leaft);
+    if(addSubTask(leaft))
+      new_nodes++;
+//      new_leaves.push_back(&mSubtasks.back());
   }
   
 //  printf("checking %d new nodes\n", new_nodes);
 //  for(int32_t i= 0; i<new_nodes; i++){
 //    HierarchicalTask& nt = mSubtasks[mSubtasks.size()-i-1];
 //    nt.checkUnresolvedReduce(this);
+//  }
+
+  for(uint32_t i=0; i < new_nodes; i++){
+    HierarchicalTask& nt = mSubtasks[mSubtasks.size()-i-1];
+    nt.checkUnresolvedReduce(this);
+  }
+  
+//  for(uint32_t st=0; st < new_leaves.size(); st++){
+//    new_leaves[st]->checkUnresolvedReduce(this);
 //  }
   
   printf("created task with %lu leaves\n", mSubtasks.size());
@@ -270,15 +439,10 @@ void HierarchicalTask::reduce(int32_t hfactor, int32_t vfactor){
       if(mSubtasks[t].id() == toRemove[st]){
         mSubtasks.erase(mSubtasks.begin()+t); t--;
       }
-      
     }
   }
   
   printf("new task size %lu \n", mSubtasks.size());
-  
-//  for(uint32_t st=0; st < supertask.mSubtasks.size(); st++){
-//    supertask.mSubtasks[st].checkUnresolved(&supertask);
-//  }
 //  checkUnresolvedReduce(this);
   
 }

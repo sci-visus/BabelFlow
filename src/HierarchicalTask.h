@@ -25,12 +25,16 @@ public:
   HierarchicalTask(){id(ht_global_id++);};
    
   void addSubTask(Task task){
-    HierarchicalTask newt(task);
+ /*   HierarchicalTask newt;//(task);
     newt.id(ht_global_id++);
+    // check callback
     
     HierarchicalTask subt(task);
     newt.addSubTask(subt);
     addSubTask(newt);
+  */
+    
+    addSubTask(HierarchicalTask(task));
   };
   
   void reduce(int32_t hfactor, int32_t vfactor);
@@ -38,20 +42,24 @@ public:
   
     // Recursive subtask search
   TaskId isSubTask(TaskId tid, bool recursive = true);
+  bool isInternalTask(TaskId tid, bool recursive = true);
   
 //  void updateMapping();
 
+  void checkUnresolvedReduce(std::vector<HierarchicalTask*>& new_leaves, HierarchicalTask* supertask);
   void checkUnresolvedReduce(HierarchicalTask* supertask);
   void checkUnresolvedExpand(HierarchicalTask* supertask);
 
+  HierarchicalTask* getParentTask(TaskId tid, bool recursive = true);
+  HierarchicalTask* getTask(TaskId tid, bool recursive = true);
   bool addSubTask(HierarchicalTask task, bool recursive = true);
 
   bool isLeafTask();
   
   std::vector<HierarchicalTask> mSubtasks;
   
-//  std::map<TaskId,TaskId> incoming_map;
-//  std::map<TaskId,TaskId> outgoing_map;
+  std::map<TaskId,TaskId> incoming_map;
+  std::map<TaskId,TaskId> outgoing_map;
 
 };
 

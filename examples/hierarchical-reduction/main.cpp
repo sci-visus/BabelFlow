@@ -13,7 +13,8 @@
 #include "ModuloMap.h"
 #include "mpi/Controller.h"
 
-#include "HierarchicalReduction.h"
+//#include "HierarchicalReduction.h"
+#include "Reduction.h"
 #include "HierarchicalTaskGraph.h"
 
 
@@ -78,7 +79,7 @@ int main(int argc, char* argv[])
   uint32_t leafs = atoi(argv[1]);
   uint32_t valence = atoi(argv[2]);
 
-  HierarchicalReduction graph(leafs,valence);
+//  HierarchicalReduction graph(leafs,valence);
   
 //  Task task;
 //  std::vector<TaskId> incoming(leafs);
@@ -93,30 +94,41 @@ int main(int argc, char* argv[])
 //  task.incoming() = incoming;
 //  task.outputs() = outgoing;
   
-  graph.computeHierarchicalGraph();
+//  graph.computeHierarchicalGraph();
+
+  Reduction graph(leafs,valence);
+  ModuloMap task_map(1, graph.size());
 
   FILE* output = fopen("task_graph.dot","w");
-  graph.output_hierarchical_graph(output);
+//  graph.output_hierarchical_graph(output);
+  graph.output_graph(1, &task_map, output);
   fclose(output);
 
   FILE* houtput = fopen("htask_graph.dot","w");
-  HierarchicalTaskGraph htg(graph.getAllTasks(), 2, 1);
+//  HierarchicalTaskGraph htg(graph.getAllTasks(), 2, 1);
+  HierarchicalTaskGraph htg(graph.localGraph(0, &task_map), 2, 1);
+  
   printf("------REDUCE-----\n");
   htg.reduce();
   printf("------REDUCE-----\n");
   htg.reduce();
-  printf("------REDUCE-----\n");
-  htg.reduce();
+//  printf("------REDUCE-----\n");
+//  htg.reduce();
 //  htg.reduceAll();
-  printf("------EXPAND-----\n");
-  htg.expand();
-  printf("------EXPAND-----\n");
-  htg.expand();
-  printf("------EXPAND-----\n");
-  htg.expand();
+//  printf("------EXPAND-----\n");
+//  htg.expand();
+//  printf("------EXPAND-----\n");
+//  htg.expand();
+//  printf("------EXPAND-----\n");
+//  htg.expand();
 //  htg.expandAll();
   htg.output_hierarchical_graph(houtput);
   fclose(houtput);
+  
+  // for all the new leaves check for external connections, expose all,
+  // follow (startingo from the new leaves) and correct directed connections to the new leaves (not all the nodes in the tree)
+  // mapping at the task level
+  
   
 //  
 //  

@@ -26,20 +26,21 @@ public:
       supertask.addSubTask(tasks[i]);
     }
     
-//    for(uint32_t i=0; i < supertask.mSubtasks.size(); i++){
-//      printf("ins task %d\n", supertask.mSubtasks[i].id());
-//    }
-    
     printf("%lu tasks inserted\n", supertask.mSubtasks.size());
+
+    for(uint32_t i=0; i < supertask.mSubtasks.size(); i++){
+      supertask.mSubtasks[i].checkUnresolvedReduce(&supertask);
+    }
 //    supertask.checkUnresolvedReduce(&supertask);
-    incoming_map.push_back(std::map<TaskId,TaskId>());
-    outgoing_map.push_back(std::map<TaskId,TaskId>());
-    checkUnresolvedReduce();
+    // Map new nodes
+//    incoming_map.push_back(std::map<TaskId,TaskId>());
+//    outgoing_map.push_back(std::map<TaskId,TaskId>());
+//    checkUnresolvedReduce();
     
   };
   
-  void checkUnresolvedReduce();
-  void checkUnresolvedExpand();
+//  void checkUnresolvedReduce();
+//  void checkUnresolvedExpand();
   
   std::vector<Task> localGraph(ControllerId id, const TaskMap* task_map) const{
     return std::vector<Task>(); // TODO adapt or ignore
@@ -53,23 +54,22 @@ public:
   void reduce(){
     
     reduction_level++;
-    
-    if(reduction_level > incoming_map.size()-1){
-      incoming_map.push_back(std::map<TaskId,TaskId>());
-      outgoing_map.push_back(std::map<TaskId,TaskId>());
-    }
-//    supertask = supertask.reduce(mHfactor, mVfactor);
+
+    // If new level create new mapping
+//    if(reduction_level > incoming_map.size()-1){
+//      incoming_map.push_back(std::map<TaskId,TaskId>());
+//      outgoing_map.push_back(std::map<TaskId,TaskId>());
+//    }
+
     supertask.reduce(mHfactor, mVfactor);
     
-    checkUnresolvedReduce();
+//    checkUnresolvedReduce();
 
   }
   
   void expand(){
-   
-    //supertask = supertask.expand(mHfactor, mVfactor);
     supertask.expand(mHfactor, mVfactor);
-    checkUnresolvedExpand();
+//    checkUnresolvedExpand();
     reduction_level--;
 
   }
@@ -77,6 +77,10 @@ public:
   void expandAll(){
     while(reduction_level > 0)
       expand();
+  }
+  
+  const std::vector<HierarchicalTask>& getTasks(){
+    return supertask.mSubtasks;
   }
   
   ~HierarchicalTaskGraph(){}; // TODO
@@ -98,39 +102,15 @@ public:
       }
     }
     
-//    fprintf(output,"%d [label=\"%d,%d\"]\n",supertask.id(),supertask.id(),supertask.callback());
-//    for (it=supertask.incoming().begin();it!=supertask.incoming().end();it++) {
-//      if (*it != TNULL)
-//        fprintf(output,"%d -> %d\n",*it,supertask.id());
-//    }
-//    
-//    for (tIt=mSubtasks.begin();tIt!=mSubtasks.end();tIt++) {
-//      fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
-//      for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
-//        if (*it != TNULL)
-//          fprintf(output,"%d -> %d\n",*it,tIt->id());
-//      }
-//      
-//      HierarchicalTask t = *tIt;
-//      output_hierarchical_graph(t, output);
-//    }
-    
-    
     fprintf(output,"}\n");
     return 1;
   }
   
-  int output_hierarchical_graph(HierarchicalTask& task, FILE* output) const
+  int output_hierarchical_graph(const HierarchicalTask& task, FILE* output) const
   {
     
     std::vector<HierarchicalTask>::const_iterator tIt;
     std::vector<TaskId>::const_iterator it;
-    
-//    fprintf(output,"%d [label=\"%d,%d\"]\n",task.id(),task.id(),task.callback());
-//    for (it=task.incoming().begin();it!=task.incoming().end();it++) {
-//      if (*it != TNULL)
-//        fprintf(output,"%d -> %d\n",*it,task.id());
-//    }
     
     for (tIt=task.mSubtasks.begin();tIt!=task.mSubtasks.end();tIt++) {
       fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
@@ -138,9 +118,7 @@ public:
         if (*it != TNULL)
           fprintf(output,"%d -> %d\n",*it,tIt->id());
       }
-      
-//      HierarchicalTask t = *tIt;
-//      output_hierarchical_graph(t, output);
+    
     }
     
     return 1;
@@ -152,8 +130,8 @@ private:
   int32_t mVfactor;
   int32_t reduction_level;
   
-  std::vector<std::map<TaskId,TaskId> > incoming_map;
-  std::vector<std::map<TaskId,TaskId> > outgoing_map;
+//  std::vector<std::map<TaskId,TaskId> > incoming_map;
+//  std::vector<std::map<TaskId,TaskId> > outgoing_map;
   
 };
 

@@ -1,6 +1,8 @@
 set(SRC
     HierarchicalReduction.h
     HierarchicalReduction.cpp
+    ${CMAKE_SOURCE_DIR}/examples/reduction/Reduction.cpp
+    ${CMAKE_SOURCE_DIR}/examples/reduction/Reduction.h
     main.cpp
 )
 
