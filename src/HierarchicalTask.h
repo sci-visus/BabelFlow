@@ -40,8 +40,8 @@ public:
   void reduce(int32_t hfactor, int32_t vfactor);
   void expand(int32_t hfactor, int32_t vfactor);
   
-    // Recursive subtask search
-  TaskId isSubTask(TaskId tid, bool recursive = true);
+  // Recursive subtask search
+//  TaskId isSubTask(TaskId tid, bool recursive = true);
   bool isInternalTask(TaskId tid, bool recursive = true);
   
 //  void updateMapping();
