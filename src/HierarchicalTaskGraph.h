@@ -29,18 +29,9 @@ public:
     printf("%lu tasks inserted\n", supertask.mSubtasks.size());
 
     for(uint32_t i=0; i < supertask.mSubtasks.size(); i++){
-      supertask.mSubtasks[i].checkUnresolvedReduce(&supertask);
+      supertask.mSubtasks[i].resolveEdgesReduce(&supertask);
     }
-//    supertask.checkUnresolvedReduce(&supertask);
-    // Map new nodes
-//    incoming_map.push_back(std::map<TaskId,TaskId>());
-//    outgoing_map.push_back(std::map<TaskId,TaskId>());
-//    checkUnresolvedReduce();
-    
   };
-  
-//  void checkUnresolvedReduce();
-//  void checkUnresolvedExpand();
   
   std::vector<Task> localGraph(ControllerId id, const TaskMap* task_map) const{
     return std::vector<Task>(); // TODO adapt or ignore
@@ -52,26 +43,13 @@ public:
   }
   
   void reduce(){
-    
-    reduction_level++;
-
-    // If new level create new mapping
-//    if(reduction_level > incoming_map.size()-1){
-//      incoming_map.push_back(std::map<TaskId,TaskId>());
-//      outgoing_map.push_back(std::map<TaskId,TaskId>());
-//    }
-
     supertask.reduce(mHfactor, mVfactor);
-    
-//    checkUnresolvedReduce();
-
+    reduction_level++;
   }
   
   void expand(){
     supertask.expand(mHfactor, mVfactor);
-//    checkUnresolvedExpand();
     reduction_level--;
-
   }
   
   void expandAll(){
