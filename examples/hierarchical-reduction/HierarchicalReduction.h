@@ -23,17 +23,17 @@
 ** the level's tasks and generate the input for the next level
 **/
 
-class HierarchicalReduction : public TaskGraph{
+class HierarchicalReduction : public DataFlow::TaskGraph{
 public:
   HierarchicalReduction(uint32_t leafs, uint32_t valence);
   
   // These functions were done to create the same graph but in a reversed fashion (starting from the root)
-  void computeHierarchicalGraphReversed(Task& super_task);
-  void computeHierarchicalGraphReversed(Task& super_task, Task& red_task, uint32_t level, uint32_t offset = 0);
+  void computeHierarchicalGraphReversed(DataFlow::Task& super_task);
+  void computeHierarchicalGraphReversed(DataFlow::Task& super_task, DataFlow::Task& red_task, uint32_t level, uint32_t offset = 0);
   
   // Computes the graph hierarchically, saved in the local variable alltasks
   void computeHierarchicalGraph();
-  void computeHierarchicalGraph(std::vector<Task>& level_tasks, uint32_t level);
+  void computeHierarchicalGraph(std::vector<DataFlow::Task>& level_tasks, uint32_t level);
   
   // This function doesn't make sense here, in this implementation we have only 1 graph builder
   std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const{
@@ -60,7 +60,7 @@ public:
     return inputs;
   };
   
-  std::vector<Task>& getAllTasks(){
+  std::vector<DataFlow::Task>& getAllTasks(){
     return alltasks;
   }
   
@@ -68,8 +68,8 @@ public:
   
 protected:
   
-  std::vector<Task> alltasks;
-  std::vector<Task> level0;
+  std::vector<DataFlow::Task> alltasks;
+  std::vector<DataFlow::Task> level0;
   std::vector<TaskId> inputs;
   
   //! The number of leafs in the reduction

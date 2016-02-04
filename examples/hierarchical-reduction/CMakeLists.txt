@@ -3,6 +3,8 @@ set(SRC
     HierarchicalReduction.cpp
     ${CMAKE_SOURCE_DIR}/examples/reduction/Reduction.cpp
     ${CMAKE_SOURCE_DIR}/examples/reduction/Reduction.h
+    ${CMAKE_SOURCE_DIR}/examples/broadcast/Broadcast.cpp
+    ${CMAKE_SOURCE_DIR}/examples/broadcast/Broadcast.h
     main.cpp
 )
 
@@ -10,6 +12,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/examples/hierarchical-reduction
     ${CMAKE_SOURCE_DIR}/examples/reduction
+    ${CMAKE_SOURCE_DIR}/examples/broadcast
     ${MPI_CXX_INCLUDE_PATH}
 )
 

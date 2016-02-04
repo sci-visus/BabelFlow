@@ -7,6 +7,8 @@
 
 #include "HierarchicalTask.h"
 
+using namespace DataFlow;
+
 bool HierarchicalTask::isInternalTask(TaskId tid, bool recursive){
   for(uint32_t i=0; i < mSubtasks.size(); i++){
     if(mSubtasks[i].id() == tid){
@@ -223,27 +225,29 @@ void HierarchicalTask::reduce(int32_t hfactor, int32_t vfactor){
   // collapse horizontally
   for(uint32_t i=0; i<leaves.size(); i+=hfactor){
     HierarchicalTask leaft;
-    
-    for(uint32_t hf=0; hf < hfactor; hf++){
+    //TODO min
+    for(uint32_t hf=0; hf < hfactor && hf < leaves.size(); hf++){
       uint32_t curr_t = i+hf;
       
       HierarchicalTask& sht = leaves[curr_t];
       
       HierarchicalTask* vert_child = &sht;
-      int32_t vf = 0;
-      while (vert_child != NULL && vf < vfactor){
-        
-        for(uint32_t ot=0; ot < vert_child->outputs()[0].size(); ot++){
-          HierarchicalTask* child = getTask(vert_child->outputs()[0][ot]);
+//      int32_t vf = 0;
+//      while (vert_child != NULL && vf < vfactor){
+        for(uint32_t iot=0; iot < vert_child->outputs().size(); iot++){
+        for(uint32_t ot=0; ot < vert_child->outputs()[iot].size(); ot++){
+          HierarchicalTask* child = getTask(vert_child->outputs()[iot][ot]);
           if(child != NULL){
             leaft.addSubTask(*child);
             toRemove.push_back(child->id());
           }
-          vert_child = child;
-          vf++;
+//          vert_child = child;
+//          vf++;
         }
+        }
+
         
-      }
+//      }
       
       toRemove.push_back(sht.id());
       
@@ -262,7 +266,10 @@ void HierarchicalTask::reduce(int32_t hfactor, int32_t vfactor){
     for(int32_t t = 0; t < mSubtasks.size(); t++){
     
       if(mSubtasks[t].id() == toRemove[st]){
+        printf("removed %u\n", mSubtasks[t].id());
         mSubtasks.erase(mSubtasks.begin()+t); t--;
+        
+        break;
       }
     }
   }

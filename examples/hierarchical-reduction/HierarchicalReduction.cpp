@@ -9,6 +9,8 @@
 
 #include "HierarchicalReduction.h"
 
+using namespace DataFlow;
+
 HierarchicalReduction::HierarchicalReduction(uint32_t leafs, uint32_t valence) : TaskGraph(), mValence(valence)
 {
   // Find the number of leafs that is a power of valence

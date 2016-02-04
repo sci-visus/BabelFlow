@@ -13,6 +13,8 @@
 
 #include "Task.h"
 
+namespace DataFlow {
+
 class TaskMap;
 
 /*! The task graph defines a baseclass for all algorithms
@@ -77,5 +79,7 @@ public:
   //! Return the controller assigned to the given rank (could be CNULL)
   virtual ShardId controller(uint32_t rank) const {return rank;}
 };
+  
+}
 
 #endif /* TASKGRAPH_H_ */

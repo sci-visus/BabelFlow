@@ -14,29 +14,17 @@
 #include "TaskGraph.h"
 #include "HierarchicalTask.h"
 
+namespace DataFlow{
+
 class HierarchicalTaskGraph : public TaskGraph{
 public:
-  HierarchicalTaskGraph(std::vector<Task> tasks, int32_t hfactor, int32_t vfactor){
-    
-    mHfactor = hfactor;
-    mVfactor = vfactor;
-    reduction_level = 0;
-    
-    for(uint32_t i=0; i < tasks.size(); i++){
-      supertask.addSubTask(tasks[i]);
-    }
-    
-    printf("%lu tasks inserted\n", supertask.mSubtasks.size());
-
-    for(uint32_t i=0; i < supertask.mSubtasks.size(); i++){
-      supertask.mSubtasks[i].resolveEdgesReduce(&supertask);
-    }
-  };
+  HierarchicalTaskGraph(std::vector<Task> tasks, int32_t hfactor, int32_t vfactor);
   
   std::vector<Task> localGraph(ControllerId id, const TaskMap* task_map) const{
     return std::vector<Task>(); // TODO adapt or ignore
   }
   
+  // TODO this condition not always holds (i.e. for broadcast)
   void reduceAll(){
     while(supertask.mSubtasks.size() != mHfactor+mVfactor)
       reduce();
@@ -63,44 +51,7 @@ public:
   
   ~HierarchicalTaskGraph(){}; // TODO
 
-  int output_hierarchical_graph(FILE* output) const
-  {
-    const std::vector<HierarchicalTask>& mSubtasks = supertask.mSubtasks;
-    
-    fprintf(output,"digraph G {\n");
-    
-    std::vector<HierarchicalTask>::const_iterator tIt;
-    std::vector<TaskId>::const_iterator it;
-    
-    for (tIt=mSubtasks.begin();tIt!=mSubtasks.end();tIt++) {
-      fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
-      for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
-        if (*it != TNULL)
-          fprintf(output,"%d -> %d\n",*it,tIt->id());
-      }
-    }
-    
-    fprintf(output,"}\n");
-    return 1;
-  }
-  
-  int output_hierarchical_graph(const HierarchicalTask& task, FILE* output) const
-  {
-    
-    std::vector<HierarchicalTask>::const_iterator tIt;
-    std::vector<TaskId>::const_iterator it;
-    
-    for (tIt=task.mSubtasks.begin();tIt!=task.mSubtasks.end();tIt++) {
-      fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
-      for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
-        if (*it != TNULL)
-          fprintf(output,"%d -> %d\n",*it,tIt->id());
-      }
-    
-    }
-    
-    return 1;
-  }
+  int output_hierarchical_graph(FILE* output) const;
 
 private:
   HierarchicalTask supertask;
@@ -108,9 +59,8 @@ private:
   int32_t mVfactor;
   int32_t reduction_level;
   
-//  std::vector<std::map<TaskId,TaskId> > incoming_map;
-//  std::vector<std::map<TaskId,TaskId> > outgoing_map;
-  
 };
+  
+}
 
 #endif /* HIERARCHICAL_TASKGRAPH_H */

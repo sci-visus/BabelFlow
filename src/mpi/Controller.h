@@ -51,8 +51,8 @@ public:
   ~Controller() {}
 
   //! Initialize the controller
-  int initialize(const TaskGraph& graph, const TaskMap* task_map, MPI_Comm comm = MPI_COMM_WORLD,
-                 const ControllerMap* controller_map = new ControllerMap());
+  int initialize(const DataFlow::TaskGraph& graph, const DataFlow::TaskMap* task_map, MPI_Comm comm = MPI_COMM_WORLD,
+                 const DataFlow::ControllerMap* controller_map = new DataFlow::ControllerMap());
 
   //! Register a callback for the given id
   int registerCallback(CallbackId id, Callback func);
@@ -68,7 +68,7 @@ public:
   public:
 
     //! Default constructor
-    TaskWrapper(const Task& t);
+    TaskWrapper(const DataFlow::Task& t);
 
     //! Copy constructor
     TaskWrapper(const TaskWrapper& t);
@@ -79,7 +79,7 @@ public:
     TaskWrapper& operator=(const TaskWrapper& t);
 
     //! Return the corresponding task
-    const Task& task() const {return mTask;}
+    const DataFlow::Task& task() const {return mTask;}
 
     //! Add an input
     bool addInput(TaskId source, Payload data);
@@ -88,7 +88,7 @@ public:
     bool ready() const;
 
     //! The task
-    Task mTask;
+    DataFlow::Task mTask;
 
     //! Mutex to check if task is ready. We use this in the addInput routine as
     //! both the master and the worker thready can check if a task is ready and
@@ -125,10 +125,10 @@ private:
   std::map<TaskId,TaskWrapper> mTasks;
 
   //! The active task map
-  const TaskMap* mTaskMap;
+  const DataFlow::TaskMap* mTaskMap;
 
   //! The active controller map
-  const ControllerMap* mControllerMap;
+  const DataFlow::ControllerMap* mControllerMap;
 
   //! The map from rank-id to the number of expected messages
   std::map<int, uint32_t> mMessageLog;

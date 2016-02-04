@@ -15,7 +15,7 @@
 #include "TaskGraph.h"
 
 //! A broadcast implements a task graph describing an tree based broadcast
-class Broadcast : public TaskGraph
+class Broadcast : public DataFlow::TaskGraph
 {
 public:
 

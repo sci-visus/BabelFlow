@@ -15,8 +15,10 @@
 
 //#include "HierarchicalReduction.h"
 #include "Reduction.h"
+#include "Broadcast.h"
 #include "HierarchicalTaskGraph.h"
 
+using namespace DataFlow;
 
 int add_int(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, TaskId task)
 {
@@ -96,7 +98,8 @@ int main(int argc, char* argv[])
   
 //  graph.computeHierarchicalGraph();
 
-  Reduction graph(leafs,valence);
+  //Reduction graph(leafs,valence);
+  Broadcast graph(leafs, valence);
   ModuloMap task_map(1, graph.size());
 
   FILE* output = fopen("task_graph.dot","w");
@@ -106,7 +109,7 @@ int main(int argc, char* argv[])
 
   FILE* houtput = fopen("htask_graph.dot","w");
 //  HierarchicalTaskGraph htg(graph.getAllTasks(), 2, 1);
-  HierarchicalTaskGraph htg(graph.localGraph(0, &task_map), valence, 1);
+  HierarchicalTaskGraph htg(graph.localGraph(0, &task_map), 2, 1);
   
   printf("------REDUCE-----\n");
   htg.reduce();
@@ -115,13 +118,13 @@ int main(int argc, char* argv[])
   printf("------REDUCE-----\n");
   htg.reduce();
 //  htg.reduceAll();
-  printf("------EXPAND-----\n");
-  htg.expand();
-  printf("------EXPAND-----\n");
-  htg.expand();
-  printf("------EXPAND-----\n");
-  htg.expand();
-//  htg.expandAll();
+//  printf("------EXPAND-----\n");
+//  htg.expand();
+//  printf("------EXPAND-----\n");
+//  htg.expand();
+//  printf("------EXPAND-----\n");
+//  htg.expand();
+  htg.expandAll();
   htg.output_hierarchical_graph(houtput);
   fclose(houtput);
   

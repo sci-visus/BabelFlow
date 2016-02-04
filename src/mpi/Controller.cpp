@@ -26,6 +26,8 @@ const int RANKID=0;
 # define PRINT_RANK(x) do {} while (0)
 #endif
 
+using namespace DataFlow;
+
 DataBlock::DataBlock(const DataBlock& block)
 {
   size = block.size;
@@ -44,7 +46,7 @@ DataBlock DataBlock::clone() const
 }
 
 
-Controller::TaskWrapper::TaskWrapper(const Task& t) : mTask(t)
+Controller::TaskWrapper::TaskWrapper(const DataFlow::Task& t) : mTask(t)
 {
   mInputs.resize(t.fanin());
   mOutputs.resize(t.fanout());
@@ -102,7 +104,7 @@ Controller::Controller() : mRecvBufferSize(1024*1024*128)
   mRank = TNULL;
 }
 
-int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map, 
+int Controller::initialize(const TaskGraph& graph, const DataFlow::TaskMap* task_map,
                            MPI_Comm comm, const ControllerMap* controller_map)
 {
   mTaskMap = task_map;

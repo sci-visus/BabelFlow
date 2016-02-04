@@ -6,7 +6,7 @@
  */
 
 #include "Task.h"
-
+using namespace DataFlow;
 
 Task::Task(const Task& t) : mId(t.mId), mCallback(t.mCallback)
 {

@@ -12,6 +12,8 @@
 
 #include "Definitions.h"
 
+namespace DataFlow{
+
 class TaskGraph;
 
 /*! A task is the abstract description of a piece of idempotent
@@ -92,5 +94,7 @@ private:
   //! A list of outputs and the tasks to which they must be send
   std::vector<std::vector<TaskId> > mOutgoing;
 };
+  
+}
 
 #endif /* TASK_H_ */

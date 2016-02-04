@@ -14,6 +14,8 @@
 
 #include "Task.h"
 
+namespace DataFlow {
+ 
 static TaskId ht_global_id = 1000;
 
 class HierarchicalTask : public Task{
@@ -52,5 +54,5 @@ public:
 
 };
 
-
+}
 #endif /* HIERARCHICAL_TASK_H */

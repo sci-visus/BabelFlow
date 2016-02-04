@@ -9,7 +9,7 @@
 
 #include "Reduction.h"
 
-
+using namespace DataFlow;
 
 Reduction::Reduction(uint32_t leafs, uint32_t valence) : TaskGraph(),
     mValence(valence)

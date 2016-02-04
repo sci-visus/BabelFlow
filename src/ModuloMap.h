@@ -11,7 +11,7 @@
 #include "Definitions.h"
 #include "TaskGraph.h"
 
-class ModuloMap : public TaskMap
+class ModuloMap : public DataFlow::TaskMap
 {
 public:
 

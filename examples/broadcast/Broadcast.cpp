@@ -33,8 +33,8 @@ std::vector<Task> Broadcast::localGraph(ShardId id, const TaskMap* task_map) con
 //  }
 
   // The create the required number of tasks
-  std::vector<Task> tasks(ids.size());
-  std::vector<Task>::iterator it;
+  std::vector<DataFlow::Task> tasks(ids.size());
+  std::vector<DataFlow::Task>::iterator it;
 
   //! Now assign all the task ids
   for (i=0;i<ids.size();i++)

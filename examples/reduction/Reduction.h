@@ -14,7 +14,7 @@
 #include "Definitions.h"
 #include "TaskGraph.h"
 
-class Reduction : public TaskGraph
+class Reduction : public DataFlow::TaskGraph
 {
 public:
 
@@ -53,7 +53,5 @@ private:
   //! The number of levels in the tree
   uint32_t mLevels;
 };
-
-
 
 #endif /* REDUCTION_H_ */
