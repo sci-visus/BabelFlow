@@ -13,7 +13,7 @@
 
 #include "KWayMerge.h"
 
-class KWayTaskMap : public TaskMap
+class KWayTaskMap : public DataFlow::TaskMap
 {
 public:
 

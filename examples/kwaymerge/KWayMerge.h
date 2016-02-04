@@ -44,7 +44,7 @@ class KWayTaskMap;
  *  using the first m bits (m typically = 4) of the taskid
  *
  */
-class KWayMerge : public TaskGraph
+class KWayMerge : public DataFlow::TaskGraph
 {
 public:
 

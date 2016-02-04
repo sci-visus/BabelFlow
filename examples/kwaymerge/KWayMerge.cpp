@@ -9,6 +9,8 @@
 
 #include "KWayMerge.h"
 
+using namespace DataFlow;
+
 KWayMerge::KWayMerge(uint32_t dim[3], uint32_t factor) : mFactor(factor)
 {
   uint32_t f;
