@@ -15,6 +15,12 @@ include_directories(
     ${MPI_CXX_INCLUDE_PATH}
 )
 
+add_library(reductiongraph STATIC ${SRC})
+
+INSTALL(TARGETS reductiongraph
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+
 add_executable(reduction ${SRC})
 target_link_libraries(reduction dataflow ${MPI_CXX_LIBRARIES})
 
@@ -23,3 +29,4 @@ target_link_libraries(reduction2 dataflow ${MPI_CXX_LIBRARIES})
     
 INSTALL(TARGETS reduction reduction2
         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+

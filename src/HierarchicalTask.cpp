@@ -73,7 +73,7 @@ void HierarchicalTask::resolveEdgesReduce(HierarchicalTask* supertask){
       
       HierarchicalTask* parent = supertask->getParentTask(task_incoming[i]);
 
-      printf("%d mapping in %d to %d\n", id(), mSubtasks[sb].incoming()[i], parent->id());
+//      printf("%d mapping in %d to %d\n", id(), mSubtasks[sb].incoming()[i], parent->id());
     
       // The incoming edge comes from outside, we need to map to the new parent
       TaskId swap_id = mSubtasks[sb].incoming()[i];
@@ -93,7 +93,7 @@ void HierarchicalTask::resolveEdgesReduce(HierarchicalTask* supertask){
         }
       }
       
-      printf("%d: add in %d\n",mSubtasks[sb].id(), parent->id());
+//      printf("%d: add in %d\n",mSubtasks[sb].id(), parent->id());
       
     }
 
@@ -106,7 +106,7 @@ void HierarchicalTask::resolveEdgesReduce(HierarchicalTask* supertask){
         
         HierarchicalTask* parent = supertask->getTask(task_outgoing[i][j]);
       
-        printf("%d mapping out %d to %d\n", id(), mSubtasks[sb].outputs()[i][j], parent->id());
+//        printf("%d mapping out %d to %d\n", id(), mSubtasks[sb].outputs()[i][j], parent->id());
       
         // The output is external we need to map it
         TaskId swap_id = mSubtasks[sb].outputs()[i][j];
@@ -141,7 +141,7 @@ void HierarchicalTask::resolveEdgesExpand(HierarchicalTask* supertask){
     
     for(uint32_t i=0; i < task_incoming.size(); i++){
       if(incoming_map.find(task_incoming[i]) != incoming_map.end()){
-        printf("in mapping back %d to %d\n", mSubtasks[sb].incoming()[i], incoming_map[task_incoming[i]]);
+//        printf("in mapping back %d to %d\n", mSubtasks[sb].incoming()[i], incoming_map[task_incoming[i]]);
         TaskId swap_id = task_incoming[i];
         mSubtasks[sb].incoming()[i] = incoming_map[swap_id];
         
@@ -164,7 +164,7 @@ void HierarchicalTask::resolveEdgesExpand(HierarchicalTask* supertask){
         TaskId swap_id = mSubtasks[sb].outputs()[i][j];
         
         if(outgoing_map.find(swap_id) != outgoing_map.end()){
-          printf("out mapping back %d to %d\n", swap_id, mSubtasks[sb].outgoing_map[mSubtasks[sb].outputs()[i][j]]);
+//          printf("out mapping back %d to %d\n", swap_id, mSubtasks[sb].outgoing_map[mSubtasks[sb].outputs()[i][j]]);
           mSubtasks[sb].outputs()[i][j] = outgoing_map[mSubtasks[sb].outputs()[i][j]];
           
           // Need to map back the incoming task
@@ -254,7 +254,7 @@ void HierarchicalTask::reduce(int32_t hfactor, int32_t vfactor){
       leaft.addSubTask(sht);
     } // end collapse horizontally
 
-    printf("grouped %lu nodes\n", leaft.mSubtasks.size());
+//    printf("grouped %lu nodes\n", leaft.mSubtasks.size());
     
     if(addSubTask(leaft))
       new_nodes++;
@@ -266,7 +266,7 @@ void HierarchicalTask::reduce(int32_t hfactor, int32_t vfactor){
     for(int32_t t = 0; t < mSubtasks.size(); t++){
     
       if(mSubtasks[t].id() == toRemove[st]){
-        printf("removed %u\n", mSubtasks[t].id());
+//        printf("removed %u\n", mSubtasks[t].id());
         mSubtasks.erase(mSubtasks.begin()+t); t--;
         
         break;

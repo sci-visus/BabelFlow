@@ -16,7 +16,7 @@
 
 namespace DataFlow {
  
-static TaskId ht_global_id = 1000;
+static TaskId ht_global_id = 1000000;
 
 class HierarchicalTask : public Task{
 
@@ -26,8 +26,6 @@ public:
   
   HierarchicalTask(){id(ht_global_id++);};
    
-  
-  
   void reduce(int32_t hfactor, int32_t vfactor);
   void expand(int32_t hfactor, int32_t vfactor);
   

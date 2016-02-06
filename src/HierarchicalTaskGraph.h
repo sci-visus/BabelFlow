@@ -49,6 +49,10 @@ public:
     return supertask.mSubtasks;
   }
   
+  const HierarchicalTask& getSuperTask(){
+    return supertask;
+  }
+  
   ~HierarchicalTaskGraph(){}; // TODO
 
   int output_hierarchical_graph(FILE* output) const;
