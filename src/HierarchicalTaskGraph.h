@@ -28,6 +28,8 @@ public:
   void reduceAll(){
     while(supertask.mSubtasks.size() != mHfactor+mVfactor)
       reduce();
+    
+    supertask.resolveEdgesReduce(&supertask);
   }
   
   void reduce(){
