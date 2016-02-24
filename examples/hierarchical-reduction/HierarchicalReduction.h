@@ -36,13 +36,13 @@ public:
   void computeHierarchicalGraph(std::vector<Task>& level_tasks, uint32_t level);
   
   // This function doesn't make sense here, in this implementation we have only 1 graph builder
-  std::vector<Task> localGraph(ControllerId id, const TaskMap* task_map) const{
+  std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const{
     return alltasks;
   }
   
   int output_hierarchical_graph(FILE* output) const;
   
-  int output_graph(ControllerId count, const TaskMap* task_map, FILE* output){
+  int output_graph(ShardId count, const TaskMap* task_map, FILE* output){
     return output_hierarchical_graph(output);
   }
   

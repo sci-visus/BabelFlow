@@ -120,7 +120,7 @@ int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map,
   std::vector<Task>::const_iterator tIt;
   std::vector<TaskId>::const_iterator it;
   std::map<int,uint32_t>::iterator mIt;
-  ControllerId cId;
+  ShardId cId;
   int c_rank;
 
   // Now collect the message log
@@ -133,7 +133,7 @@ int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map,
       //PRINT_RANK(" Incoming: " << *it);
       // If this is an input that will come from the dataflow
       if (*it != TNULL) {
-        cId = mTaskMap->controller(*it);
+        cId = mTaskMap->shard(*it);
 
         // And one that comes from the outside
         if (cId != mId) {
@@ -361,7 +361,7 @@ int Controller::initiateSend(TaskId source,
       //PRINT_RANK("Source task: " << source << " Dest Task: " << *it);
 
       // Figure out where it needs to go
-      rank = mControllerMap->rank(mTaskMap->controller(*it));
+      rank = mControllerMap->rank(mTaskMap->shard(*it));
 
       // See whether somebody else already send to the same MPI rank
       pIt = packets.find(rank);

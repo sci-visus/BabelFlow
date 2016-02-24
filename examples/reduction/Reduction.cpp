@@ -25,7 +25,7 @@ Reduction::Reduction(uint32_t leafs, uint32_t valence) : TaskGraph(),
 }
 
 
-std::vector<Task> Reduction::localGraph(ControllerId id, const TaskMap* task_map) const
+std::vector<Task> Reduction::localGraph(ShardId id, const TaskMap* task_map) const
 {
   TaskId i;
 

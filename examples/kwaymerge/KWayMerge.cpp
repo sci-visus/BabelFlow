@@ -73,7 +73,7 @@ TaskId KWayMerge::size() const
   assert (false); // Not meaningfull;
 }
 
-std::vector<Task> KWayMerge::localGraph(ControllerId id, 
+std::vector<Task> KWayMerge::localGraph(ShardId id, 
                                         const TaskMap* task_map) const
 {
   TaskId i;
@@ -214,7 +214,7 @@ std::vector<Task> KWayMerge::localGraph(ControllerId id,
   return tasks;
 }
 
-int KWayMerge::output_graph(ControllerId count, 
+int KWayMerge::output_graph(ShardId count, 
                             const TaskMap* task_map, FILE* output)
 {
   fprintf(output,"digraph G {\n");

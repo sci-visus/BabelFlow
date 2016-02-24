@@ -22,7 +22,7 @@ Broadcast::Broadcast(uint32_t endpoints, uint32_t valence) : TaskGraph(),
   }
 }
 
-std::vector<Task> Broadcast::localGraph(ControllerId id, const TaskMap* task_map) const
+std::vector<Task> Broadcast::localGraph(ShardId id, const TaskMap* task_map) const
 {
   TaskId i;
 

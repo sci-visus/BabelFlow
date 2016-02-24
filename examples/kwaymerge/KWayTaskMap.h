@@ -18,21 +18,21 @@ class KWayTaskMap : public TaskMap
 public:
 
   //! Default constructor
-  KWayTaskMap(ControllerId controller_count,const KWayMerge* task_graph);
+  KWayTaskMap(ShardId controller_count,const KWayMerge* task_graph);
 
   //! Destructor
   ~KWayTaskMap() {}
 
   //! Return which controller is assigned to the given task
-  virtual ControllerId controller(TaskId id) const;
+  virtual ShardId shard(TaskId id) const;
 
   //! Return the set of task assigned to the given controller
-  virtual std::vector<TaskId> tasks(ControllerId id) const;
+  virtual std::vector<TaskId> tasks(ShardId id) const;
 
 private:
 
   //! The number of controllers
-  ControllerId mControllerCount;
+  ShardId mControllerCount;
 
   //! A reference to the task graph
   const KWayMerge* mTaskGraph;

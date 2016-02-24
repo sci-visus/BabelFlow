@@ -34,7 +34,7 @@ public:
     
   };
   
-  std::vector<Task> localGraph(ControllerId id, const TaskMap* task_map) const{
+  std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const{
     return std::vector<Task>();
   }
   

@@ -7,17 +7,17 @@
 
 #include "ModuloMap.h"
 
-ModuloMap::ModuloMap(ControllerId controller_count, TaskId task_count) : TaskMap(),
-mControllerCount(controller_count), mTaskCount(task_count)
+ModuloMap::ModuloMap(ShardId shard_count, TaskId task_count) : TaskMap(),
+mShardCount(shard_count), mTaskCount(task_count)
 {
 }
 
-ControllerId ModuloMap::controller(TaskId id) const
+ShardId ModuloMap::shard(TaskId id) const
 {
-  return (id % mControllerCount);
+  return (id % mShardCount);
 }
 
-std::vector<TaskId> ModuloMap::tasks(ControllerId id) const
+std::vector<TaskId> ModuloMap::tasks(ShardId id) const
 {
   std::vector<TaskId> back;
 
@@ -26,7 +26,7 @@ std::vector<TaskId> ModuloMap::tasks(ControllerId id) const
   while (t < mTaskCount) {
     back.push_back(t);
 
-    t += mControllerCount;
+    t += mShardCount;
   }
 
   return back;

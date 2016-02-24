@@ -8,12 +8,12 @@
 #include "KWayTaskMap.h"
 #include <cstdio>
 
-KWayTaskMap::KWayTaskMap(ControllerId controller_count,const KWayMerge* task_graph) :
+KWayTaskMap::KWayTaskMap(ShardId controller_count,const KWayMerge* task_graph) :
 mControllerCount(controller_count), mTaskGraph(task_graph)
 {
 }
 
-ControllerId KWayTaskMap::controller(TaskId id) const
+ShardId KWayTaskMap::shard(TaskId id) const
 {
   TaskId base_id = mTaskGraph->baseId(id);
   std::vector<TaskId> up;
@@ -26,12 +26,12 @@ ControllerId KWayTaskMap::controller(TaskId id) const
   // The base_id now is the task id of the leaf task which we simply
   // distribute through round robin
   
-  ControllerId cId = base_id % mControllerCount;
+  ShardId cId = base_id % mControllerCount;
   //printf("base id: %d con count : %d cid : %d\n", base_id, mControllerCount, cId);
   return cId;
 }
 
-std::vector<TaskId> KWayTaskMap::tasks(ControllerId id) const
+std::vector<TaskId> KWayTaskMap::tasks(ShardId id) const
 {
   std::vector<TaskId> tasks;
   uint8_t k;

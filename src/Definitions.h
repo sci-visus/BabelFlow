@@ -17,10 +17,10 @@ typedef uint32_t TaskId;
 const TaskId TNULL = (TaskId)-1;
 
 //! Index type used to identify a controller
-typedef uint32_t ControllerId;
+typedef uint32_t ShardId;
 
 //! The NULL element indicating no controller
-const ControllerId CNULL = (ControllerId)-1;
+const ShardId CNULL = (ShardId)-1;
 
 //! Index type used to register callbacks
 typedef uint8_t CallbackId;

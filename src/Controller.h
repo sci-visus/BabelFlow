@@ -128,7 +128,7 @@ public:
 private:
 
   //! The id of this controller
-  ControllerId mId;
+  ShardId mId;
 
   //! The MPI rank used by the controller. If no MPI rank its TNULL
   int mRank;

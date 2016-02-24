@@ -74,7 +74,7 @@ public:
 
   //! Compute the fully specified tasks for the
   //! given controller id and task map
-  virtual std::vector<Task> localGraph(ControllerId id, const TaskMap* task_map) const;
+  virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const;
 
   //! Return the total number of tasks
   /*! This function computes the total number of tasks in the graph.
@@ -90,7 +90,7 @@ public:
   uint8_t rounds() const {return mRounds;}
 
   //! Output the entire graph as dot file
-  virtual int output_graph(ControllerId count, const TaskMap* task_map, FILE* output);
+  virtual int output_graph(ShardId count, const TaskMap* task_map, FILE* output);
 
 private:
 

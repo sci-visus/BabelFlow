@@ -30,10 +30,10 @@ public:
   virtual ~TaskGraph() {}
 
   //! Compute the fully specified tasks for the given controller
-  virtual std::vector<Task> localGraph(ControllerId id, const TaskMap* task_map) const = 0;
+  virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const = 0;
 
   //! Output the entire graph as dot file
-  virtual int output_graph(ControllerId count, const TaskMap* task_map, FILE* output);
+  virtual int output_graph(ShardId count, const TaskMap* task_map, FILE* output);
 };
 
 /*! The task map defines an abstract baseclass to define the global
@@ -50,10 +50,10 @@ public:
   virtual ~TaskMap() {}
 
   //! Return which controller is assigned to the given task
-  virtual ControllerId controller(TaskId id) const = 0;
+  virtual ShardId shard(TaskId id) const = 0;
 
   //! Return the set of task assigned to the given controller
-  virtual std::vector<TaskId> tasks(ControllerId id) const = 0;
+  virtual std::vector<TaskId> tasks(ShardId id) const = 0;
 };
 
 /*! The controller map defines a baseclass to define the controller
@@ -72,10 +72,10 @@ public:
   virtual ~ControllerMap() {}
 
   //! Return the MPI_RANK to which the given controller is assigned
-  virtual uint32_t rank(ControllerId id) const {return id;}
+  virtual uint32_t rank(ShardId id) const {return id;}
 
   //! Return the controller assigned to the given rank (could be CNULL)
-  virtual ControllerId controller(uint32_t rank) const {return rank;}
+  virtual ShardId controller(uint32_t rank) const {return rank;}
 };
 
 #endif /* TASKGRAPH_H_ */

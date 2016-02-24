@@ -7,7 +7,7 @@
 
 #include "TaskGraph.h"
 
-int TaskGraph::output_graph(ControllerId count, const TaskMap* task_map, FILE* output)
+int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output)
 {
   fprintf(output,"digraph G {\n");
 
