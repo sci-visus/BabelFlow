@@ -6,8 +6,7 @@ SET (DATAFLOW_HEADERS
     
     TaskGraph.h 
     RelayTask.h
-    Controller.h
-   
+    
     ModuloMap.h
 
     HierarchicalTask.h
@@ -17,17 +16,36 @@ SET (DATAFLOW_HEADERS
 SET (DATAFLOW_SRC
     Task.cpp    
     TaskGraph.cpp
-    Controller.cpp
     ModuloMap.cpp
     
     HierarchicalTask.cpp
 )
 
-include_directories(${MPI_CXX_INCLUDE_PATH})
+
+
+if (NOT DISABLE_MPI)
+  SET (DATAFLOW_HEADERS ${DATAFLOW_HEADER}
+       mpi/Controller.h
+  )
+
+  SET (DATAFLOW_SRC ${DATAFLOW_SRC}
+      mpi/Controller.cpp
+  )
+
+
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${MPI_CXX_INCLUDE_PATH})
+endif()
+
 
 add_library(dataflow STATIC ${DATAFLOW_SRC})
+  
+ 
+  
+if (NOT DISABLE_MPI)
+  target_link_libraries(dataflow ${MPI_CXX_LIBRARIES})
+endif()
 
-target_link_libraries(dataflow ${MPI_CXX_LIBRARIES})
+  
 
 INSTALL(FILES ${DATAFLOW_HEADERS}
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include/DataFlow

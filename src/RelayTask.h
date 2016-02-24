@@ -10,7 +10,6 @@
 
 #include <cassert>
 
-#include "Controller.h"
 
 int relay_message(std::vector<DataBlock>& inputs, std::vector<DataBlock>& outputs, TaskId task)
 {

@@ -21,23 +21,6 @@
 #include "Task.h"
 #include "mpi.h"
 
-//! A DataBlock abstracts a chunk of memory
-class DataBlock
-{
-public:
-
-  //! Default constructor
-  DataBlock(char *b=NULL, uint32_t s=0) : buffer(b), size(s) {}
-
-  //! Copy constructor
-  DataBlock(const DataBlock& block);
-
-  //! Makes a copy of the data block
-  DataBlock clone() const;
-
-  char* buffer;
-  uint32_t size;
-};
 
 //! The typedef for the accepted callbacks
 /*! A Callback is the only accepted function signature for a task.
