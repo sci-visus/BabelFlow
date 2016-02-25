@@ -11,7 +11,7 @@
 #include <cassert>
 
 
-int relay_message(std::vector<DataBlock>& inputs, std::vector<DataBlock>& outputs, TaskId task)
+int relay_message(std::vector<Payload>& inputs, std::vector<Payload>& outputs, TaskId task)
 {
   assert (inputs.size() == 1);
   assert (outputs.size() == 1);

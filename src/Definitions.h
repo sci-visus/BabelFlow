@@ -33,7 +33,7 @@ class DataBlock
 public:
 
   //! Default constructor
-  DataBlock(char *b=NULL, uint32_t s=0) : buffer(b), size(s) {}
+  DataBlock(char *b=NULL, int32_t s=0) : buffer(b), size(s) {}
 
   //! Copy constructor
   DataBlock(const DataBlock& block);
@@ -41,8 +41,11 @@ public:
   //! Makes a copy of the data block
   DataBlock clone() const;
 
+  //! The point to the actual memory
   char* buffer;
-  uint32_t size;
+
+  //! The size with size=-1 and buffer != NULL indicating a pointer to a class instance
+  int32_t size;
 };
 
 

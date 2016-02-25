@@ -19,6 +19,7 @@
 #include "Definitions.h"
 #include "TaskGraph.h"
 #include "Task.h"
+#include "Payload.h"
 #include "mpi.h"
 
 
@@ -34,7 +35,7 @@
  * @param outputs A set of DataBlocks storing the outputs
  * @return 1 if successful and 0 otherwise
  */
-typedef int (*Callback)(std::vector<DataBlock>& inputs, std::vector<DataBlock>& outputs, TaskId task);
+typedef int (*Callback)(std::vector<Payload>& inputs, std::vector<Payload>& outputs, TaskId task);
 
 /*! A controller handles the communication as well as thread
  *  management for the tasks assigned to it
@@ -57,7 +58,7 @@ public:
   int registerCallback(CallbackId id, Callback func);
 
   //! Start the computation
-  int run(std::map<TaskId,DataBlock>& initial_inputs);
+  int run(std::map<TaskId,Payload>& initial_inputs);
 
 //private:
 
@@ -81,7 +82,7 @@ public:
     const Task& task() const {return mTask;}
 
     //! Add an input
-    bool addInput(TaskId source, DataBlock data);
+    bool addInput(TaskId source, Payload data);
 
     //! Return whether this task is ready to be executed
     bool ready() const;
@@ -95,10 +96,10 @@ public:
     std::mutex mTaskReadyMutex;
 
     //! The input buffers
-    std::vector<DataBlock> mInputs;
+    std::vector<Payload> mInputs;
 
     //! The output buffers
-    std::vector<DataBlock> mOutputs;
+    std::vector<Payload> mOutputs;
   };
 
   //! A list of registered callbacks
@@ -106,7 +107,7 @@ public:
    
   //! Post a send of the given data to all destinations
   int initiateSend(TaskId source,const std::vector<TaskId>& destinations, 
-                   DataBlock data);
+                   Payload data);
 
 private:
 
@@ -185,9 +186,9 @@ private:
 
   //! Send all outstanding messages
   char* packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator pIt,
-                    TaskId source, DataBlock data ) ;
+                    TaskId source, Payload data) ;
 
-  TaskId* unPackMessage(char* messsage, DataBlock* data_block, 
+  TaskId* unPackMessage(char* messsage, Payload* data_block,
                         TaskId* source_task, uint32_t* num_tasks_msg);
 
   //! Test for MPI events to guarantee progress and handle receives

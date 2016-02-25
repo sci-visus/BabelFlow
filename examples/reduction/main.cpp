@@ -13,20 +13,21 @@
 
 #include "Reduction.h"
 #include "ModuloMap.h"
-#include "Controller.h"
+#include "mpi/Controller.h"
 
-
-int add_int(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, TaskId task)
+int add_int(std::vector<Payload>& inputs, std::vector<Payload>& output, TaskId task)
 {
-  output[0].size = sizeof(uint32_t);
-  output[0].buffer = (char*)(new uint32_t[1]);
-  uint32_t* result = (uint32_t*)output[0].buffer;
+  int32_t size = sizeof(int32_t);
+  char* buffer = (char*)(new uint32_t[1]);
+
+  uint32_t* result = (uint32_t*)buffer;
 
   *result = 0;
-
   for (uint32_t i=0;i<inputs.size();i++) {
-    *result += *((uint32_t *)inputs[i].buffer);
+    *result += *((uint32_t *)inputs[i].buffer());
   }
+
+  output[0].initialize(size,buffer);
 
   int r = rand() % 100000;
   usleep(r);
@@ -34,12 +35,12 @@ int add_int(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, Task
   return 1;
 }
 
-int report_sum(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, TaskId task)
+int report_sum(std::vector<Payload>& inputs, std::vector<Payload>& output, TaskId task)
 {
   uint32_t result = 0;
 
   for (uint32_t i=0;i<inputs.size();i++)
-    result += *((uint32_t *)inputs[i].buffer);
+    result += *((uint32_t *)inputs[i].buffer());
 
   fprintf(stderr,"Total sum is %d\n",result);
 
@@ -92,17 +93,20 @@ int main(int argc, char* argv[])
   master.registerCallback(1,add_int);
   master.registerCallback(2,report_sum);
 
-  std::map<TaskId,DataBlock> inputs;
+  std::map<TaskId,Payload> inputs;
 
 
   uint32_t count=1;
   uint32_t sum = 0;
   for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
-    DataBlock data;
-    data.size = sizeof(uint32_t);
-    data.buffer = (char*)(new uint32_t[1]);
 
-    *((uint32_t*)data.buffer) = count;
+    int32_t size = sizeof(uint32_t);
+    char* buffer = (char*)(new uint32_t[1]);
+    *((uint32_t*)buffer) = count;
+
+
+    Payload data(size,buffer);
+
     inputs[i] = data;
 
     sum += count++;

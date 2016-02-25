@@ -66,7 +66,7 @@ Controller::TaskWrapper& Controller::TaskWrapper::operator=(const TaskWrapper& t
 
 //! Adds the new input to the task. If all inputs have arrived returns true as
 //! this task can now be staged
-bool Controller::TaskWrapper::addInput(TaskId source, DataBlock data)
+bool Controller::TaskWrapper::addInput(TaskId source, Payload data)
 {
   TaskId i;
   bool is_ready = true;
@@ -75,11 +75,11 @@ bool Controller::TaskWrapper::addInput(TaskId source, DataBlock data)
   mTaskReadyMutex.lock();
   for (i=0;i<mTask.fanin();i++) {
     if (mTask.incoming()[i] == source) {
-      assert(mInputs[i].buffer == NULL);
+      assert(mInputs[i].buffer() == NULL);
       mInputs[i] = data;
       input_added = true;
     }
-    if (mInputs[i].buffer == NULL)
+    if (mInputs[i].buffer() == NULL)
       is_ready = false;
   }
   mTaskReadyMutex.unlock();
@@ -170,10 +170,10 @@ int Controller::registerCallback(CallbackId id, Callback func)
 }
 
 //! Start the computation
-int Controller::run(std::map<TaskId,DataBlock>& initial_inputs)
+int Controller::run(std::map<TaskId,Payload>& initial_inputs)
 {
   std::map<int,uint32_t>::iterator mIt;
-  std::map<TaskId,DataBlock>::iterator tIt;
+  std::map<TaskId,Payload>::iterator tIt;
   std::map<TaskId,TaskWrapper>::iterator wIt;
 
   int num_processes;
@@ -191,7 +191,7 @@ int Controller::run(std::map<TaskId,DataBlock>& initial_inputs)
   // Look through all tasks to find leaf tasks that need outside inputs
   for (wIt=mTasks.begin();wIt!=mTasks.end();wIt++) {
 
-    // For now we assume that leaf tasks only hvae a single input
+    // For now we assume that leaf tasks only have a single input
     // indicated by TNULL task id
     if (wIt->second.task().incoming()[0] == TNULL) { // If this is a leaf task
       // Look for the approriate input
@@ -271,7 +271,7 @@ int Controller::startTask(TaskWrapper& task)
 
 
 
-TaskId* Controller::unPackMessage(char* message, DataBlock* data_block, 
+TaskId* Controller::unPackMessage(char* message, Payload* data_block,
                                   TaskId* source_task, uint32_t* num_tasks_msg) {
 
   uint32_t message_size = *(uint32_t*)(message + sizeof(uint32_t));
@@ -281,10 +281,12 @@ TaskId* Controller::unPackMessage(char* message, DataBlock* data_block,
   char* data_ptr        = (char*)(task_ids + *num_tasks_msg);
 
   // Create DataBlock from message
-  data_block->size = (int)message_size - 
-                    (sizeof(uint32_t)*3 + sizeof(TaskId)*(1 + *num_tasks_msg));
-  data_block->buffer = new char[data_block->size];
-  memcpy(data_block->buffer, data_ptr, data_block->size);
+  int32_t size = (int)message_size - (sizeof(uint32_t)*3 + sizeof(TaskId)*(1 + *num_tasks_msg));
+  char* buffer =  new char[size];
+  memcpy(buffer, data_ptr, size);
+
+
+  data_block->initialize(size,buffer);
 
   //PRINT("Rank : " << mRank << "Data Size :: " << data_block->size << \
    " Msg Size :: " << message_size << \
@@ -299,12 +301,12 @@ TaskId* Controller::unPackMessage(char* message, DataBlock* data_block,
 
 
 char* Controller::packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator pIt,
-                              TaskId source, DataBlock data ) {
+                              TaskId source, Payload data ) {
 
   uint32_t size = 3*sizeof(uint32_t)                  // dest rank, size, no. dest tasks
                   + sizeof(TaskId)                    // source taskId
                   + pIt->second.size()*sizeof(TaskId) // the destination tasks
-                  + data.size;                        // payload
+                  + data.size();                      // payload
 
   char* msg = new char[size];
   *(uint32_t*)msg = pIt->first;
@@ -325,7 +327,7 @@ char* Controller::packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator 
   // This memcpy is annoying but appears necessary if we want to encode multiple
   // destination task ids. Might look at this later
   memcpy(ptr + sizeof(uint32_t) + sizeof(TaskId) + 
-         pIt->second.size()*sizeof(TaskId), data.buffer, data.size);
+         pIt->second.size()*sizeof(TaskId), data.buffer(), data.size());
 
   return msg;
 }
@@ -333,7 +335,7 @@ char* Controller::packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator 
 
 int Controller::initiateSend(TaskId source, 
                              const std::vector<TaskId>& destinations, 
-                             DataBlock data)
+                             Payload data)
 {
   std::vector<TaskId>::const_iterator it;
   std::map<TaskId,TaskWrapper>::iterator tIt;
@@ -388,7 +390,7 @@ int Controller::initiateSend(TaskId source,
   }
   
   //TODO: enable the delete after full parallelMT code has been ported
-  delete[] data.buffer;
+  data.reset();
   return 1;
 }
 
@@ -442,7 +444,7 @@ int Controller::testMPI()
     if (dest == mRank) { // This is a received message
 
       // Unpack the message
-      DataBlock data_block;
+      Payload data_block;
       TaskId* task_ids;
       uint32_t num_tasks_msg;
       TaskId source_task=0;

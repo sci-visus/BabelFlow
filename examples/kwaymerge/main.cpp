@@ -11,7 +11,7 @@
 
 #include "mpi.h"
 #include "KWayTaskMap.h"
-#include "Controller.h"
+#include "mpi/Controller.h"
 
 #include "KWayMerge.h"
 

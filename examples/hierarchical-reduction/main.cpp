@@ -11,7 +11,7 @@
 
 #include "mpi.h"
 #include "ModuloMap.h"
-#include "Controller.h"
+#include "mpi/Controller.h"
 
 #include "HierarchicalReduction.h"
 #include "HierarchicalTaskGraph.h"
