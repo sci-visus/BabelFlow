@@ -7,6 +7,8 @@
 
 #include "TaskGraph.h"
 
+using namespace DataFlow;
+
 int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output)
 {
   fprintf(output,"digraph G {\n");

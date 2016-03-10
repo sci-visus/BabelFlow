@@ -76,7 +76,7 @@ int main(int argc, char* argv[]){
 //  uint32_t leafs = atoi(argv[1]);
 //  uint32_t valence = atoi(argv[2]);
 
-  uint32_t leafs[3] = {4,4,4};
+  uint32_t leafs[3] = {2,2,2};
   KWayMerge graph(leafs,2);
   KWayTaskMap tmap(1, &graph);
   

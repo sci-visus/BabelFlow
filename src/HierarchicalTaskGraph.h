@@ -20,7 +20,7 @@ class HierarchicalTaskGraph : public TaskGraph{
 public:
   HierarchicalTaskGraph(std::vector<Task> tasks, int32_t hfactor, int32_t vfactor);
   
-  std::vector<Task> localGraph(ControllerId id, const TaskMap* task_map) const{
+  std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const{
     return std::vector<Task>(); // TODO adapt or ignore
   }
   
