@@ -9,6 +9,8 @@
 #include "Broadcast.h"
 #include <iostream>
 
+using namespace DataFlow;
+
 Broadcast::Broadcast(uint32_t endpoints, uint32_t valence) : TaskGraph(),
     mValence(valence)
 {

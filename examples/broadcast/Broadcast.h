@@ -33,7 +33,7 @@ public:
 
   //! Compute the fully specified tasks for the
   //! given controller and task map
-  virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const;
+  virtual std::vector<DataFlow::Task> localGraph(ShardId id, const DataFlow::TaskMap* task_map) const;
 
   //! Return the total number of tasks
   TaskId size() const {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}

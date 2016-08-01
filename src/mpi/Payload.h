@@ -21,7 +21,7 @@ public:
 
   int32_t size() const {return mSize;}
 
-  char* buffer() {return mBuffer;}
+  char* buffer() const {return mBuffer;}
 
   void initialize(int32_t size, char* buffer) {mSize = size; mBuffer = buffer;}
 
