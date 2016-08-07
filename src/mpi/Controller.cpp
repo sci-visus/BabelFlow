@@ -348,8 +348,9 @@ int Controller::initiateSend(TaskId source,
   for (it=destinations.begin();it!=destinations.end();it++) {
     
     if (*it == TNULL) {
-      assert (false);
-      return 1;
+      //assert (false);
+      continue;
+      // return 1;
     }
 
     // First, we check whether the destination is a local task
