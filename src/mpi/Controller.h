@@ -22,6 +22,9 @@
 #include "Payload.h"
 #include "mpi.h"
 
+namespace DataFlow {
+
+namespace mpi {
 
 //! The typedef for the accepted callbacks
 /*! A Callback is the only accepted function signature for a task.
@@ -202,5 +205,6 @@ private:
 //! Execute the given task and send the outputs
 int execute(Controller* c, Controller::TaskWrapper task);
 
-
+}
+}
 #endif /* CONTROLLER_H_ */

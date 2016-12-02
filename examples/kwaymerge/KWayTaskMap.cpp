@@ -8,6 +8,8 @@
 #include "KWayTaskMap.h"
 #include <cstdio>
 
+using namespace DataFlow;
+
 KWayTaskMap::KWayTaskMap(ShardId controller_count,const KWayMerge* task_graph) :
 mControllerCount(controller_count), mTaskGraph(task_graph)
 {

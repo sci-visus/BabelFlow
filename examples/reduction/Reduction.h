@@ -34,13 +34,13 @@ public:
 
   //! Compute the fully specified tasks for the
   //! given controller id and task map
-  virtual std::vector<DataFlow::Task> localGraph(ShardId id, const DataFlow::TaskMap* task_map) const;
+  virtual std::vector<DataFlow::Task> localGraph(DataFlow::ShardId id, const DataFlow::TaskMap* task_map) const;
 
   //! Return the total number of tasks
-  TaskId size() const {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
+  DataFlow::TaskId size() const {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
 
   //! Return the number of leafs
-  TaskId leafCount() const {return pow(mValence,mLevels);}
+  DataFlow::TaskId leafCount() const {return pow(mValence,mLevels);}
 
 private:
 

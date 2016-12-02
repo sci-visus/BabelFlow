@@ -7,6 +7,8 @@
 
 #include "ModuloMap.h"
 
+namespace DataFlow {
+
 ModuloMap::ModuloMap(ShardId shard_count, TaskId task_count) : TaskMap(),
 mShardCount(shard_count), mTaskCount(task_count)
 {
@@ -32,4 +34,4 @@ std::vector<TaskId> ModuloMap::tasks(ShardId id) const
   return back;
 }
 
-
+}

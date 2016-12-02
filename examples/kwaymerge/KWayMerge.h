@@ -54,10 +54,10 @@ public:
   static const uint8_t sPrefixSize = 4;
 
   //! The number of non-prefix bits
-  static const uint8_t sPostfixSize = sizeof(TaskId)*8 - sPrefixSize;
+  static const uint8_t sPostfixSize = sizeof(DataFlow::TaskId)*8 - sPrefixSize;
 
   //! Bit mask for scatter tasks
-  static const TaskId sPrefixMask = ((1 << sPrefixSize) - 1) << sPostfixSize;
+  static const DataFlow::TaskId sPrefixMask = ((1 << sPrefixSize) - 1) << sPostfixSize;
 
 
   /*! Create a k-way merge graph from the given grid of local tasks
@@ -74,7 +74,7 @@ public:
 
   //! Compute the fully specified tasks for the
   //! given controller id and task map
-  virtual std::vector<DataFlow::Task> localGraph(ShardId id, const DataFlow::TaskMap* task_map) const;
+  virtual std::vector<DataFlow::Task> localGraph(DataFlow::ShardId id, const DataFlow::TaskMap* task_map) const;
 
   //! Return the total number of tasks
   /*! This function computes the total number of tasks in the graph.
@@ -84,13 +84,13 @@ public:
    *
    * @return The total number of tasks
    */
-  TaskId size() const;
+  DataFlow::TaskId size() const;
 
   //! Return the total number of rounds needed to merge
   uint8_t rounds() const {return mRounds;}
 
   //! Output the entire graph as dot file
-  virtual int output_graph(ShardId count, const DataFlow::TaskMap* task_map, FILE* output);
+  virtual int output_graph(DataFlow::ShardId count, const DataFlow::TaskMap* task_map, FILE* output);
 
 private:
 
@@ -117,31 +117,31 @@ private:
   const std::vector<uint32_t>& lvlOffset() const {return mLvlOffset;}
 
   //! Return the level of a reduction task
-  uint8_t level(TaskId id) const;
+  uint8_t level(DataFlow::TaskId id) const;
 
   //! Return the base id (in the reduction)
-  TaskId baseId(TaskId id) const {return id &= ~sPrefixMask;}
+  DataFlow::TaskId baseId(DataFlow::TaskId id) const {return id &= ~sPrefixMask;}
 
   //! Return thecomputation round this task is part of
-   TaskId round(TaskId id) const {return id >> sPostfixSize;}
+  DataFlow::TaskId round(DataFlow::TaskId id) const {return id >> sPostfixSize;}
 
   //! Compute the id of a task in a certain round
-  TaskId roundId(TaskId id, uint8_t round) const;
+  DataFlow::TaskId roundId(DataFlow::TaskId id, uint8_t round) const;
 
   //! Return whether this is a gather or scatter task
-  bool gatherTask(TaskId id) const {return (id & sPrefixMask) == 0;}
+  bool gatherTask(DataFlow::TaskId id) const {return (id & sPrefixMask) == 0;}
 
   //! Function to map a global id in the reduction to its parent
-  TaskId reduce(TaskId source) const;
+  DataFlow::TaskId reduce(DataFlow::TaskId source) const;
 
   //! Function to compute the children of the given task id
-  std::vector<TaskId> expand(TaskId source) const;
+  std::vector<DataFlow::TaskId> expand(DataFlow::TaskId source) const;
 
   //! Function to map row-major indices from grid of round n to grid of round n+1
-  TaskId gridReduce(TaskId source, uint8_t lvl) const;
+  DataFlow::TaskId gridReduce(DataFlow::TaskId source, uint8_t lvl) const;
 
   //! Function to map row-major indices from grid of round n+1 to round n
-  std::vector<TaskId> gridExpand(TaskId source, uint8_t lvl) const;
+  std::vector<DataFlow::TaskId> gridExpand(DataFlow::TaskId source, uint8_t lvl) const;
 
 
 };

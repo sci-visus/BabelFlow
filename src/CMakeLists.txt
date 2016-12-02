@@ -2,6 +2,7 @@
 
 SET (DATAFLOW_HEADERS
     Definitions.h
+    Payload.h
     Task.h
     
     TaskGraph.h 
@@ -27,7 +28,6 @@ SET (DATAFLOW_SRC
 if (NOT DISABLE_MPI)
   SET (DATAFLOW_HEADERS ${DATAFLOW_HEADERS}
        mpi/Controller.h
-       mpi/Payload.h
   )
 
   SET (DATAFLOW_SRC ${DATAFLOW_SRC}

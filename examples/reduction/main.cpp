@@ -15,6 +15,9 @@
 #include "ModuloMap.h"
 #include "mpi/Controller.h"
 
+using namespace DataFlow;
+using namespace DataFlow::mpi;
+
 int add_int(std::vector<Payload>& inputs, std::vector<Payload>& output, TaskId task)
 {
   int32_t size = sizeof(int32_t);

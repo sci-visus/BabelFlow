@@ -16,6 +16,10 @@
 #include "ModuloMap.h"
 #include "mpi/Controller.h"
 
+using namespace DataFlow;
+using namespace DataFlow::mpi;
+
+
 class MyString : public Payload {
 public:
 

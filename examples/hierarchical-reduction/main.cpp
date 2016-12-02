@@ -11,6 +11,7 @@
 
 #include "mpi.h"
 #include "ModuloMap.h"
+#include "Payload.h"
 #include "mpi/Controller.h"
 
 //#include "HierarchicalReduction.h"
@@ -20,16 +21,18 @@
 
 using namespace DataFlow;
 
-int add_int(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, TaskId task)
+int add_int(std::vector<Payload>& inputs, std::vector<Payload>& output, TaskId task)
 {
-  output[0].size = sizeof(uint32_t);
-  output[0].buffer = (char*)(new uint32_t[1]);
-  uint32_t* result = (uint32_t*)output[0].buffer;
+  output[0] = Payload(sizeof(uint32_t),(char*)(new uint32_t[1]));
+
+  //output[0].size = sizeof(uint32_t);
+  //output[0].buffer = (char*)(new uint32_t[1]);
+  uint32_t* result = (uint32_t*)output[0].buffer();
 
   *result = 0;
 
   for (uint32_t i=0;i<inputs.size();i++) {
-    *result += *((uint32_t *)inputs[i].buffer);
+    *result += *((uint32_t *)inputs[i].buffer());
   }
 
   int r = rand() % 100000;
@@ -38,12 +41,12 @@ int add_int(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, Task
   return 1;
 }
 
-int report_sum(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, TaskId task)
+int report_sum(std::vector<Payload>& inputs, std::vector<Payload>& output, TaskId task)
 {
   uint32_t result = 0;
 
   for (uint32_t i=0;i<inputs.size();i++)
-    result += *((uint32_t *)inputs[i].buffer);
+    result += *((uint32_t *)inputs[i].buffer());
 
   fprintf(stderr,"Total sum is %d\n",result);
 

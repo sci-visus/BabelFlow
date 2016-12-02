@@ -36,27 +36,27 @@ public:
   void computeHierarchicalGraph(std::vector<DataFlow::Task>& level_tasks, uint32_t level);
   
   // This function doesn't make sense here, in this implementation we have only 1 graph builder
-  std::vector<DataFlow::Task> localGraph(ShardId id, const DataFlow::TaskMap* task_map) const{
+  std::vector<DataFlow::Task> localGraph(DataFlow::ShardId id, const DataFlow::TaskMap* task_map) const{
     return alltasks;
   }
   
   int output_hierarchical_graph(FILE* output) const;
   
-  int output_graph(ShardId count, const DataFlow::TaskMap* task_map, FILE* output){
+  int output_graph(DataFlow::ShardId count, const DataFlow::TaskMap* task_map, FILE* output){
     return output_hierarchical_graph(output);
   }
   
   //! Return the total number of tasks
-  TaskId size() const {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
+  DataFlow::TaskId size() const {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
   
   //! Return the number of leafs
-  TaskId leafCount() const {return pow(mValence,mLevels);}
+  DataFlow::TaskId leafCount() const {return pow(mValence,mLevels);}
   
   uint32_t generateId(){
     return curr_id++;
   }
   
-  std::vector<TaskId>& getInputsIds(){
+  std::vector<DataFlow::TaskId>& getInputsIds(){
     return inputs;
   };
   
@@ -70,7 +70,7 @@ protected:
   
   std::vector<DataFlow::Task> alltasks;
   std::vector<DataFlow::Task> level0;
-  std::vector<TaskId> inputs;
+  std::vector<DataFlow::TaskId> inputs;
   
   //! The number of leafs in the reduction
   uint32_t mLeafs;

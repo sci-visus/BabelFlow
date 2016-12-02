@@ -19,6 +19,9 @@
 uint32_t gCount = 0;
 int arr_length = 0;
 
+using namespace DataFlow;
+using namespace DataFlow::mpi;
+
 int print_message(std::vector<Payload>& inputs, std::vector<Payload>& output, TaskId task)
 {
   //char* str = (char*)inputs[0].buffer;

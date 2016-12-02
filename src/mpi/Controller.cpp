@@ -14,6 +14,11 @@
 #include "Controller.h"
 #include "RelayTask.h"
 
+namespace DataFlow {
+
+namespace mpi {
+
+
 //#define DEBUG_PRINTS
 const int RANKID=0;
 #ifdef DEBUG_PRINTS
@@ -26,8 +31,8 @@ const int RANKID=0;
 # define PRINT_RANK(x) do {} while (0)
 #endif
 
-using namespace DataFlow;
 
+/*
 DataBlock::DataBlock(const DataBlock& block)
 {
   size = block.size;
@@ -44,7 +49,7 @@ DataBlock DataBlock::clone() const
   memcpy(data_copy.buffer, buffer, size);
   return data_copy;
 }
-
+*/
 
 Controller::TaskWrapper::TaskWrapper(const DataFlow::Task& t) : mTask(t)
 {
@@ -566,4 +571,5 @@ int execute(Controller *c,Controller::TaskWrapper task)
 }
 
 
-
+} // namespace mpi
+} // namespace DataFlow

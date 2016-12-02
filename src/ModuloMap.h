@@ -11,6 +11,8 @@
 #include "Definitions.h"
 #include "TaskGraph.h"
 
+namespace DataFlow {
+
 class ModuloMap : public DataFlow::TaskMap
 {
 public:
@@ -36,6 +38,6 @@ private:
   TaskId mTaskCount;
 
 };
-
+}
 
 #endif /* MODULEMAP_H_ */

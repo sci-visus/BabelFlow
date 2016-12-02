@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include <cstdlib>
 
+namespace DataFlow {
+
 //! Index type used to identify tasks
 typedef uint32_t TaskId;
 
@@ -27,6 +29,7 @@ const ShardId CNULL = (ShardId)-1;
 typedef uint8_t CallbackId;
 
 
+/*
 //! A DataBlock abstracts a chunk of memory
 class DataBlock
 {
@@ -47,7 +50,8 @@ public:
   //! The size with size=-1 and buffer != NULL indicating a pointer to a class instance
   int32_t size;
 };
+*/
 
-
+}
 
 #endif /* DEFINITIONS_H_ */

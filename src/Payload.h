@@ -11,6 +11,8 @@
 #include <cassert>
 #include <cstring>
 
+namespace DataFlow {
+
 class Payload {
 
 public:
@@ -48,6 +50,7 @@ protected:
   char* mBuffer;
 };
 
+}
 
 
 #endif /* MPI_PAYLOAD_H_ */

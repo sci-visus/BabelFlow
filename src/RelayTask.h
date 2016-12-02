@@ -10,6 +10,7 @@
 
 #include <cassert>
 
+namespace DataFlow {
 
 int relay_message(std::vector<Payload>& inputs, std::vector<Payload>& outputs, TaskId task)
 {
@@ -23,6 +24,6 @@ int relay_message(std::vector<Payload>& inputs, std::vector<Payload>& outputs, T
   return 1;
 }
 
-
+}
 
 #endif /* RELAYTASK_H_ */
