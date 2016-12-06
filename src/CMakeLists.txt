@@ -42,6 +42,7 @@ INSTALL(TARGETS dataflow
 )
 
 if (ENABLE_MPI)
+
     add_subdirectory(mpi)
 
     set(DATAFLOW_LIBRARIES 
@@ -51,13 +52,8 @@ if (ENABLE_MPI)
     ) 
 
 elseif(ENABLE_CHARM)
-    add_subdirectory(charm)
 
-    set(DATAFLOW_LIBRARIES 
-        ${DATAFLOW_LIBRARIES}
-        dataflow_charm
-        PARENT_SCOPE
-    ) 
+    add_subdirectory(charm)
 
 else()
     message(FATAL_ERROR "Unrecognized runtime")
