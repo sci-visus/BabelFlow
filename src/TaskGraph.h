@@ -10,6 +10,8 @@
 
 #include <vector>
 #include <cstdio>
+#include <cassert>
+#include <string>
 
 #include "Task.h"
 
@@ -33,6 +35,12 @@ public:
 
   //! Compute the fully specified tasks for the given controller
   virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const = 0;
+
+  //! Return the task for the given global task id
+  virtual Task task(uint64_t gId) const {assert(false);return Task();}
+
+  //! Return the global id of the given task id
+  virtual uint64_t gId(TaskId tId) const {assert(false);return 0;}
 
   //! Output the entire graph as dot file
   virtual int output_graph(ShardId count, const TaskMap* task_map, FILE* output);

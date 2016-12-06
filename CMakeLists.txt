@@ -2,11 +2,21 @@ Project(DataFlow)
 cmake_minimum_required(VERSION 2.8)
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
-if(NOT DISABLE_MPI)
-  Find_Package(MPI)
-  set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
-  set(CMAKE_C_COMPILER ${MPI_C_COMPILER})
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+
+if (ENABLE_CHARM)
+    find_package(Charm)
+
+    set(CMAKE_C_COMPILER ${CHARM_COMPILER}) 
+    set(CMAKE_CXX_COMPILER ${CHARM_COMPILER}) 
+else()
+    set(ENABLE_MPI TRUE)
+    
+    Find_Package(MPI)
+    set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
+    set(CMAKE_C_COMPILER ${MPI_C_COMPILER})
 endif()
+
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set (CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/" CACHE PATH "default install path" FORCE )
@@ -30,4 +40,4 @@ endif()
 
 
 add_subdirectory(src)
-add_subdirectory(examples)
+#add_subdirectory(examples)

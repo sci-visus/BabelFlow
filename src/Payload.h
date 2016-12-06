@@ -10,8 +10,26 @@
 
 #include <cassert>
 #include <cstring>
+#include <vector>
 
 namespace DataFlow {
+
+class Payload;
+
+//! The typedef for the accepted callbacks
+/*! A Callback is the only accepted function signature for a task.
+ *  It takes n>=0  DataBlocks as input and produces m>=0 DataBlocks
+ *  as output. The callback will assume ownership of the input buffers
+ *  as is responsible for deleting any associated memory. Similarly,
+ *  the callback will give up ownership of all output buffers to the
+ *  caller
+ *
+ * @param inputs A set of DataBlocks that are the inputs
+ * @param outputs A set of DataBlocks storing the outputs
+ * @return 1 if successful and 0 otherwise
+ */
+typedef int (*Callback)(std::vector<Payload>& inputs, std::vector<Payload>& outputs, TaskId task);
+
 
 class Payload {
 

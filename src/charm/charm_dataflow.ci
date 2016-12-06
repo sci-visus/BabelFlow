@@ -1,0 +1,11 @@
+mainmodule charm_dataflow {
+
+  mainchare Main {
+    entry Main(CkArgMsg *m);
+  };
+
+  array [1D] CharmTask {
+    entry CharmTask(DataFlow::charm::CharmTaskGraphBase cgraph, std::vector<DataFlow::Callback> callbacks);
+    entry void addInput(DataFlow::TaskId source, std::vector<char>  input);
+  };          
+};
