@@ -5,4 +5,11 @@ mainmodule reduction {
   mainchare Main {
       entry Main(CkArgMsg* m);
   };          
+  
+  /*
+ template <class TaskGraph>
+  array [1D] MakeInput {
+    entry MakeInput(DataFlow::charm::Controller<Reduction,ReductionCallbacks>::ProxyType proxy);
+  };
+  */
 };

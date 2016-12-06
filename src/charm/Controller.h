@@ -25,7 +25,8 @@ class Controller
 {
 public:
 
-  typedef CProxy_CharmDataFlowTask<TaskGraphClass,CallbackClass> ProxyType;
+  typedef CharmTask<TaskGraphClass,CallbackClass> TaskType;
+  typedef CProxy_CharmTask<TaskGraphClass,CallbackClass> ProxyType;
 
   //! Default constructor
   Controller() {}
@@ -34,22 +35,23 @@ public:
   ~Controller() {}
 
   //! Initialize the controller with the given graph
-  int initialize(const std::string& graph_config);
+  ProxyType initialize(const std::string& graph_config);
 
 };
 
 
 
 template <class TaskGraphClass, class CallbackClass>
-int Controller<TaskGraphClass,CallbackClass>::initialize(const std::string& graph_config)
+CProxy_CharmTask<TaskGraphClass,CallbackClass> Controller<TaskGraphClass,CallbackClass>::initialize(const std::string& graph_config)
 {
   TaskGraphClass graph(graph_config);
 
+  fprintf(stderr,"Trying to create %d tasks\n", graph.size());
 
-  ProxyType tasks = ProxyType::ckNew(graph_config);//, graph.size());
+  // Create an array to hold all tasks
+  ProxyType tasks = ProxyType::ckNew(graph_config, graph.size());
 
-
-  return 1;
+  return tasks;
 }
 
 

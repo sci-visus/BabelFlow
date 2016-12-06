@@ -37,10 +37,13 @@ public:
   virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const = 0;
 
   //! Return the task for the given global task id
-  virtual Task task(uint64_t gId) const {assert(false);return Task();}
+  virtual Task task(uint64_t gId) const = 0;
 
   //! Return the global id of the given task id
-  virtual uint64_t gId(TaskId tId) const {assert(false);return 0;}
+  virtual uint64_t gId(TaskId tId) const = 0;
+
+  //! Return the global id of the given leaf id
+  //virtual uint64_t leaf(uint64_t lId) const = 0;
 
   //! Return the total number of tasks (or some reasonable upper bound)
   virtual TaskId size() const = 0;

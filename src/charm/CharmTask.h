@@ -28,15 +28,18 @@ namespace charm {
 typedef std::vector<char> Buffer;
 
 template<class TaskGraphClass, class CallbackClass>
-class CharmDataFlowTask : public CBase_CharmDataFlowTask<TaskGraphClass, CallbackClass>
+class CharmTask : public CBase_CharmTask<TaskGraphClass, CallbackClass>
 {
 public:
 
   //! Constructor which sets the callback and decodes destinations
-  CharmDataFlowTask(std::string config);
+  CharmTask(std::string config);
 
   //! Default
-  CharmDataFlowTask(CkMigrateMessage *m) {}
+  CharmTask(CkMigrateMessage *m) {}
+
+  ~CharmTask() {}
+
 
   //! The main compute call for the task
   void exec();
@@ -61,11 +64,14 @@ private:
 
 
 template<class TaskGraphClass, class CallbackClass>
-CharmDataFlowTask<TaskGraphClass, CallbackClass>::CharmDataFlowTask(std::string config) : mCallback(NULL)
+CharmTask<TaskGraphClass, CallbackClass>::CharmTask(std::string config) : mCallback(NULL)
 {
+  fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
 
+  return;
   TaskGraphClass graph(config);
 
+  return;
   mTask = graph.task(this->thisIndex);
   mCallback = CallbackClass::callback(mTask.callback());
 
@@ -87,7 +93,7 @@ CharmDataFlowTask<TaskGraphClass, CallbackClass>::CharmDataFlowTask(std::string 
 }
 
 template<class TaskGraphClass, class CallbackClass>
-void CharmDataFlowTask<TaskGraphClass, CallbackClass>::exec()
+void CharmTask<TaskGraphClass, CallbackClass>::exec()
 {
   assert (mCallback != NULL);
 
@@ -123,7 +129,7 @@ void CharmDataFlowTask<TaskGraphClass, CallbackClass>::exec()
 }
 
 template<class TaskGraphClass, class CallbackClass>
-void CharmDataFlowTask<TaskGraphClass, CallbackClass>::addInput(TaskId source, Buffer buffer)
+void CharmTask<TaskGraphClass, CallbackClass>::addInput(TaskId source, Buffer buffer)
 {
   TaskId i;
   bool is_ready = true;

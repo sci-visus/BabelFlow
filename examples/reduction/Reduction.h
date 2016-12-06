@@ -39,6 +39,15 @@ public:
   //! given controller id and task map
   virtual std::vector<DataFlow::Task> localGraph(DataFlow::ShardId id, const DataFlow::TaskMap* task_map) const;
 
+  //! Return the taskId for the given global task id
+  virtual DataFlow::Task task(uint64_t gId) const;
+
+  //! Return the global id of the given task id
+  virtual uint64_t gId(DataFlow::TaskId tId) const {return tId;}
+
+  //! Return the global id of the given leaf id
+  //virtual uint64_t leaf(uint64_t lId) const = 0;
+
   //! Return the total number of tasks
   DataFlow::TaskId size() const {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
 

@@ -100,3 +100,38 @@ std::vector<Task> Reduction::localGraph(ShardId id, const TaskMap* task_map) con
 
   return tasks;
 }
+
+DataFlow::Task Reduction::task(uint64_t gId) const
+{
+  DataFlow::Task task(gId);
+  std::vector<DataFlow::TaskId> incoming; // There will be at most valence many incoming
+  std::vector<std::vector<DataFlow::TaskId> > outgoing(1); // and one output
+  uint32_t i;
+
+  if (gId < leafCount()) {
+    incoming.resize(mValence);
+    for (i=0;i<mValence;i++)
+      incoming[i] = task.id()*mValence + i + 1;
+
+    task.incoming(incoming);
+  }
+  else { // Otherwise we expect one external input
+    incoming.resize(1,TNULL);
+  }
+
+  // Then we assign the outputs
+  if (task.id() != 0) {// If we are not the root
+    task.callback(1); // We do a reduction
+    outgoing[0][0] = (task.id() - 1) / mValence;
+  }
+  else {
+    task.callback(0); // Otherwise we report the result
+    outgoing.clear();
+  }
+
+  task.incoming(incoming);
+  task.outputs(outgoing);
+
+  return task;
+}
+

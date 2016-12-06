@@ -78,6 +78,26 @@ public:
   }
 };
 
+/*
+template <class TaskGraph>
+class MakeInput : CBase_MakeInput
+{
+public:
+
+  MakeInput(DataFlow::charm::Controller<Reduction,ReductionCallbacks>::ProxyType proxy) {
+
+    std::vector<char> buffer[sizeof(uint32_t)];
+    uint32_t input = 1;
+
+    buffer.assign(&input,&input + sizeof(uint32_t));
+
+    proxy[]
+  }
+};
+*/
+
+
+
 class Main : public CBase_Main
 {
 public:
@@ -85,6 +105,14 @@ public:
   //! The main constructor that constructs *and* starts the dataflow
   Main(CkArgMsg* m)
   {
+
+    if (m->argc < 3) {
+      fprintf(stderr,"Usage: %s <nr-of-leafs> <fan-in> \n", m->argv[0]);
+    }
+    else
+      fprintf(stderr,"Starting program with %d leafs and fanin %d\n",atoi(m->argv[1]),atoi(m->argv[2]));
+
+
     uint32_t leafs = atoi(m->argv[1]);
     uint32_t valence = atoi(m->argv[2]);
 
@@ -96,7 +124,25 @@ public:
 
     DataFlow::charm::Controller<Reduction,ReductionCallbacks> controller;
 
-    controller.initialize(config.str());
+    DataFlow::charm::Controller<Reduction,ReductionCallbacks>::ProxyType proxy;
+
+    proxy = controller.initialize(config.str());
+
+    fprintf(stderr,"Going to sleep\n");
+    sleep(100000);
+    return;
+    uint32_t count=1;
+    uint32_t sum = 0;
+    for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
+
+      std::vector<char> buffer(sizeof(uint32_t));
+
+      buffer.assign(&count,&count + sizeof(uint32_t));
+
+      proxy[graph.gId(i)].addInput(TNULL,buffer);
+      sum += count++;
+    }
+
   }
 
 };
