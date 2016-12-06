@@ -8,13 +8,18 @@ if (ENABLE_CHARM)
     find_package(Charm)
 
     set(CMAKE_C_COMPILER ${CHARM_COMPILER}) 
-    set(CMAKE_CXX_COMPILER ${CHARM_COMPILER}) 
+    set(CMAKE_CXX_COMPILER ${CHARM_COMPILER})
+    
 else()
     set(ENABLE_MPI TRUE)
     
     Find_Package(MPI)
     set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
     set(CMAKE_C_COMPILER ${MPI_C_COMPILER})
+
+    set(DATAFLOW_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH})
+    set(DATAFLOW_LIBRARIES ${MPI_CXX_LIBRARIES}) 
+
 endif()
 
 
@@ -40,4 +45,4 @@ endif()
 
 
 add_subdirectory(src)
-#add_subdirectory(examples)
+add_subdirectory(examples)

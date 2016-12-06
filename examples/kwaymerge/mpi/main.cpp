@@ -10,12 +10,12 @@
 #include <cstdlib>
 
 #include "mpi.h"
-#include "KWayTaskMap.h"
+#include "../KWayTaskMap.h"
 #include "Payload.h"
 #include "mpi/Controller.h"
 
 
-#include "KWayMerge.h"
+#include "../KWayMerge.h"
 
 using namespace DataFlow;
 using namespace DataFlow::mpi;

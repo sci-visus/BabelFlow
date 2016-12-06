@@ -26,6 +26,12 @@ SET (DATAFLOW_SRC
 
 add_library(dataflow STATIC ${DATAFLOW_SRC})
   
+set(DATAFLOW_LIBRARIES 
+    ${DATAFLOW_LIBRARIES}
+    dataflow
+    PARENT_SCOPE
+) 
+
  
 INSTALL(FILES ${DATAFLOW_HEADERS}
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include/DataFlow
@@ -37,8 +43,22 @@ INSTALL(TARGETS dataflow
 
 if (ENABLE_MPI)
     add_subdirectory(mpi)
+
+    set(DATAFLOW_LIBRARIES 
+        ${DATAFLOW_LIBRARIES}
+        dataflow_mpi
+        PARENT_SCOPE
+    ) 
+
 elseif(ENABLE_CHARM)
     add_subdirectory(charm)
+
+    set(DATAFLOW_LIBRARIES 
+        ${DATAFLOW_LIBRARIES}
+        dataflow_charm
+        PARENT_SCOPE
+    ) 
+
 else()
     message(FATAL_ERROR "Unrecognized runtime")
 endif()

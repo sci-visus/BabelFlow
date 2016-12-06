@@ -12,7 +12,7 @@
 #include <cstdlib>
 
 #include "mpi.h"
-#include "Broadcast.h"
+#include "../Broadcast.h"
 #include "ModuloMap.h"
 #include "mpi/Controller.h"
 
