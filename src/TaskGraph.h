@@ -28,7 +28,7 @@ class TaskGraph
 public:
 
   //! Default constructor
-  TaskGraph() {}
+  TaskGraph(std::string config = "") {}
 
   //! Default destructor
   virtual ~TaskGraph() {}
@@ -41,6 +41,9 @@ public:
 
   //! Return the global id of the given task id
   virtual uint64_t gId(TaskId tId) const {assert(false);return 0;}
+
+  //! Return the total number of tasks (or some reasonable upper bound)
+  virtual TaskId size() const = 0;
 
   //! Output the entire graph as dot file
   virtual int output_graph(ShardId count, const TaskMap* task_map, FILE* output);

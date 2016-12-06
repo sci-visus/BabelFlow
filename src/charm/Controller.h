@@ -12,17 +12,20 @@
 
 #include "Definitions.h"
 #include "TaskGraph.h"
-#include "Payload.h"
 
+#include "charm_dataflow.decl.h"
 
 namespace DataFlow {
 namespace charm {
 
 
 //! The Charm++ based controller
+template <class TaskGraphClass, class CallbackClass>
 class Controller
 {
 public:
+
+  typedef CProxy_CharmDataFlowTask<TaskGraphClass,CallbackClass> ProxyType;
 
   //! Default constructor
   Controller() {}
@@ -31,15 +34,24 @@ public:
   ~Controller() {}
 
   //! Initialize the controller with the given graph
-  int initialize(const TaskGraph& graph);
+  int initialize(const std::string& graph_config);
 
-  //! Register a callback for the given id
-  int registerCallback(CallbackId id, Callback func);
-
-private:
-
-  static std::vector<Callback> mCallbacks;
 };
+
+
+
+template <class TaskGraphClass, class CallbackClass>
+int Controller<TaskGraphClass,CallbackClass>::initialize(const std::string& graph_config)
+{
+  TaskGraphClass graph(graph_config);
+
+
+  ProxyType tasks = ProxyType::ckNew(graph_config);//, graph.size());
+
+
+  return 1;
+}
+
 
 }
 }

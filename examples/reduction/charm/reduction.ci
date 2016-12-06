@@ -1,0 +1,8 @@
+mainmodule reduction {
+
+  extern module charm_dataflow;
+
+  mainchare Main {
+      entry Main(CkArgMsg* m);
+  };          
+};

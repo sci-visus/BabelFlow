@@ -9,6 +9,7 @@
 #define RELAYTASK_H
 
 #include <cassert>
+#include "Payload.h"
 
 namespace DataFlow {
 

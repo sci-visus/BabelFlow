@@ -20,7 +20,7 @@ class CharmTaskGraphBase
 public:
 
   //! The constructor
-  CharmTaskGraphBase(std::string config) {}
+  CharmTaskGraphBase(std::string config = "") : mConfig(config) {}
 
   virtual ~CharmTaskGraphBase() {}
 
@@ -28,7 +28,7 @@ public:
 
   void pup(PUP::er &p) {p|mConfig;}
 
-private:
+protected:
 
   //! The configuration string that can build an instance
   std::string mConfig;
@@ -36,7 +36,7 @@ private:
 
 
 
-template<class TaskGraph>
+template<class TaskGraphType>
 class CharmTaskGraph : public CharmTaskGraphBase
 {
 public:
@@ -46,7 +46,6 @@ public:
 
   virtual ~CharmTaskGraph() {}
 
-  virtual TaskGraph* buildGraph() const {return TaskGraph::instantiate(this->mConfig);}
 };
 
 }

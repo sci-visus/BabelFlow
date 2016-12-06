@@ -5,7 +5,7 @@ set(CHARM_SRC
 
 set(CHARM_HEADERS
     CharmTask.h
-    CharmTaskGraph.h
+    #CharmTaskGraph.h
     Controller.h
 )
 
@@ -13,7 +13,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_charm_module(charm_dataflow)
-add_charm_library(charm_dataflow dataflow_charm ${CHARM_SRC})
+add_charm_library(charm_dataflow dataflow_charm ${CHARM_HEADERS} ${CHARM_SRC})
 target_link_libraries(dataflow_charm dataflow)
 
 

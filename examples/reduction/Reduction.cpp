@@ -6,6 +6,7 @@
  */
 
 #include <cmath>
+#include <sstream>
 
 #include "Reduction.h"
 
@@ -23,6 +24,26 @@ Reduction::Reduction(uint32_t leafs, uint32_t valence) : TaskGraph(),
     mLevels++;
   }
 }
+
+Reduction::Reduction(std::string config)
+{
+  std::stringstream cmd(config);
+
+  uint32_t leafs;
+
+  cmd >> leafs;
+  cmd >> mValence;
+
+  // Find the number of leafs that is a power of valence
+  mLeafs = 1;
+  mLevels = 0;
+
+  while (mLeafs < leafs) {
+    mLeafs *= mValence;
+    mLevels++;
+  }
+}
+
 
 
 std::vector<Task> Reduction::localGraph(ShardId id, const TaskMap* task_map) const

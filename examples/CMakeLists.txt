@@ -1,12 +1,6 @@
 
-if (ENABLE_MPI)
-    add_subdirectory(broadcast/mpi)
-    add_subdirectory(reduction/mpi)
-#    add_subdirectory(hierarchical-reduction/mpi)
-    add_subdirectory(kwaymerge/mpi)
-elseif (ENABLE_CHARM)
-    add_subdirectory(broadcast/charm)
-    add_subdirectory(reduction/charm)
-#    add_subdirectory(hierarchical-reduction/charm)
-    add_subdirectory(kwaymerge/charm)
-endif()    
+#add_subdirectory(broadcast)
+add_subdirectory(reduction)
+#add_subdirectory(hierarchical-reduction)
+#add_subdirectory(kwaymerge)
+    

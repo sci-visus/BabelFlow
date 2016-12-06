@@ -27,7 +27,10 @@ public:
    * @param leafs: The minimal number of leafs to create
    * @param valence: The fanin of the reduction
    */
-  Reduction(uint32_t leafs, uint32_t valence);
+  Reduction(uint32_t leafs = 1, uint32_t valence = 1);
+
+  //! COnstruct from command line arguments
+  Reduction(std::string config);
 
   //! Default destructor
   virtual ~Reduction() {}
