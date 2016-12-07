@@ -12,7 +12,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_charm_module(charm_dataflow)
 
-add_dependencies(dataflow charm_dataflowModule)
+add_dependencies(dataflow charm_dataflowCharm)
 
 
 #add_charm_library(charm_dataflow dataflow_charm ${CHARM_HEADERS})
