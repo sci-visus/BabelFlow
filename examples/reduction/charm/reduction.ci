@@ -13,6 +13,7 @@ mainmodule reduction {
    array [1D] TestTask {
       entry TestTask();
   };
+  array [1D] TestTask<int>;
   
    array [1D] TestTask2 {
       entry TestTask2();

@@ -86,7 +86,7 @@ class TestTask : public CBase_TestTask<dummy1>
 public:
 
   TestTask() {
-    fprintf(stderr,"Task %d\n",this->thisIndex);
+    fprintf(stderr,"Task<> %d\n",this->thisIndex);
     if (this->thisIndex == 9) {
       usleep(1000);
       mainProxy.done();
@@ -149,10 +149,10 @@ public:
     // Various Test code
 
     // This will seg fault
-    //CProxy_TestTask<int> proxy = CProxy_TestTask<int>::ckNew(10);
+    CProxy_TestTask<int> proxy = CProxy_TestTask<int>::ckNew(10);
 
     // While this succeeds
-    CProxy_TestTask2 proxy = CProxy_TestTask2::ckNew(10);
+    //CProxy_TestTask2 proxy = CProxy_TestTask2::ckNew(10);
 
     return;
 
