@@ -80,8 +80,8 @@ public:
   }
 };
 
-template<typename dummy1>
-class TestTask : public CBase_TestTask<dummy1>
+template<class dummy1>
+class TestTask : public CBase_TestTask<dummy1>//, public DataFlow::charm::CBase_CharmTask<Reduction,ReductionCallbacks>
 {
 public:
 
@@ -140,24 +140,22 @@ public:
 
     DataFlow::charm::Controller<Reduction,ReductionCallbacks> controller;
 
-    /*
+    
     // This should be the correct true code
     DataFlow::charm::Controller<Reduction,ReductionCallbacks>::ProxyType proxy;
     proxy = controller.initialize(config.str());
-     */
-
+    
     // Various Test code
 
     // This will seg fault
-    CProxy_TestTask<int> proxy = CProxy_TestTask<int>::ckNew(10);
+    //CProxy_TestTask<int> proxy = CProxy_TestTask<int>::ckNew(10);
 
     // While this succeeds
     //CProxy_TestTask2 proxy = CProxy_TestTask2::ckNew(10);
 
-    return;
+    //return;
 
-
-    /*// Original code
+    // Original code
     uint32_t count=1;
     uint32_t sum = 0;
     for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
@@ -169,7 +167,7 @@ public:
       proxy[graph.gId(i)].addInput(TNULL,buffer);
       sum += count++;
     }
-     */
+    
   }
 
   Main(CkMigrateMessage *m) {}

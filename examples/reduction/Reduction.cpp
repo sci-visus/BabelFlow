@@ -122,6 +122,8 @@ DataFlow::Task Reduction::task(uint64_t gId) const
   // Then we assign the outputs
   if (task.id() != 0) {// If we are not the root
     task.callback(1); // We do a reduction
+    outgoing.resize(1);
+    outgoing[0].resize(1);
     outgoing[0][0] = (task.id() - 1) / mValence;
   }
   else {

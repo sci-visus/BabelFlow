@@ -67,11 +67,10 @@ CharmTask<TaskGraphClass, CallbackClass>::CharmTask(std::string config) : mCallb
 {
   fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
 
-  return;
   TaskGraphClass graph(config);
 
-  return;
   mTask = graph.task(this->thisIndex);
+  // return;
   mCallback = CallbackClass::callback(mTask.callback());
 
   mInputs.resize(mTask.fanin());
@@ -152,6 +151,8 @@ void CharmTask<TaskGraphClass, CallbackClass>::addInput(TaskId source, Buffer bu
   if (!input_added) {
     fprintf(stderr,"Unknown sender %d in TaskWrapper::addInput for task %d\n",source,mTask.id());
     assert (false);
+  }else{
+    printf("input added \n");
   }
 
   if (is_ready)
