@@ -2,14 +2,19 @@ mainmodule reduction {
 
   extern module charm_dataflow;
 
+  readonly CProxy_Main mainProxy;
+   
   mainchare Main {
       entry Main(CkArgMsg* m);
+      entry void done();
   };          
   
-  /*
- template <class TaskGraph>
-  array [1D] MakeInput {
-    entry MakeInput(DataFlow::charm::Controller<Reduction,ReductionCallbacks>::ProxyType proxy);
+   template<typename dummy1>
+   array [1D] TestTask {
+      entry TestTask();
   };
-  */
+  
+   array [1D] TestTask2 {
+      entry TestTask2();
+  };
 };

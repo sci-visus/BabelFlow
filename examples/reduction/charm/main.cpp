@@ -19,6 +19,7 @@
 
 #include "reduction.decl.h"
 
+/* readonly */ CProxy_Main mainProxy;
 
 using namespace DataFlow;
 
@@ -54,6 +55,7 @@ int report_sum(std::vector<Payload>& inputs, std::vector<Payload>& output, TaskI
   int r = rand() % 100000;
   usleep(r);
 
+  mainProxy.done();
   return 1;
 }
 
@@ -78,25 +80,38 @@ public:
   }
 };
 
-/*
-template <class TaskGraph>
-class MakeInput : CBase_MakeInput
+template<typename dummy1>
+class TestTask : public CBase_TestTask<dummy1>
 {
 public:
 
-  MakeInput(DataFlow::charm::Controller<Reduction,ReductionCallbacks>::ProxyType proxy) {
-
-    std::vector<char> buffer[sizeof(uint32_t)];
-    uint32_t input = 1;
-
-    buffer.assign(&input,&input + sizeof(uint32_t));
-
-    proxy[]
+  TestTask() {
+    fprintf(stderr,"Task %d\n",this->thisIndex);
+    if (this->thisIndex == 9) {
+      usleep(1000);
+      mainProxy.done();
+    }
   }
+
+  TestTask(CkMigrateMessage *m) {}
+
 };
-*/
 
+class TestTask2 : public CBase_TestTask2
+{
+public:
 
+  TestTask2() {
+    fprintf(stderr,"Task %d\n",this->thisIndex);
+    if (this->thisIndex == 9) {
+      usleep(1000);
+      mainProxy.done();
+    }
+  }
+
+  TestTask2(CkMigrateMessage *m) {}
+
+};
 
 class Main : public CBase_Main
 {
@@ -112,6 +127,7 @@ public:
     else
       fprintf(stderr,"Starting program with %d leafs and fanin %d\n",atoi(m->argv[1]),atoi(m->argv[2]));
 
+    mainProxy = thisProxy;
 
     uint32_t leafs = atoi(m->argv[1]);
     uint32_t valence = atoi(m->argv[2]);
@@ -124,13 +140,24 @@ public:
 
     DataFlow::charm::Controller<Reduction,ReductionCallbacks> controller;
 
+    /*
+    // This should be the correct true code
     DataFlow::charm::Controller<Reduction,ReductionCallbacks>::ProxyType proxy;
-
     proxy = controller.initialize(config.str());
+     */
 
-    fprintf(stderr,"Going to sleep\n");
-    sleep(100000);
+    // Various Test code
+
+    // This will seg fault
+    //CProxy_TestTask<int> proxy = CProxy_TestTask<int>::ckNew(10);
+
+    // While this succeeds
+    CProxy_TestTask2 proxy = CProxy_TestTask2::ckNew(10);
+
     return;
+
+
+    /*// Original code
     uint32_t count=1;
     uint32_t sum = 0;
     for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
@@ -142,10 +169,18 @@ public:
       proxy[graph.gId(i)].addInput(TNULL,buffer);
       sum += count++;
     }
-
+     */
   }
 
+  Main(CkMigrateMessage *m) {}
+
+  void done() {CkExit();}
 };
+
+#define CK_TEMPLATES_ONLY
+#include "reduction.def.h"
+#undef CK_TEMPLATES_ONLY
+
 
 #include "reduction.def.h"
 #include "charm_dataflow.def.h"
