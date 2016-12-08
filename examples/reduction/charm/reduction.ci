@@ -9,13 +9,10 @@ mainmodule reduction {
       entry void done();
   };          
   
-   template<typename dummy1>
-   array [1D] TestTask {
-      entry TestTask();
-  };
-  array [1D] TestTask<int>;
-  
-   array [1D] TestTask2 {
-      entry TestTask2();
-  };
+  // Note: temporarely here for testing, but should not
+  namespace DataFlow {
+    namespace charm {
+      array [1D] CharmTask<Reduction,ReductionCallbacks>;
+    }
+  }
 };

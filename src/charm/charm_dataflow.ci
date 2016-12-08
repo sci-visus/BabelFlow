@@ -9,9 +9,6 @@ module charm_dataflow {
         entry void addInput(DataFlow::TaskId source, std::vector<char> input);
       };
 
-      // Note: temporarely here for testing, but should not
-      array [1D] CharmTask<Reduction,ReductionCallbacks>;
-
     }          
   }
 };

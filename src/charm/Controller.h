@@ -9,6 +9,7 @@
 #define CHARMCONTROLLER_H
 
 #include <vector>
+#include <cstdlib>
 
 #include "Definitions.h"
 #include "TaskGraph.h"
@@ -46,7 +47,7 @@ CProxy_CharmTask<TaskGraphClass,CallbackClass> Controller<TaskGraphClass,Callbac
 {
   TaskGraphClass graph(graph_config);
 
-  fprintf(stderr,"Trying to create %d tasks\n", graph.size());
+  //fprintf(stderr,"Trying to create %d tasks\n", graph.size());
 
   // Create an array to hold all tasks
   ProxyType tasks = ProxyType::ckNew(graph_config, graph.size());

@@ -80,42 +80,12 @@ public:
   }
 };
 
-template<class dummy1>
-class TestTask : public CBase_TestTask<dummy1>//, public DataFlow::charm::CBase_CharmTask<Reduction,ReductionCallbacks>
-{
-public:
-
-  TestTask() {
-    fprintf(stderr,"Task<> %d\n",this->thisIndex);
-    if (this->thisIndex == 9) {
-      usleep(1000);
-      mainProxy.done();
-    }
-  }
-
-  TestTask(CkMigrateMessage *m) {}
-
-};
-
-class TestTask2 : public CBase_TestTask2
-{
-public:
-
-  TestTask2() {
-    fprintf(stderr,"Task %d\n",this->thisIndex);
-    if (this->thisIndex == 9) {
-      usleep(1000);
-      mainProxy.done();
-    }
-  }
-
-  TestTask2(CkMigrateMessage *m) {}
-
-};
 
 class Main : public CBase_Main
 {
 public:
+
+  uint32_t mSum;
 
   //! The main constructor that constructs *and* starts the dataflow
   Main(CkArgMsg* m)
@@ -136,43 +106,34 @@ public:
     std::stringstream config;
     config << m->argv[1] << " " << m->argv[2];
 
+    // Output the graph for checking
     Reduction graph(config.str());
+    ModuloMap task_map(1,graph.size());
+    FILE* output=fopen("output.dot","w");
+    graph.output_graph(1,&task_map,output);
+    fclose(output);
 
     DataFlow::charm::Controller<Reduction,ReductionCallbacks> controller;
-
     
-    // This should be the correct true code
     DataFlow::charm::Controller<Reduction,ReductionCallbacks>::ProxyType proxy;
     proxy = controller.initialize(config.str());
     
-    // Various Test code
-
-    // This will seg fault
-    //CProxy_TestTask<int> proxy = CProxy_TestTask<int>::ckNew(10);
-
-    // While this succeeds
-    //CProxy_TestTask2 proxy = CProxy_TestTask2::ckNew(10);
-
-    //return;
-
-    // Original code
     uint32_t count=1;
-    uint32_t sum = 0;
+    mSum = 0;
     for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
 
       std::vector<char> buffer(sizeof(uint32_t));
 
-      buffer.assign(&count,&count + sizeof(uint32_t));
+      buffer.assign((char*)&count,((char *)&count) + sizeof(uint32_t));
 
       proxy[graph.gId(i)].addInput(TNULL,buffer);
-      sum += count++;
+      mSum += count++;
     }
-    
   }
 
   Main(CkMigrateMessage *m) {}
 
-  void done() {CkExit();}
+  void done() {fprintf(stderr,"Correct total sum is %d\n",mSum);CkExit();}
 };
 
 #define CK_TEMPLATES_ONLY
@@ -182,73 +143,4 @@ public:
 
 #include "reduction.def.h"
 #include "charm_dataflow.def.h"
-
-/*
-int main(int argc, char* argv[])
-{
-  if (argc < 3) {
-    fprintf(stderr,"Usage: %s <nr-of-leafs> <fan-in> \n", argv[0]);
-    return 0;
-  }
-
-  srand(100);
-
-  MPI_Init(&argc, &argv);
-
-  fprintf(stderr,"After MPI_Init\n");
-  // FInd out how many controllers we need
-  int mpi_width;
-  MPI_Comm_size(MPI_COMM_WORLD, &mpi_width);
-
-  fprintf(stderr,"Using %d processes\n",mpi_width);
-
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  if (rank == 0)
-    fprintf(stderr,"My rank %d\n",rank);
-
-
-  uint32_t leafs = atoi(argv[1]);
-  uint32_t valence = atoi(argv[2]);
-
-  Reduction graph(leafs,valence);
-  ModuloMap task_map(mpi_width,graph.size());
-
-  Controller master;
-
-  FILE* output = fopen("task_graph.dot","w");
-  graph.output_graph(mpi_width,&task_map,output);
-  fclose(output);
-
-  master.initialize(graph,&task_map);
-  master.registerCallback(1,add_int);
-  master.registerCallback(2,report_sum);
-
-  std::map<TaskId,Payload> inputs;
-
-
-  uint32_t count=1;
-  uint32_t sum = 0;
-  for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
-
-    int32_t size = sizeof(uint32_t);
-    char* buffer = (char*)(new uint32_t[1]);
-    *((uint32_t*)buffer) = count;
-
-
-    Payload data(size,buffer);
-
-    inputs[i] = data;
-
-    sum += count++;
-  }
-
-  master.run(inputs);
-
-  fprintf(stderr,"The result was supposed to be %d\n",sum);
-  MPI_Finalize();
-  return 0;
-}
-*/
 

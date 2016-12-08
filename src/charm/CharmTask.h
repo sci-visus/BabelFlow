@@ -65,7 +65,7 @@ private:
 template<class TaskGraphClass, class CallbackClass>
 CharmTask<TaskGraphClass, CallbackClass>::CharmTask(std::string config) : mCallback(NULL)
 {
-  fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
+  //fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
 
   TaskGraphClass graph(config);
 
@@ -78,7 +78,8 @@ CharmTask<TaskGraphClass, CallbackClass>::CharmTask(std::string config) : mCallb
   //! Now we pre-compute the global ids of the outgoing tasks so we
   //! later do not need the task graph again
   mOutputs.resize(mTask.fanout());
-  for (uint32_t i;i<mTask.fanout();i++) {
+  for (uint32_t i=0;i<mTask.fanout();i++) {
+
     mOutputs[i].resize(mTask.outgoing(i).size());
     for (uint32_t j=0;j<mTask.outgoing(i).size();j++) {
 
@@ -95,6 +96,7 @@ void CharmTask<TaskGraphClass, CallbackClass>::exec()
 {
   assert (mCallback != NULL);
 
+  //fprintf(stderr,"CharmTask<TaskGraphClass, CallbackClass>::exec() %d  fanout %d\n",mTask.id(),mTask.fanout());
   std::vector<Payload> outputs(mTask.fanout());
 
   mCallback(mInputs,outputs,mTask.id());
@@ -108,6 +110,7 @@ void CharmTask<TaskGraphClass, CallbackClass>::exec()
     // For all tasks that need this output as input
     for(int j=0;j<mOutputs[i].size();j++)
     {
+      //fprintf(stderr,"\nProcessing output from %d to %d\n",mTask.id(),mOutputs[i][j]);
       if (mOutputs[i][j] != (uint64_t)-1)
         this->thisProxy[mOutputs[i][j]].addInput(mTask.id(),buffer);
     }
@@ -133,7 +136,10 @@ void CharmTask<TaskGraphClass, CallbackClass>::addInput(TaskId source, Buffer bu
   bool is_ready = true;
   bool input_added = false;
 
+  //fprintf(stderr,"CharmTask<TaskGraphClass, CallbackClass>::addInput id %d source %d \n", mTask.id(),source);
+
   for (i=0;i<mTask.fanin();i++) {
+    //fprintf(stderr,"\t %d incoming %d\n",mTask.id(),mTask.incoming()[i]);
     if (mTask.incoming()[i] == source) {
       assert(mInputs[i].buffer() == NULL);
 
@@ -149,10 +155,11 @@ void CharmTask<TaskGraphClass, CallbackClass>::addInput(TaskId source, Buffer bu
   }
 
   if (!input_added) {
-    fprintf(stderr,"Unknown sender %d in TaskWrapper::addInput for task %d\n",source,mTask.id());
+    fprintf(stderr,"Unknown sender %d in CharmTask::addInput for task %d\n",source,mTask.id());
     assert (false);
-  }else{
-    printf("input added \n");
+  }
+  else{
+    //printf("\tinput added is_ready = %d\n",is_ready);
   }
 
   if (is_ready)

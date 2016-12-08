@@ -50,6 +50,8 @@ std::vector<Task> Reduction::localGraph(ShardId id, const TaskMap* task_map) con
 {
   TaskId i;
 
+  //fprintf(stderr, "LocalGraph %d \n",id);
+
   // First get all the ids we need
   std::vector<TaskId> ids = task_map->tasks(id);
 
@@ -108,7 +110,7 @@ DataFlow::Task Reduction::task(uint64_t gId) const
   std::vector<std::vector<DataFlow::TaskId> > outgoing(1); // and one output
   uint32_t i;
 
-  if (gId < leafCount()) {
+  if (gId < size() - leafCount()) {
     incoming.resize(mValence);
     for (i=0;i<mValence;i++)
       incoming[i] = task.id()*mValence + i + 1;
@@ -127,7 +129,7 @@ DataFlow::Task Reduction::task(uint64_t gId) const
     outgoing[0][0] = (task.id() - 1) / mValence;
   }
   else {
-    task.callback(0); // Otherwise we report the result
+    task.callback(2); // Otherwise we report the result
     outgoing.clear();
   }
 
