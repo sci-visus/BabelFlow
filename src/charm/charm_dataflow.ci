@@ -5,7 +5,7 @@ module charm_dataflow {
   
       template<class TaskGraphClass, class CallbackClass>
       array [1D] CharmTask {
-        entry CharmTask(std::string config);
+        entry CharmTask(TaskGraphClass& graph);
         entry void addInput(DataFlow::TaskId source, std::vector<char> input);
       };
 

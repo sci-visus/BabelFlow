@@ -139,3 +139,25 @@ DataFlow::Task Reduction::task(uint64_t gId) const
   return task;
 }
 
+DataFlow::Payload Reduction::serialize() const
+{
+  uint32_t* buffer = new uint32_t[3];
+
+  buffer[0] = mLeafs;
+  buffer[1] = mValence;
+  buffer[2] = mLevels;
+
+  return Payload(3*sizeof(uint32_t),(char*)buffer);
+}
+
+void Reduction::deserialize(DataFlow::Payload buffer)
+{
+  assert (buffer.size() == 3*sizeof(uint32_t));
+  uint32_t *tmp = (uint32_t *)(buffer.buffer());
+
+  mLeafs = tmp[0];
+  mValence = tmp[1];
+  mLevels = tmp[2];
+
+  delete[] buffer.buffer();
+}

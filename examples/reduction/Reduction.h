@@ -54,7 +54,14 @@ public:
   //! Return the number of leafs
   DataFlow::TaskId leafCount() const {return pow(mValence,mLevels);}
 
-private:
+  //! Serialize a task graph
+  virtual DataFlow::Payload serialize() const;
+
+  //! Deserialize a task graph. This will consume the payload
+  virtual void deserialize(DataFlow::Payload buffer);
+
+
+protected:
 
   //! The number of leafs in the reduction
   uint32_t mLeafs;

@@ -3,13 +3,12 @@ mainmodule reduction {
   extern module charm_dataflow;
 
   readonly CProxy_Main mainProxy;
-   
-  mainchare Main {
+ 
+   mainchare Main {
       entry Main(CkArgMsg* m);
       entry void done();
   };          
   
-  // Note: temporarely here for testing, but should not
   namespace DataFlow {
     namespace charm {
       array [1D] CharmTask<Reduction,ReductionCallbacks>;

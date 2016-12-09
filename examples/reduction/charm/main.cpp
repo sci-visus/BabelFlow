@@ -15,13 +15,17 @@
 #include "RelayTask.h"
 #include "charm/CharmTask.h"
 #include "charm/Controller.h"
-
+#include "charm/CharmTaskGraph.h"
 
 #include "reduction.decl.h"
 
 /* readonly */ CProxy_Main mainProxy;
 
 using namespace DataFlow;
+using namespace charm;
+
+inline void operator|(PUP::er &p, Reduction& graph) {p|(DataFlow::TaskGraph&)graph;}
+
 
 int add_int(std::vector<Payload>& inputs, std::vector<Payload>& output, TaskId task)
 {
@@ -102,12 +106,10 @@ public:
     uint32_t leafs = atoi(m->argv[1]);
     uint32_t valence = atoi(m->argv[2]);
 
-    // Pass the first two command line arguments to the graph
-    std::stringstream config;
-    config << m->argv[1] << " " << m->argv[2];
+    Reduction graph(leafs,valence);
 
-    // Output the graph for checking
-    Reduction graph(config.str());
+
+    // Output the graph for testing
     ModuloMap task_map(1,graph.size());
     FILE* output=fopen("output.dot","w");
     graph.output_graph(1,&task_map,output);
@@ -116,7 +118,7 @@ public:
     DataFlow::charm::Controller<Reduction,ReductionCallbacks> controller;
     
     DataFlow::charm::Controller<Reduction,ReductionCallbacks>::ProxyType proxy;
-    proxy = controller.initialize(config.str());
+    proxy = controller.initialize(graph);
     
     uint32_t count=1;
     mSum = 0;

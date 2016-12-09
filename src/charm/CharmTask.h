@@ -11,8 +11,6 @@
 #include "charm++.h"
 #include "pup_stl.h"
 
-
-
 #include "Definitions.h"
 #include "TaskGraph.h"
 #include "Payload.h"
@@ -32,7 +30,7 @@ class CharmTask : public CBase_CharmTask<TaskGraphClass, CallbackClass>
 public:
 
   //! Constructor which sets the callback and decodes destinations
-  CharmTask(std::string config);
+  CharmTask(TaskGraphClass& graph);
 
   //! Default
   CharmTask(CkMigrateMessage *m) {}
@@ -63,14 +61,12 @@ private:
 
 
 template<class TaskGraphClass, class CallbackClass>
-CharmTask<TaskGraphClass, CallbackClass>::CharmTask(std::string config) : mCallback(NULL)
+CharmTask<TaskGraphClass, CallbackClass>::CharmTask(TaskGraphClass& graph) : mCallback(NULL)
 {
-  //fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
-
-  TaskGraphClass graph(config);
+  fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
 
   mTask = graph.task(this->thisIndex);
-  // return;
+
   mCallback = CallbackClass::callback(mTask.callback());
 
   mInputs.resize(mTask.fanin());

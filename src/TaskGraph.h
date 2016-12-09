@@ -14,6 +14,7 @@
 #include <string>
 
 #include "Task.h"
+#include "Payload.h"
 
 namespace DataFlow {
 
@@ -47,6 +48,12 @@ public:
 
   //! Return the total number of tasks (or some reasonable upper bound)
   virtual TaskId size() const = 0;
+
+  //! Serialize a task graph
+  virtual Payload serialize() const {assert(false);return Payload();}
+
+  //! Deserialize a task graph. This will consume the payload
+  virtual void deserialize(Payload buffer) {assert(false);}
 
   //! Output the entire graph as dot file
   virtual int output_graph(ShardId count, const TaskMap* task_map, FILE* output);
