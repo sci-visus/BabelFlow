@@ -11,7 +11,7 @@ mainmodule reduction {
   
   namespace DataFlow {
     namespace charm {
-      array [1D] CharmTask<Reduction,ReductionCallbacks>;
+      array [1D] CharmTask<Reduction>;
     }
   }
 };

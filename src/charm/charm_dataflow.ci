@@ -3,7 +3,7 @@ module charm_dataflow {
   namespace DataFlow {
     namespace charm {
   
-      template<class TaskGraphClass, class CallbackClass>
+      template<class TaskGraphClass>
       array [1D] CharmTask {
         entry CharmTask(TaskGraphClass& graph);
         entry void addInput(DataFlow::TaskId source, std::vector<char> input);

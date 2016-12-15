@@ -64,25 +64,21 @@ int report_sum(std::vector<Payload>& inputs, std::vector<Payload>& output, TaskI
 }
 
 
-class ReductionCallbacks
+DataFlow::Callback registered_callback(DataFlow::CallbackId id)
 {
-public:
-  static Callback callback(CallbackId id)
-  {
-    switch (id) {
-      case 0:
-        return DataFlow::relay_message;
-      case 1:
-        return add_int;
-      case 2:
-        return report_sum;
-      default:
-        assert(false);
-        break;
-    }
-    return NULL;
+  switch (id) {
+    case 0:
+      return DataFlow::relay_message;
+    case 1:
+      return add_int;
+    case 2:
+      return report_sum;
+    default:
+      assert(false);
+      break;
   }
-};
+  return NULL;
+}
 
 
 class Main : public CBase_Main
@@ -115,9 +111,9 @@ public:
     graph.output_graph(1,&task_map,output);
     fclose(output);
 
-    DataFlow::charm::Controller<Reduction,ReductionCallbacks> controller;
+    DataFlow::charm::Controller<Reduction> controller;
     
-    DataFlow::charm::Controller<Reduction,ReductionCallbacks>::ProxyType proxy;
+    DataFlow::charm::Controller<Reduction>::ProxyType proxy;
     proxy = controller.initialize(graph);
     
     uint32_t count=1;

@@ -17,6 +17,8 @@
 
 #include "charm_dataflow.decl.h"
 
+extern DataFlow::Callback registered_callback(DataFlow::CallbackId id);
+
 namespace DataFlow {
 namespace charm {
 
@@ -24,8 +26,8 @@ namespace charm {
 //! Default message for charm
 typedef std::vector<char> Buffer;
 
-template<class TaskGraphClass, class CallbackClass>
-class CharmTask : public CBase_CharmTask<TaskGraphClass, CallbackClass>
+template<class TaskGraphClass>
+class CharmTask : public CBase_CharmTask<TaskGraphClass>
 {
 public:
 
@@ -49,9 +51,6 @@ private:
   //! The corresponding base task
   Task mTask;
 
-  //! The actual callback to execute once all inputs are assembled
-  Callback mCallback;
-
   //! The array of inputs
   std::vector<Payload> mInputs;
 
@@ -60,14 +59,12 @@ private:
 };
 
 
-template<class TaskGraphClass, class CallbackClass>
-CharmTask<TaskGraphClass, CallbackClass>::CharmTask(TaskGraphClass& graph) : mCallback(NULL)
+template<class TaskGraphClass>
+CharmTask<TaskGraphClass>::CharmTask(TaskGraphClass& graph)
 {
   fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
 
   mTask = graph.task(this->thisIndex);
-
-  mCallback = CallbackClass::callback(mTask.callback());
 
   mInputs.resize(mTask.fanin());
 
@@ -87,15 +84,16 @@ CharmTask<TaskGraphClass, CallbackClass>::CharmTask(TaskGraphClass& graph) : mCa
   }
 }
 
-template<class TaskGraphClass, class CallbackClass>
-void CharmTask<TaskGraphClass, CallbackClass>::exec()
+template<class TaskGraphClass>
+void CharmTask<TaskGraphClass>::exec()
 {
-  assert (mCallback != NULL);
-
   //fprintf(stderr,"CharmTask<TaskGraphClass, CallbackClass>::exec() %d  fanout %d\n",mTask.id(),mTask.fanout());
   std::vector<Payload> outputs(mTask.fanout());
 
-  mCallback(mInputs,outputs,mTask.id());
+  //mCallback(mInputs,outputs,mTask.id());
+
+  Callback cb = registered_callback(mTask.callback());
+  cb(mInputs,outputs,mTask.id());
 
   std::vector<char> buffer;
 
@@ -125,8 +123,8 @@ void CharmTask<TaskGraphClass, CallbackClass>::exec()
   outputs.clear();
 }
 
-template<class TaskGraphClass, class CallbackClass>
-void CharmTask<TaskGraphClass, CallbackClass>::addInput(TaskId source, Buffer buffer)
+template<class TaskGraphClass>
+void CharmTask<TaskGraphClass>::addInput(TaskId source, Buffer buffer)
 {
   TaskId i;
   bool is_ready = true;
