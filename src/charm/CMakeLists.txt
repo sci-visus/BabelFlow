@@ -1,4 +1,6 @@
 set(CHARM_SRC
+    CharmTask.cpp
+    Controller.cpp
 )
 
 set(CHARM_HEADERS
@@ -15,8 +17,8 @@ add_charm_module(charm_dataflow)
 add_dependencies(dataflow charm_dataflowCharm)
 
 
-#add_charm_library(charm_dataflow dataflow_charm ${CHARM_HEADERS})
-#target_link_libraries(dataflow_charm dataflow)
+add_charm_library(charm_dataflow dataflow_charm ${CHARM_HEADERS} ${CHARM_SRC})
+target_link_libraries(dataflow_charm dataflow)
 
 
 INSTALL(FILES ${CHARM_HEADERS}

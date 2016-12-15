@@ -9,9 +9,4 @@ mainmodule reduction {
       entry void done();
   };          
   
-  namespace DataFlow {
-    namespace charm {
-      array [1D] CharmTask<Reduction>;
-    }
-  }
 };

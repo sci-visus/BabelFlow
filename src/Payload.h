@@ -59,7 +59,7 @@ public:
 
   virtual void deserialize() {assert (false);}
 
-protected:
+public:
 
   //! Size of the memory
   int32_t mSize;

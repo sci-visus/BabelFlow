@@ -54,6 +54,13 @@ if (ENABLE_MPI)
 elseif(ENABLE_CHARM)
 
     add_subdirectory(charm)
+    
+    set(DATAFLOW_LIBRARIES 
+        ${DATAFLOW_LIBRARIES}
+        dataflow_charm
+        PARENT_SCOPE
+    ) 
+    
 
 else()
     message(FATAL_ERROR "Unrecognized runtime")

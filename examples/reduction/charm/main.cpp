@@ -15,7 +15,7 @@
 #include "RelayTask.h"
 #include "charm/CharmTask.h"
 #include "charm/Controller.h"
-#include "charm/CharmTaskGraph.h"
+//#include "charm/CharmTaskGraph.h"
 
 #include "reduction.decl.h"
 
@@ -23,8 +23,6 @@
 
 using namespace DataFlow;
 using namespace charm;
-
-inline void operator|(PUP::er &p, Reduction& graph) {p|(DataFlow::TaskGraph&)graph;}
 
 
 int add_int(std::vector<Payload>& inputs, std::vector<Payload>& output, TaskId task)
@@ -80,6 +78,11 @@ DataFlow::Callback registered_callback(DataFlow::CallbackId id)
   return NULL;
 }
 
+DataFlow::TaskGraph* make_task_graph(DataFlow::Payload buffer)
+{
+  return DataFlow::charm::make_task_graph_template<Reduction>(buffer);
+}
+
 
 class Main : public CBase_Main
 {
@@ -111,10 +114,10 @@ public:
     graph.output_graph(1,&task_map,output);
     fclose(output);
 
-    DataFlow::charm::Controller<Reduction> controller;
+    DataFlow::charm::Controller controller;
     
-    DataFlow::charm::Controller<Reduction>::ProxyType proxy;
-    proxy = controller.initialize(graph);
+    DataFlow::charm::Controller::ProxyType proxy;
+    proxy = controller.initialize(graph.serialize(),graph.size());
     
     uint32_t count=1;
     mSum = 0;
@@ -134,11 +137,6 @@ public:
   void done() {fprintf(stderr,"Correct total sum is %d\n",mSum);CkExit();}
 };
 
-#define CK_TEMPLATES_ONLY
-#include "reduction.def.h"
-#undef CK_TEMPLATES_ONLY
-
 
 #include "reduction.def.h"
-#include "charm_dataflow.def.h"
 

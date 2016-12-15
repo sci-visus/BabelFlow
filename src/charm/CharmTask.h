@@ -17,22 +17,53 @@
 
 #include "charm_dataflow.decl.h"
 
+//! Global function returning the callbacks
+//! Must be implemented by the calling application code
 extern DataFlow::Callback registered_callback(DataFlow::CallbackId id);
+
+//! Global function to create a task graph
+//! Must be implemented by the calling application code
+extern DataFlow::TaskGraph* make_task_graph(DataFlow::Payload buffer);
+
 
 namespace DataFlow {
 namespace charm {
+
+//! Allow us to send Payload buffers using charm++
+inline void operator|(PUP::er &p, DataFlow::Payload& buffer) {
+
+  p|buffer.mSize;
+  if (p.isUnpacking())
+    buffer.mBuffer = new char[buffer.size()];
+  PUParray(p, buffer.buffer(), buffer.size());
+
+
+  // If charm will delete the object make sure that we release the
+  // memory buffer
+  if (p.isDeleting())
+    delete[] buffer.buffer();
+}
+
+//! Make defining the global task graph function easy
+template<class TaskGraphClass>
+TaskGraph *make_task_graph_template(Payload buffer)
+{
+  TaskGraph* graph =  new TaskGraphClass();
+  graph->deserialize(buffer);
+
+  return graph;
+}
 
 
 //! Default message for charm
 typedef std::vector<char> Buffer;
 
-template<class TaskGraphClass>
-class CharmTask : public CBase_CharmTask<TaskGraphClass>
+class CharmTask : public CBase_CharmTask
 {
 public:
 
   //! Constructor which sets the callback and decodes destinations
-  CharmTask(TaskGraphClass& graph);
+  CharmTask(Payload buffer);
 
   //! Default
   CharmTask(CkMigrateMessage *m) {}
@@ -59,114 +90,9 @@ private:
 };
 
 
-template<class TaskGraphClass>
-CharmTask<TaskGraphClass>::CharmTask(TaskGraphClass& graph)
-{
-  fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
-
-  mTask = graph.task(this->thisIndex);
-
-  mInputs.resize(mTask.fanin());
-
-  //! Now we pre-compute the global ids of the outgoing tasks so we
-  //! later do not need the task graph again
-  mOutputs.resize(mTask.fanout());
-  for (uint32_t i=0;i<mTask.fanout();i++) {
-
-    mOutputs[i].resize(mTask.outgoing(i).size());
-    for (uint32_t j=0;j<mTask.outgoing(i).size();j++) {
-
-      if (mTask.outgoing(i)[j] != TNULL)
-        mOutputs[i][j] = graph.gId(mTask.outgoing(i)[j]);
-      else
-        mOutputs[i][j] = (uint64_t)-1;
-    }
-  }
-}
-
-template<class TaskGraphClass>
-void CharmTask<TaskGraphClass>::exec()
-{
-  //fprintf(stderr,"CharmTask<TaskGraphClass, CallbackClass>::exec() %d  fanout %d\n",mTask.id(),mTask.fanout());
-  std::vector<Payload> outputs(mTask.fanout());
-
-  //mCallback(mInputs,outputs,mTask.id());
-
-  Callback cb = registered_callback(mTask.callback());
-  cb(mInputs,outputs,mTask.id());
-
-  std::vector<char> buffer;
-
-  for(int i=0;i<outputs.size();i++)
-  {
-    buffer.assign(outputs[i].buffer(), outputs[i].buffer()+outputs[i].size());
-
-    // For all tasks that need this output as input
-    for(int j=0;j<mOutputs[i].size();j++)
-    {
-      //fprintf(stderr,"\nProcessing output from %d to %d\n",mTask.id(),mOutputs[i][j]);
-      if (mOutputs[i][j] != (uint64_t)-1)
-        this->thisProxy[mOutputs[i][j]].addInput(mTask.id(),buffer);
-    }
-  }
-
-  // Clean up
-
-  // The actual compute tasks have assumed responsibility for the
-  // input payloads
-  mInputs.clear();
-
-  // But we should delete the output payloads
-  for(int i=0;i<outputs.size();i++)
-    outputs[i].reset();
-
-  outputs.clear();
-}
-
-template<class TaskGraphClass>
-void CharmTask<TaskGraphClass>::addInput(TaskId source, Buffer buffer)
-{
-  TaskId i;
-  bool is_ready = true;
-  bool input_added = false;
-
-  //fprintf(stderr,"CharmTask<TaskGraphClass, CallbackClass>::addInput id %d source %d \n", mTask.id(),source);
-
-  for (i=0;i<mTask.fanin();i++) {
-    //fprintf(stderr,"\t %d incoming %d\n",mTask.id(),mTask.incoming()[i]);
-    if (mTask.incoming()[i] == source) {
-      assert(mInputs[i].buffer() == NULL);
-
-      // Not clear whether we need to copy the data here
-      char *data = new char[buffer.size()];
-      memcpy(data, &buffer[0], buffer.size());
-
-      mInputs[i].initialize(buffer.size(),data);
-      input_added = true;
-    }
-    if (mInputs[i].buffer() == NULL)
-      is_ready = false;
-  }
-
-  if (!input_added) {
-    fprintf(stderr,"Unknown sender %d in CharmTask::addInput for task %d\n",source,mTask.id());
-    assert (false);
-  }
-  else{
-    //printf("\tinput added is_ready = %d\n",is_ready);
-  }
-
-  if (is_ready)
-    exec();
-}
-
-
 
 }
 }
-#define CK_TEMPLATES_ONLY
-#include "charm_dataflow.def.h"
-#undef CK_TEMPLATES_ONLY
 
 
 
