@@ -11,6 +11,7 @@
 #include <cassert>
 #include <cstring>
 #include <vector>
+#include "Definitions.h"
 
 namespace DataFlow {
 
