@@ -34,6 +34,11 @@
 
 #include "pmt.decl.h"
 
+#define DETAILED_TIMING 1
+#define DO_SEGMENTATION 1
+
+#define WRITE_RESULTS 1 && DO_SEGMENTATION
+
 template <typename T>
 struct DomainBlock{
   GlobalIndexType low[3];
@@ -53,8 +58,6 @@ class DomainSelection{
   }
 
 };
-
-
 
 /* readonly */ CProxy_Main mainProxy;
 
@@ -81,11 +84,14 @@ int local_compute(std::vector<Payload>& inputs,
   float threshold;
   memcpy(&threshold, input+sizeof(DomainSelection), sizeof(float));
 
-  char* filename = input+sizeof(DomainSelection)+sizeof(float);
-  // sprintf(filename, "/Users/steve/Research/SCI/workspace/datasets/pmt/blob200.idx");      
+  char* filename = input+sizeof(DomainSelection)+sizeof(float);     
   char* data_block = read_block(filename,box->low,box->high);
 
   //printf("file %s thr %f\n", filename, threshold);
+
+#if DETAILED_TIMING
+  std::cout << std::fixed << "compute start " << CkWallTimer() <<std::endl;
+#endif
 
   Payload new_pay = make_local_block((FunctionType*)(data_block), box->low, box->high, threshold);
  
@@ -181,12 +187,20 @@ int write_results(std::vector<Payload>& inputs,
   t.decode(inputs[0]);
   
   t.id(task & ~sPrefixMask);
-  t.writeToFile(task & ~sPrefixMask);
+  //t.writeToFile(task & ~sPrefixMask);
   //printf("after write to file %d.dot\n", task & ~sPrefixMask);
   
   t.computeSegmentation();
+
+#if DETAILED_TIMING
+  std::cout << std::fixed << "compute end " << CkWallTimer() <<std::endl;
+#endif
+
+#if WRITE_RESULTS
   t.writeToFileBinary(task & ~sPrefixMask);
   fprintf(stderr,"done segmentation %d\n", task);
+#endif
+
   // Deleting input data
   for (int i=0; i<inputs.size(); i++){
     delete[] (char*)inputs[i].buffer();
@@ -194,6 +208,9 @@ int write_results(std::vector<Payload>& inputs,
   inputs.clear();
   
   assert(output.size() == 0);
+
+  CkExit();
+  
   //fprintf(stderr,"WRITING RESULTS performed by %d\n", task & ~sPrefixMask);
   return 1;
 }
@@ -665,7 +682,7 @@ public:
 
       proxy[graph.gId(i++)].addInput(TNULL,buffer);
     }
-    
+
   }
 
   Main(CkMigrateMessage *m) {}
