@@ -14,6 +14,7 @@
 
 //#include "TypeDefinitions.h"
 #include "TaskGraph.h"
+#include "KWayTaskMap.h"
 
 class KWayTaskMap;
 
@@ -99,8 +100,115 @@ public:
   //! Return the taskId for the given global task id
   virtual DataFlow::Task task(uint64_t gId) const;
 
+  DataFlow::TaskId toTId(uint64_t this_gId) const;
+
   //! Return the global id of the given task id
-  virtual uint64_t gId(DataFlow::TaskId tId) const {return tId;}
+  virtual uint64_t gId(DataFlow::TaskId tId) const {
+
+    uint8_t k;
+
+    uint64_t gId = 0;
+    DataFlow::TaskId leaf_count = lvlOffset()[1];
+
+    // For all leafs assigned to this controller
+    for (DataFlow::TaskId leaf=0;leaf<leaf_count;leaf++) {
+      if(leaf == tId)
+        return gId;
+      else 
+        gId++;
+
+      // Now take its local copies for all rounds
+      for (k=1;k<=rounds();k++) {
+        if(roundId(leaf,k) == tId)
+          return gId;
+        else 
+          gId++;
+      }
+      // Walk down the tree until your child is no longer
+      // assigned to the same controller
+      uint8_t lvl = 0;
+      DataFlow::TaskId down = leaf;
+      DataFlow::TaskId next = reduce(down);
+      while ((down != next) &&  (down == expand(next)[0])) {
+        lvl++;
+        down = next;
+
+        if (lvl < rounds()-1)
+          next = reduce(next);
+
+        if(down == tId)
+          return gId;
+        else 
+          gId++;
+
+        // All lower nodes exist for all levels after this one
+        for (k=lvl+1;k<rounds();k++){
+          if(roundId(down,k) == tId)
+            return gId;
+          else 
+            gId++;
+        }
+      }// end-while
+    } // end-for all leafs
+#if 0
+    DataFlow::TaskId base = baseId(tId);
+    DataFlow::TaskId rnd = round(tId);
+
+    bool gather = gatherTask(tId);
+
+    const std::vector<uint32_t>& offset = lvlOffset();
+    uint32_t max_offset = offset[offset.size()-1];
+
+    uint32_t leaves = mLvlOffset[1];
+
+    uint32_t curr_lvl = leaves;
+
+    uint32_t this_offset = 0;
+    // while (base > this_offset){
+    //   this_offset += curr_lvl*log2(curr_lvl);
+    //   curr_lvl = log2(curr_lvl);
+
+    // }
+
+    std::vector<uint32_t> sizes;
+    //printf("offs %d\n", offset.size());
+
+    //sizes.push_back(0);
+    //printf("sizes: ");
+    for(int i=1; i< offset.size(); i++){
+      sizes.push_back(offset[i]-offset[i-1]);
+      //printf("%d ",sizes.back());
+    }
+    //printf("\n");
+    
+    uint32_t l = 0;
+    while (base >= offset[l+1]){
+      uint32_t off = offset[l+1]-offset[l];
+      this_offset +=  off;
+      l++;
+    }
+
+    //printf("lvl %d\n", l);
+
+    // if(gather){
+    //   uint8_t lvl = level(tId);
+      
+    //   printf("base %d round %d level %d [%d] tId %d max offset %d\n", base, rnd, lvl, offset[lvl],tId, max_offset);
+    //   return tId;
+    // }
+    // else{
+    //   DataFlow::TaskId scatterId = max_offset+base+this_offset+rnd;
+    //   printf("base %d round %d tId %d USE %d\n", base, rnd, tId, scatterId);
+    //   return scatterId;
+    // }
+    DataFlow::TaskId gId = (base-offset[l])*sizes[l]+this_offset+rnd;
+
+    printf("gId %d tId %d rnd %d base %d level %d offset %d\n", gId, tId, rnd, base, l, this_offset);
+    
+#endif
+   return gId;
+    
+  };
 
   //! Serialize a task graph
   virtual DataFlow::Payload serialize() const;
@@ -147,6 +255,8 @@ private:
 
   //! Return whether this is a gather or scatter task
   bool gatherTask(DataFlow::TaskId id) const {return (id & sPrefixMask) == 0;}
+
+  uint32_t gatherTasks(DataFlow::TaskId id) const;
 
   //! Function to map a global id in the reduction to its parent
   DataFlow::TaskId reduce(DataFlow::TaskId source) const;

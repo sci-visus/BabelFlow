@@ -8,6 +8,7 @@
 #include <cassert>
 
 #include "KWayMerge.h"
+#include "MergeTree.h"
 #include <sstream>
 
 using namespace DataFlow;
@@ -26,7 +27,7 @@ KWayMerge::KWayMerge(std::string config)
 
   cmd >> factor;
   
-  KWayMerge(dim, factor);
+  init(dim, factor);
 }
 
 void KWayMerge::init(uint32_t dim[3], uint32_t factor){
@@ -148,6 +149,16 @@ TaskId KWayMerge::size() const
   assert (false); // Not meaningfull;
 }
 
+uint32_t KWayMerge::gatherTasks(DataFlow::TaskId id) const {
+    KWayTaskMap tmap(id, this); 
+    std::vector<DataFlow::TaskId> ids = tmap.tasks(id);
+    uint32_t c = 0;
+    for(uint32_t i=0; i<ids.size(); i++)
+      if(gatherTask(ids[i])) c++;
+
+    return c;
+  }
+
 std::vector<Task> KWayMerge::localGraph(ShardId id, 
                                         const TaskMap* task_map) const
 {
@@ -163,7 +174,6 @@ std::vector<Task> KWayMerge::localGraph(ShardId id,
   //! Now assign all the task ids
   for (i=0;i<ids.size();i++)
     tasks[i].id(ids[i]);
-
 
   std::vector<TaskId> incoming;
   std::vector<std::vector<TaskId> > outgoing;
@@ -289,9 +299,61 @@ std::vector<Task> KWayMerge::localGraph(ShardId id,
   return tasks;
 }
 
-DataFlow::Task KWayMerge::task(uint64_t gId) const
+TaskId KWayMerge::toTId(uint64_t this_gId) const
 {
-  DataFlow::Task task(gId);
+
+  uint8_t k;
+
+  uint64_t gId = 0;
+  DataFlow::TaskId leaf_count = lvlOffset()[1];
+
+  // For all leafs assigned to this controller
+  for (DataFlow::TaskId leaf=0;leaf<leaf_count;leaf++) {
+    if(gId == this_gId)
+      return leaf;
+    else 
+      gId++;
+
+    // Now take its local copies for all rounds
+    for (k=1;k<=rounds();k++) {
+      if(gId == this_gId)
+        return roundId(leaf,k);
+      else 
+        gId++;
+    }
+    // Walk down the tree until your child is no longer
+    // assigned to the same controller
+    uint8_t lvl = 0;
+    DataFlow::TaskId down = leaf;
+    DataFlow::TaskId next = reduce(down);
+    while ((down != next) &&  (down == expand(next)[0])) {
+      lvl++;
+      down = next;
+
+      if (lvl < rounds()-1)
+        next = reduce(next);
+
+      if(gId == this_gId)
+        return down;
+      else 
+        gId++;
+
+      // All lower nodes exist for all levels after this one
+      for (k=lvl+1;k<rounds();k++){
+        if(gId == this_gId)
+          return roundId(down,k);
+        else 
+          gId++;
+      }
+    }// end-while
+  } // end-for all leafs
+
+}
+
+DataFlow::Task KWayMerge::task(uint64_t this_gId) const
+{
+
+  DataFlow::Task task(toTId(this_gId));
   std::vector<DataFlow::TaskId> incoming; 
   std::vector<std::vector<DataFlow::TaskId> > outgoing;
   
@@ -578,35 +640,43 @@ std::vector<TaskId> KWayMerge::gridExpand(TaskId source, uint8_t lvl) const
 
 DataFlow::Payload KWayMerge::serialize() const
 {
-  uint32_t* buffer = new uint32_t[4];
+  uint32_t* buffer = new uint32_t[8];
 
   buffer[0] = mLvlDim[0][0];
   buffer[1] = mLvlDim[0][1];
   buffer[2] = mLvlDim[0][2];
-  buffer[3] = mFactor;
 
-  printf("serializing %d %d %d , f %d\n", buffer[0], buffer[1], buffer[2], buffer[3]);
+  buffer[3] = MergeTree::sDimension[0];
+  buffer[4] = MergeTree::sDimension[1];
+  buffer[5] = MergeTree::sDimension[2];
+  buffer[6] = mFactor;
 
-  return Payload(4*sizeof(uint32_t),(char*)buffer);
+  // TODO threshold
+
+  //printf("serializing %d %d %d , f %d\n", buffer[0], buffer[1], buffer[2], buffer[3]);
+
+  return Payload(8*sizeof(uint32_t),(char*)buffer);
 }
 
 void KWayMerge::deserialize(DataFlow::Payload buffer)
 {
-  assert (buffer.size() == 4*sizeof(uint32_t));
+  assert (buffer.size() == 8*sizeof(uint32_t));
   uint32_t *tmp = (uint32_t *)(buffer.buffer());
 
   // mLvlDim[0][0] = tmp[0];
   // mLvlDim[0][1] = tmp[1];
   // mLvlDim[0][2] = tmp[2];
-  mFactor = tmp[3];
+  mFactor = tmp[6];
 
-  printf("DEserializing %d %d %d , f %d\n", tmp[0], tmp[1], tmp[2], tmp[3]);
+  //printf("DEserializing %d %d %d , f %d\n", tmp[0], tmp[1], tmp[2], tmp[3]);
 
-  uint32_t* dim = new uint32_t[4];
+  uint32_t* decomp = tmp;
+  uint32_t* dim = tmp+3;
 
-  memcpy(dim, buffer.buffer(), sizeof(uint32_t)*3);
+  MergeTree::setDimension(dim);
+  // memcpy(dim, buffer.buffer(), sizeof(uint32_t)*3);
 
-  init(dim, mFactor);
+  init(decomp, mFactor);
 
   delete[] buffer.buffer();
 }

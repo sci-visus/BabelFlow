@@ -76,11 +76,13 @@ int local_compute(std::vector<Payload>& inputs,
 
   DomainSelection* box = (DomainSelection*)inputs[0].buffer();
 
+  // TODO serialize threshold and filename
+
   char filename[128];
-  sprintf(filename, "/Users/steve/Research/SCI/workspace/datasets/pmt/blob.idx");      
+  sprintf(filename, "/Users/steve/Research/SCI/workspace/datasets/pmt/blob200.idx");      
   char* data_block = read_block(filename,box->low,box->high);
 
-  float threshold = 0;
+  float threshold = (FunctionType)(-1)*FLT_MAX;
   Payload new_pay = make_local_block((FunctionType*)(data_block), box->low, box->high, threshold);
  
   for (int i=0; i<inputs.size(); i++){
@@ -90,9 +92,9 @@ int local_compute(std::vector<Payload>& inputs,
 
   inputs.push_back(new_pay);
 
-  // char filename[128];
-  // sprintf(filename,"dump_%d.raw", task);
-  // std::ofstream outfile (filename,std::ofstream::binary);
+  // char dfilename[128];
+  // sprintf(dfilename,"dump_%d.raw", task);
+  // std::ofstream outfile (dfilename,std::ofstream::binary);
 
   // outfile.write (inputs[0].buffer(),inputs[0].size());
 
@@ -175,12 +177,12 @@ int write_results(std::vector<Payload>& inputs,
   t.decode(inputs[0]);
   
   t.id(task & ~sPrefixMask);
-  // t.writeToFile(task & ~sPrefixMask);
+  t.writeToFile(task & ~sPrefixMask);
   //printf("after write to file %d.dot\n", task & ~sPrefixMask);
   
   t.computeSegmentation();
-  //t.writeToFileBinary(task & ~sPrefixMask);
-  //fprintf(stderr,"done segmentation\n");
+  t.writeToFileBinary(task & ~sPrefixMask);
+  fprintf(stderr,"done segmentation %d\n", task);
   // Deleting input data
   for (int i=0; i<inputs.size(); i++){
     delete[] (char*)inputs[i].buffer();
@@ -346,33 +348,35 @@ std::vector<DomainSelection> blockify_nodata(uint32_t* num_blocks, GlobalIndexTy
   return  blocks;
 }
 
-std::map<TaskId,Payload> input_initialization_nodata(int argc, char* argv[]){
-  GlobalIndexType data_size[3];        // {x_size, y_size, z_size}
-  uint32_t block_decomp[3];     // block decomposition
+std::map<TaskId,Payload> input_initialization_nodata(GlobalIndexType* data_size, uint32_t* block_decomp, uint32_t valence){ //int argc, char* argv[]){
+  // GlobalIndexType data_size[3] = {0,0,0};        // {x_size, y_size, z_size}
+  // uint32_t block_decomp[3] = {0,0,0};     // block decomposition
   int nblocks;                  // number of blocks per input task
   int share_face = 1;           // share a face among the blocks
-  uint32_t valence = 2;
+  //uint32_t valence = 2;
   FunctionType threshold = (FunctionType)(-1)*FLT_MAX;
   char* dataset = NULL;
   //fprintf(stderr, "input initialization started\n");
-  for (int i = 1; i < argc; i++){
-    if (!strcmp(argv[i],"-d")){
-      data_size[0] = atoi(argv[++i]);
-      data_size[1] = atoi(argv[++i]);
-      data_size[2] = atoi(argv[++i]);
-    }
-    if (!strcmp(argv[i],"-p")){
-      block_decomp[0] = atoi(argv[++i]);
-      block_decomp[1] = atoi(argv[++i]);
-      block_decomp[2] = atoi(argv[++i]);
-    }
-    if (!strcmp(argv[i],"-m"))
-      valence = atoi(argv[++i]);
-    if (!strcmp(argv[i],"-t"))
-      threshold = atof(argv[++i]);
-    if (!strcmp(argv[i],"-f"))
-      dataset = argv[++i];
-  }
+  // for (int i = 1; i < argc; i++){
+  //   if (!strcmp(argv[i],"-d")){
+  //     data_size[0] = atoi(argv[++i]);
+  //     data_size[1] = atoi(argv[++i]);
+  //     data_size[2] = atoi(argv[++i]);
+  //   }
+  //   if (!strcmp(argv[i],"-p")){
+  //     block_decomp[0] = atoi(argv[++i]);
+  //     block_decomp[1] = atoi(argv[++i]);
+  //     block_decomp[2] = atoi(argv[++i]);
+  //   }
+  //   if (!strcmp(argv[i],"-m"))
+  //     valence = atoi(argv[++i]);
+  //   if (!strcmp(argv[i],"-t"))
+  //     threshold = atof(argv[++i]);
+  //   if (!strcmp(argv[i],"-f"))
+  //     dataset = argv[++i];
+  // }
+  uint32_t decomp[3];
+  memcpy(decomp, block_decomp, 3*sizeof(uint32_t));
   
   KWayMerge graph(block_decomp, valence);
   KWayTaskMap task_map(1, &graph);
@@ -381,7 +385,8 @@ std::map<TaskId,Payload> input_initialization_nodata(int argc, char* argv[]){
   
   GlobalIndexType tot_size = data_size[0]*data_size[1]*data_size[2]*sizeof(float);
   
-  std::vector<DomainSelection> blocks = blockify_nodata(block_decomp, data_size, share_face);
+
+  std::vector<DomainSelection> blocks = blockify_nodata(decomp, data_size, share_face);
   nblocks = blocks.size();
   /*
   FILE* output = fopen("graph.dot","w");
@@ -597,32 +602,59 @@ public:
     }
     
     int tot_blocks = block_decomp[0]* block_decomp[1]* block_decomp[2];
+
+    uint32_t decomp[3];
+    memcpy(decomp, block_decomp, 3*sizeof(uint32_t));
+
     printf("run config %d %d %d nprocs %d \n",block_decomp[0], block_decomp[1], block_decomp[2],tot_blocks);    
     KWayMerge graph(block_decomp, valence);
     KWayTaskMap task_map(1, &graph);
+
+    std::vector<DataFlow::Task> alltasks = graph.localGraph(0,&task_map);
+    uint32_t n_tasks = alltasks.size();
+
+    // printf("n_tasks %d\n", n_tasks);
+    // for( int i=0; i< n_tasks; i++){
+
+    //   uint64_t gid = graph.gId(alltasks[i].id());
+    //   printf("gId %d tId %d \n", gid, alltasks[i].id());
+    //   //graph.task(i);
+
+    // }
+
+    // printf("\nGID to TID\n");
+    // for( int i=0; i< n_tasks; i++){
+
+    //   uint64_t tid = graph.toTId(i);
+    //   printf("gId %d tId %d \n", i, tid);
+    //   //graph.task(i);
+
+    // }
+
+    // exit(0);
+
     std::map<TaskId,Payload> initial_input;
     MergeTree::setDimension(data_size);
 
     DataFlow::charm::Controller controller;
     
     DataFlow::charm::Controller::ProxyType proxy;
-    proxy = controller.initialize(graph.serialize(),tot_blocks);
+    proxy = controller.initialize(graph.serialize(), n_tasks);
 
-    std::map<TaskId,Payload> inputs = input_initialization_nodata(m->argc, m->argv);
+    std::map<TaskId,Payload> inputs = input_initialization_nodata(data_size, decomp, valence);//m->argc, m->argv);
 
     std::map<TaskId,Payload>::iterator it;
 
     int i=0;
     for (it=inputs.begin();it != inputs.end(); it++) {
 
-      std::vector<char> buffer(it->second.size());
+      std::vector<char> buffer(it->second.buffer(), it->second.buffer()+it->second.size());//it->second.size());
 
-      uint32_t size = it->second.size();
-      buffer.assign((char*)&size, (char*)(it->second.buffer()));
+      //uint32_t size = it->second.size();
+      //buffer.assign((char*)&size, (char*)(it->second.buffer()));
 
       proxy[graph.gId(i++)].addInput(TNULL,buffer);
     }
-    // controller.registerInputInitialization(&input_initialization_nodata);
     
   }
 
