@@ -13,7 +13,7 @@ namespace charm {
 
 CharmTask::CharmTask(Payload buffer)
 {
-  fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
+  //fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
 
   TaskGraph* graph = make_task_graph(buffer);
   mTask = graph->task(this->thisIndex);

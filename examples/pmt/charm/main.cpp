@@ -76,13 +76,17 @@ int local_compute(std::vector<Payload>& inputs,
 
   DomainSelection* box = (DomainSelection*)inputs[0].buffer();
 
-  // TODO serialize threshold and filename
+  char* input = inputs[0].buffer();
 
-  char filename[128];
-  sprintf(filename, "/Users/steve/Research/SCI/workspace/datasets/pmt/blob200.idx");      
+  float threshold;
+  memcpy(&threshold, input+sizeof(DomainSelection), sizeof(float));
+
+  char* filename = input+sizeof(DomainSelection)+sizeof(float);
+  // sprintf(filename, "/Users/steve/Research/SCI/workspace/datasets/pmt/blob200.idx");      
   char* data_block = read_block(filename,box->low,box->high);
 
-  float threshold = (FunctionType)(-1)*FLT_MAX;
+  //printf("file %s thr %f\n", filename, threshold);
+
   Payload new_pay = make_local_block((FunctionType*)(data_block), box->low, box->high, threshold);
  
   for (int i=0; i<inputs.size(); i++){
@@ -348,14 +352,14 @@ std::vector<DomainSelection> blockify_nodata(uint32_t* num_blocks, GlobalIndexTy
   return  blocks;
 }
 
-std::map<TaskId,Payload> input_initialization_nodata(GlobalIndexType* data_size, uint32_t* block_decomp, uint32_t valence){ //int argc, char* argv[]){
+std::map<TaskId,Payload> input_initialization_nodata(GlobalIndexType* data_size, uint32_t* block_decomp, uint32_t valence, 
+                                      char* dataset, float threshold){ 
   // GlobalIndexType data_size[3] = {0,0,0};        // {x_size, y_size, z_size}
   // uint32_t block_decomp[3] = {0,0,0};     // block decomposition
   int nblocks;                  // number of blocks per input task
   int share_face = 1;           // share a face among the blocks
   //uint32_t valence = 2;
-  FunctionType threshold = (FunctionType)(-1)*FLT_MAX;
-  char* dataset = NULL;
+
   //fprintf(stderr, "input initialization started\n");
   // for (int i = 1; i < argc; i++){
   //   if (!strcmp(argv[i],"-d")){
@@ -411,16 +415,22 @@ std::map<TaskId,Payload> input_initialization_nodata(GlobalIndexType* data_size,
   
   int in_length = leafTasks.size();
   
+  char filename[128];
+  sprintf(filename, "%s", dataset);
+
   // Set input for leaf tasks
   for(int i=0; i < in_length; i++){
     
     DataFlow::Task& task = leafTasks[i];
     //    printf("input task %d callback %d\n", task.id(), task.callback());
 
-    size_t size = sizeof(DomainSelection);
+    size_t size = sizeof(DomainSelection) + sizeof(float) + 128;
     char* input = (char*)malloc(size);
 
-    memcpy(input, &blocks[i], size);
+    memcpy(input, &blocks[i], sizeof(DomainSelection));
+    memcpy(input+sizeof(DomainSelection), &threshold, sizeof(float));
+    memcpy(input+sizeof(DomainSelection)+sizeof(float), filename, 128);
+
     Payload pay(size, input);
 
     initial_input[task.id()] = pay;
@@ -641,7 +651,7 @@ public:
     DataFlow::charm::Controller::ProxyType proxy;
     proxy = controller.initialize(graph.serialize(), n_tasks);
 
-    std::map<TaskId,Payload> inputs = input_initialization_nodata(data_size, decomp, valence);//m->argc, m->argv);
+    std::map<TaskId,Payload> inputs = input_initialization_nodata(data_size, decomp, valence, dataset, threshold);//m->argc, m->argv);
 
     std::map<TaskId,Payload>::iterator it;
 
