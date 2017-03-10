@@ -87,6 +87,14 @@ int local_compute(std::vector<Payload>& inputs,
   char* data_block = read_block(filename,box->low,box->high);
 
   //printf("file %s thr %f\n", filename, threshold);
+<<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
+=======
+
+#if DETAILED_TIMING
+  std::cout << std::fixed << "compute start " << CkWallTimer() <<std::endl;
+#endif
+
+>>>>>>>  fix settings
   Payload new_pay = make_local_block((FunctionType*)(data_block), box->low, box->high, threshold);
  
   for (int i=0; i<inputs.size(); i++){
@@ -103,10 +111,14 @@ int local_compute(std::vector<Payload>& inputs,
   // outfile.write (inputs[0].buffer(),inputs[0].size());
 
   // outfile.close();
+<<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
 #if DETAILED_TIMING
   std::cout << std::fixed << "compute start " << CkWallTimer() <<std::endl;
 #endif
 
+=======
+  
+>>>>>>>  fix settings
   sorted_union_find_algorithm(inputs, output, task);
   
   // MergeTree t;

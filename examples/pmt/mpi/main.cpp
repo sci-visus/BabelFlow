@@ -39,7 +39,11 @@ static const TaskId sPrefixMask = ((1 << sPrefixSize) - 1) << sPostfixSize;
 
 int local_compute(std::vector<Payload>& inputs,
                   std::vector<Payload>& output, TaskId task){
+<<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
   /*  char filename[128];
+=======
+  char filename[128];
+>>>>>>>  fix settings
   sprintf(filename,"dump_%d.raw", task);
   std::ofstream outfile (filename,std::ofstream::binary);
 
@@ -47,16 +51,26 @@ int local_compute(std::vector<Payload>& inputs,
 
   outfile.close();
 
+<<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
   */
   sorted_union_find_algorithm(inputs, output, task);
   /*
+=======
+  
+  sorted_union_find_algorithm(inputs, output, task);
+  
+>>>>>>>  fix settings
   MergeTree t;
   
   fprintf(stderr,"LOCAL COMPUTE performed by task %d\n", task);
   t.decode(output[0]);
   
   t.writeToFile(task);
+<<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
   */
+=======
+  
+>>>>>>>  fix settings
   // Deleting input data
   for (int i=0; i<inputs.size(); i++){
     delete[] (char*)inputs[i].buffer();
@@ -69,7 +83,11 @@ int local_compute(std::vector<Payload>& inputs,
 
 int join(std::vector<Payload>& inputs,
          std::vector<Payload>& output, TaskId task){
+<<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
   /*
+=======
+  
+>>>>>>>  fix settings
   for(int i=0; i<inputs.size(); i++){
     char filename[128];
   
@@ -79,16 +97,28 @@ int join(std::vector<Payload>& inputs,
     outfile.write (inputs[i].buffer(),inputs[i].size());
 
     outfile.close();
+<<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
     }*/
   //fprintf(stderr, "Task : %d : Started with join algorithm\n", task);
   sorted_join_algorithm(inputs, output, task);
   //fprintf(stderr, "Task : %d : Done with join algorithm\n", task);
   /*
+=======
+  }
+  //fprintf(stderr, "Task : %d : Started with join algorithm\n", task);
+  sorted_join_algorithm(inputs, output, task);
+  //fprintf(stderr, "Task : %d : Done with join algorithm\n", task);
+  
+>>>>>>>  fix settings
   MergeTree join_tree;
   
   join_tree.decode(output[0]);
   join_tree.writeToFile(task+1000);
+<<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
   */
+=======
+  
+>>>>>>>  fix settings
   // Deleting input data
   for (int i=0; i<inputs.size(); i++){
     delete[] (char*)inputs[i].buffer();
