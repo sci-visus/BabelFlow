@@ -39,11 +39,15 @@ static const TaskId sPrefixMask = ((1 << sPrefixSize) - 1) << sPostfixSize;
 
 int local_compute(std::vector<Payload>& inputs,
                   std::vector<Payload>& output, TaskId task){
+<<<<<<< HEAD
 <<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
   /*  char filename[128];
 =======
   char filename[128];
 >>>>>>>  fix settings
+=======
+  /*  char filename[128];
+>>>>>>> remove debug
   sprintf(filename,"dump_%d.raw", task);
   std::ofstream outfile (filename,std::ofstream::binary);
 
@@ -51,6 +55,7 @@ int local_compute(std::vector<Payload>& inputs,
 
   outfile.close();
 
+<<<<<<< HEAD
 <<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
   */
   sorted_union_find_algorithm(inputs, output, task);
@@ -60,17 +65,26 @@ int local_compute(std::vector<Payload>& inputs,
   sorted_union_find_algorithm(inputs, output, task);
   
 >>>>>>>  fix settings
+=======
+  */
+  sorted_union_find_algorithm(inputs, output, task);
+  /*
+>>>>>>> remove debug
   MergeTree t;
   
   fprintf(stderr,"LOCAL COMPUTE performed by task %d\n", task);
   t.decode(output[0]);
   
   t.writeToFile(task);
+<<<<<<< HEAD
 <<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
   */
 =======
   
 >>>>>>>  fix settings
+=======
+  */
+>>>>>>> remove debug
   // Deleting input data
   for (int i=0; i<inputs.size(); i++){
     delete[] (char*)inputs[i].buffer();
@@ -83,11 +97,15 @@ int local_compute(std::vector<Payload>& inputs,
 
 int join(std::vector<Payload>& inputs,
          std::vector<Payload>& output, TaskId task){
+<<<<<<< HEAD
 <<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
   /*
 =======
   
 >>>>>>>  fix settings
+=======
+  /*
+>>>>>>> remove debug
   for(int i=0; i<inputs.size(); i++){
     char filename[128];
   
@@ -97,6 +115,7 @@ int join(std::vector<Payload>& inputs,
     outfile.write (inputs[i].buffer(),inputs[i].size());
 
     outfile.close();
+<<<<<<< HEAD
 <<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
     }*/
   //fprintf(stderr, "Task : %d : Started with join algorithm\n", task);
@@ -110,15 +129,26 @@ int join(std::vector<Payload>& inputs,
   //fprintf(stderr, "Task : %d : Done with join algorithm\n", task);
   
 >>>>>>>  fix settings
+=======
+    }*/
+  //fprintf(stderr, "Task : %d : Started with join algorithm\n", task);
+  sorted_join_algorithm(inputs, output, task);
+  //fprintf(stderr, "Task : %d : Done with join algorithm\n", task);
+  /*
+>>>>>>> remove debug
   MergeTree join_tree;
   
   join_tree.decode(output[0]);
   join_tree.writeToFile(task+1000);
+<<<<<<< HEAD
 <<<<<<< 2e8b3bc4e57e51192432ef9824f6be137cc36858
   */
 =======
   
 >>>>>>>  fix settings
+=======
+  */
+>>>>>>> remove debug
   // Deleting input data
   for (int i=0; i<inputs.size(); i++){
     delete[] (char*)inputs[i].buffer();
