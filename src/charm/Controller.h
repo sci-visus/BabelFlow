@@ -11,8 +11,8 @@
 #include <vector>
 #include <cstdlib>
 
-#include "Definitions.h"
-#include "TaskGraph.h"
+#include "../Definitions.h"
+#include "../TaskGraph.h"
 
 #include "charm_dataflow.decl.h"
 

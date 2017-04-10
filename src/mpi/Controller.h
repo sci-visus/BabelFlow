@@ -16,10 +16,10 @@
 #include <mutex>
 #include <queue>
 
-#include "Definitions.h"
-#include "TaskGraph.h"
-#include "Task.h"
-#include "Payload.h"
+#include "../Definitions.h"
+#include "../TaskGraph.h"
+#include "../Task.h"
+#include "../Payload.h"
 #include "mpi.h"
 
 namespace DataFlow {

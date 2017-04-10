@@ -11,9 +11,9 @@
 #include "charm++.h"
 #include "pup_stl.h"
 
-#include "Definitions.h"
-#include "TaskGraph.h"
-#include "Payload.h"
+#include "../Definitions.h"
+#include "../TaskGraph.h"
+#include "../Payload.h"
 
 #include "charm_dataflow.decl.h"
 

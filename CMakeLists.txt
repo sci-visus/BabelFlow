@@ -4,13 +4,26 @@ set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
+set(RUNTIME_TYPE "MPI" CACHE STRING "Runtime Controller (MPI, CHARM)")
+set_property(CACHE RUNTIME_TYPE PROPERTY STRINGS MPI CHARM)
+
+if(${RUNTIME_TYPE} MATCHES "MPI")
+    set(ENABLE_MPI TRUE)
+    set(ENABLE_CHARM FALSE)
+    message("Using MPI Runtime Controller")
+else()
+    set(ENABLE_CHARM TRUE)
+    set(ENABLE_MPI FALSE)
+    message("Using Charm++ Runtime Controller")
+endif()
+
 if (ENABLE_CHARM)
     find_package(Charm)
 
     set(CMAKE_C_COMPILER ${CHARM_COMPILER}) 
     set(CMAKE_CXX_COMPILER ${CHARM_COMPILER})
  
-     set(DATAFLOW_INCLUDE_PATH ${CMAKE_CURRENT_BINARY_DIR}/src/charm)
+    set(DATAFLOW_INCLUDE_PATH ${CMAKE_CURRENT_BINARY_DIR}/src/charm)
     
 else()
     set(ENABLE_MPI TRUE)

@@ -7,9 +7,9 @@ include_directories(
 
 if (ENABLE_MPI)
     
-    add_subdirectory(mpi)
+    #add_subdirectory(mpi)
     
-    set (SRC ${SRC} ./mpi/main.cpp)
+    set (SRC ${SRC} ./mpi/main.cpp Reduction.cpp)
 
     add_executable(reduction ${SRC})
     target_link_libraries(reduction ${DATAFLOW_LIBRARIES})
