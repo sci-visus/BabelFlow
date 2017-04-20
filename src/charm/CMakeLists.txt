@@ -16,7 +16,6 @@ add_charm_module(charm_dataflow)
 
 add_dependencies(dataflow charm_dataflowCharm)
 
-
 add_charm_library(charm_dataflow dataflow_charm ${CHARM_HEADERS} ${CHARM_SRC})
 target_link_libraries(dataflow_charm dataflow)
 
@@ -26,8 +25,12 @@ INSTALL(FILES ${CHARM_HEADERS}
 )
 
 INSTALL(TARGETS dataflow_charm 
+        EXPORT DataFlowTargets
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
+
+export(TARGETS dataflow dataflow_charm
+  FILE "${PROJECT_BINARY_DIR}/DataFlowTargets.cmake")
 
 #INSTALL(TARGETS ${PROJECT_BINARY_DIR}/src/charm/charm_dataflow.decl.h POST_BUILD 
 #	DESTINATION ${CMAKE_INSTALL_PREFIX}/include/charm

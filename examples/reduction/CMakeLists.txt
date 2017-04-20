@@ -4,7 +4,6 @@ include_directories(
     ${DATAFLOW_INCLUDE_PATH}
 )
 
-
 if (ENABLE_MPI)
     
     #add_subdirectory(mpi)
@@ -12,7 +11,8 @@ if (ENABLE_MPI)
     set (SRC ${SRC} ./mpi/main.cpp Reduction.cpp)
 
     add_executable(reduction ${SRC})
-    target_link_libraries(reduction ${DATAFLOW_LIBRARIES})
+    
+    target_link_libraries(reduction dataflow dataflow_mpi)
 
 elseif(ENABLE_CHARM)
  
