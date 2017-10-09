@@ -26,32 +26,69 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef HIERARCHICAL_TASKGRAPH_H
+#define HIERARCHICAL_TASKGRAPH_H
+
+#include <vector>
+#include <cstdio>
+
 #include "TaskGraph.h"
+#include "HierarchicalTask.h"
 
-using namespace DataFlow;
+namespace DataFlow{
 
-int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output)
-{
-  fprintf(output,"digraph G {\n");
-
-  std::vector<Task> tasks;
-  std::vector<Task>::iterator tIt;
-  std::vector<TaskId>::iterator it;
-
-  for (uint32_t i=0;i<count;i++) {
-    tasks = localGraph(i,task_map);
-
-    for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
-      for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
-        if (*it != TNULL)
-          fprintf(output,"%d -> %d\n",*it,tIt->id());
-      }
-    }
+class HierarchicalTaskGraph : public TaskGraph{
+public:
+  HierarchicalTaskGraph(std::vector<Task> tasks, int32_t hfactor, int32_t vfactor);
+  
+  std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const{
+    return std::vector<Task>(); // TODO adapt or ignore
   }
+  
+  // TODO this condition not always holds (i.e. for broadcast)
+  void reduceAll(){
+    while(supertask.mSubtasks.size() != mHfactor+mVfactor)
+      reduce();
+    
+    supertask.resolveEdgesReduce(&supertask);
+  }
+  
+  void reduce(){
+    supertask.reduce(mHfactor, mVfactor);
+    reduction_level++;
+  }
+  
+  void expand(){
+    supertask.expand(mHfactor, mVfactor);
+    reduction_level--;
+  }
+  
+  void expandAll(){
+    while(reduction_level > 0)
+      expand();
+  }
+  
+  const std::vector<HierarchicalTask>& getTasks(){
+    return supertask.mSubtasks;
+  }
+  
+  const HierarchicalTask& getSuperTask(){
+    return supertask;
+  }
+  
+  ~HierarchicalTaskGraph(){}; // TODO
 
-  fprintf(output,"}\n");
-  return 1;
+  int output_hierarchical_graph(FILE* output) const;
+
+private:
+  HierarchicalTask supertask;
+  int32_t mHfactor;
+  int32_t mVfactor;
+  int32_t reduction_level;
+  
+};
+  
 }
 
-
+#endif /* HIERARCHICAL_TASKGRAPH_H */

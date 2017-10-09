@@ -1,0 +1,13 @@
+module charm_dataflow {
+
+  namespace DataFlow {
+    namespace charm {
+  
+    array [1D] CharmTask {
+        entry CharmTask(Payload buffer);
+        entry void addInput(DataFlow::TaskId source, std::vector<char> input);
+      };
+
+    }          
+  }
+};

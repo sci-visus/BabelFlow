@@ -26,32 +26,44 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "TaskGraph.h"
+
+#include "HierarchicalTaskGraph.h"
 
 using namespace DataFlow;
 
-int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output)
-{
+HierarchicalTaskGraph::HierarchicalTaskGraph(std::vector<Task> tasks, int32_t hfactor, int32_t vfactor){
+  
+  mHfactor = hfactor;
+  mVfactor = vfactor;
+  reduction_level = 0;
+  
+  for(uint32_t i=0; i < tasks.size(); i++){
+    supertask.addSubTask(tasks[i]);
+  }
+  
+  printf("%lu tasks inserted\n", supertask.mSubtasks.size());
+  
+  for(uint32_t i=0; i < supertask.mSubtasks.size(); i++){
+    supertask.mSubtasks[i].resolveEdgesReduce(&supertask);
+  }
+}
+
+int HierarchicalTaskGraph::output_hierarchical_graph(FILE* output) const{
+  const std::vector<HierarchicalTask>& mSubtasks = supertask.mSubtasks;
+  
   fprintf(output,"digraph G {\n");
-
-  std::vector<Task> tasks;
-  std::vector<Task>::iterator tIt;
-  std::vector<TaskId>::iterator it;
-
-  for (uint32_t i=0;i<count;i++) {
-    tasks = localGraph(i,task_map);
-
-    for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
-      for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
-        if (*it != TNULL)
-          fprintf(output,"%d -> %d\n",*it,tIt->id());
-      }
+  
+  std::vector<HierarchicalTask>::const_iterator tIt;
+  std::vector<TaskId>::const_iterator it;
+  
+  for (tIt=mSubtasks.begin();tIt!=mSubtasks.end();tIt++) {
+    fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
+    for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
+      if (*it != TNULL)
+        fprintf(output,"%d -> %d\n",*it,tIt->id());
     }
   }
-
+  
   fprintf(output,"}\n");
   return 1;
 }
-
-

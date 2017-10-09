@@ -26,32 +26,48 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "TaskGraph.h"
 
-using namespace DataFlow;
+#ifndef CHARMCONTROLLER_H
+#define CHARMCONTROLLER_H
 
-int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output)
+#include <vector>
+#include <cstdlib>
+
+#include "../Definitions.h"
+#include "../TaskGraph.h"
+
+#include "charm_dataflow.decl.h"
+
+namespace DataFlow {
+
+namespace charm {
+
+
+//! The Charm++ based controller
+class Controller
 {
-  fprintf(output,"digraph G {\n");
+public:
 
-  std::vector<Task> tasks;
-  std::vector<Task>::iterator tIt;
-  std::vector<TaskId>::iterator it;
+  typedef CProxy_CharmTask ProxyType;
 
-  for (uint32_t i=0;i<count;i++) {
-    tasks = localGraph(i,task_map);
+  //! Default constructor
+  Controller() {}
 
-    for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
-      for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
-        if (*it != TNULL)
-          fprintf(output,"%d -> %d\n",*it,tIt->id());
-      }
-    }
-  }
+  //! Destructor
+  ~Controller() {}
 
-  fprintf(output,"}\n");
-  return 1;
+  //! Initialize the controller with the given graph
+  ProxyType initialize(Payload buffer,TaskId size);
+
+};
+
+
+
 }
+}
+
+
+#endif
+
 
 

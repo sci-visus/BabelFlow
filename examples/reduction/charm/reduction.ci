@@ -1,0 +1,12 @@
+mainmodule reduction {
+
+  extern module charm_dataflow;
+
+  readonly CProxy_Main mainProxy;
+ 
+   mainchare Main {
+      entry Main(CkArgMsg* m);
+      entry void done();
+  };          
+  
+};

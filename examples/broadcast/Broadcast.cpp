@@ -9,6 +9,8 @@
 #include "Broadcast.h"
 #include <iostream>
 
+using namespace DataFlow;
+
 Broadcast::Broadcast(uint32_t endpoints, uint32_t valence) : TaskGraph(),
     mValence(valence)
 {
@@ -22,7 +24,7 @@ Broadcast::Broadcast(uint32_t endpoints, uint32_t valence) : TaskGraph(),
   }
 }
 
-std::vector<Task> Broadcast::localGraph(ControllerId id, const TaskMap* task_map) const
+std::vector<Task> Broadcast::localGraph(ShardId id, const TaskMap* task_map) const
 {
   TaskId i;
 
@@ -33,8 +35,8 @@ std::vector<Task> Broadcast::localGraph(ControllerId id, const TaskMap* task_map
 //  }
 
   // The create the required number of tasks
-  std::vector<Task> tasks(ids.size());
-  std::vector<Task>::iterator it;
+  std::vector<DataFlow::Task> tasks(ids.size());
+  std::vector<DataFlow::Task>::iterator it;
 
   //! Now assign all the task ids
   for (i=0;i<ids.size();i++)

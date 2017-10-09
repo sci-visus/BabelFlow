@@ -26,32 +26,29 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "TaskGraph.h"
 
-using namespace DataFlow;
+#include "Controller.h"
 
-int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output)
+namespace DataFlow {
+namespace charm {
+
+
+CProxy_CharmTask Controller::initialize(Payload buffer, TaskId size)
 {
-  fprintf(output,"digraph G {\n");
+  //fprintf(stderr,"Trying to create %d tasks\n", graph.size());
 
-  std::vector<Task> tasks;
-  std::vector<Task>::iterator tIt;
-  std::vector<TaskId>::iterator it;
+  // Create an array to hold all tasks
+  ProxyType tasks = ProxyType::ckNew(buffer, size);
 
-  for (uint32_t i=0;i<count;i++) {
-    tasks = localGraph(i,task_map);
+  // As per convention, this function now owns the buffer and must
+  // free the memory
+  delete[] buffer.buffer();
 
-    for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
-      for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
-        if (*it != TNULL)
-          fprintf(output,"%d -> %d\n",*it,tIt->id());
-      }
-    }
-  }
-
-  fprintf(output,"}\n");
-  return 1;
+  return tasks;
 }
 
+
+
+}
+}
 

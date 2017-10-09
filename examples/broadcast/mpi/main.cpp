@@ -12,17 +12,20 @@
 #include <cstdlib>
 
 #include "mpi.h"
-#include "Broadcast.h"
+#include "../Broadcast.h"
 #include "ModuloMap.h"
-#include "Controller.h"
+#include "mpi/Controller.h"
 
 uint32_t gCount = 0;
 int arr_length = 0;
 
-int print_message(std::vector<DataBlock>& inputs, std::vector<DataBlock>& output, TaskId task)
+using namespace DataFlow;
+using namespace DataFlow::mpi;
+
+int print_message(std::vector<Payload>& inputs, std::vector<Payload>& output, TaskId task)
 {
   //char* str = (char*)inputs[0].buffer;
-  int* arr = (int*)inputs[0].buffer;
+  int* arr = (int*)inputs[0].buffer();
   int sum = arr[0];
   arr[0] = 0;
   for (int i=1; i<arr_length; i++) {
@@ -77,15 +80,14 @@ int main(int argc, char* argv[])
   master.registerCallback(1,print_message);
 
   
-  std::map<TaskId,DataBlock> inputs;
+  std::map<TaskId,Payload> inputs;
 
   arr_length = atoi(argv[3]);
   if (rank ==0 ) {
-    DataBlock data;
-    data.size = arr_length*sizeof(int);
-    data.buffer = (char*)(new int[data.size]);
+    int32_t size = arr_length*sizeof(int);
+    char* buffer = (char*)(new int[size]);
 
-    int *arr = (int*)data.buffer;
+     int *arr = (int*)buffer;
     // Initialize the array with ints
     for (int i=0; i<arr_length; i++) 
       arr[i] = i;
@@ -96,6 +98,7 @@ int main(int argc, char* argv[])
 
     //memcpy(data.buffer,argv[3],data.size);
 
+    Payload data(size,buffer);
     inputs[0] = data;
     printf("Array Size: %d Sum: %d\n", arr_length, arr[0]);
   }

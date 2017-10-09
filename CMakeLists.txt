@@ -2,9 +2,41 @@ Project(DataFlow)
 cmake_minimum_required(VERSION 2.8)
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
-Find_Package(MPI)
-set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
-set(CMAKE_C_COMPILER ${MPI_C_COMPILER})
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+
+set(RUNTIME_TYPE "MPI" CACHE STRING "Runtime Controller (MPI, CHARM)")
+set_property(CACHE RUNTIME_TYPE PROPERTY STRINGS MPI CHARM)
+
+if(${RUNTIME_TYPE} MATCHES "MPI")
+    set(ENABLE_MPI TRUE)
+    set(ENABLE_CHARM FALSE)
+    message("Using MPI Runtime Controller")
+else()
+    set(ENABLE_CHARM TRUE)
+    set(ENABLE_MPI FALSE)
+    message("Using Charm++ Runtime Controller")
+endif()
+
+if (ENABLE_CHARM)
+    find_package(Charm)
+
+    set(CMAKE_C_COMPILER ${CHARM_COMPILER}) 
+    set(CMAKE_CXX_COMPILER ${CHARM_COMPILER})
+ 
+    set(DATAFLOW_INCLUDE_PATH ${CMAKE_CURRENT_BINARY_DIR}/src/charm)
+    
+else()
+    set(ENABLE_MPI TRUE)
+    
+    Find_Package(MPI)
+    set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
+    set(CMAKE_C_COMPILER ${MPI_C_COMPILER})
+
+    set(DATAFLOW_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH})
+    set(DATAFLOW_LIBRARIES ${MPI_CXX_LIBRARIES}) 
+
+endif()
+
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set (CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/" CACHE PATH "default install path" FORCE )

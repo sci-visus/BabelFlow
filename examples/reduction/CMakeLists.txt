@@ -1,16 +1,24 @@
-set(SRC
-    Reduction.h
-    Reduction.cpp
-    main.cpp
-)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/src
-    ${MPI_CXX_INCLUDE_PATH}
+    ${DATAFLOW_INCLUDE_PATH}
 )
 
-add_executable(reduction ${SRC})
-target_link_libraries(reduction dataflow ${MPI_CXX_LIBRARIES})
+if (ENABLE_MPI)
     
-INSTALL(TARGETS reduction
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+    #add_subdirectory(mpi)
+    
+    set (SRC ${SRC} ./mpi/main.cpp Reduction.cpp)
+
+    add_executable(reduction ${SRC})
+    
+    target_link_libraries(reduction dataflow dataflow_mpi)
+
+elseif(ENABLE_CHARM)
+ 
+     add_subdirectory(charm)
+ 
+ endif()   
+
+
+

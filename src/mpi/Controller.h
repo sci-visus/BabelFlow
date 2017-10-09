@@ -1,8 +1,30 @@
 /*
- * Controller.h
+ * Copyright (c) 2017 University of Utah 
+ * All rights reserved.
  *
- *  Created on: Dec 12, 2014
- *      Author: bremer5
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the copyright holder nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef CONTROLLER_H
@@ -16,42 +38,15 @@
 #include <mutex>
 #include <queue>
 
-#include "Definitions.h"
-#include "TaskGraph.h"
-#include "Task.h"
+#include "../Definitions.h"
+#include "../TaskGraph.h"
+#include "../Task.h"
+#include "../Payload.h"
 #include "mpi.h"
 
-//! A DataBlock abstracts a chunk of memory
-class DataBlock
-{
-public:
+namespace DataFlow {
 
-  //! Default constructor
-  DataBlock(char *b=NULL, uint32_t s=0) : buffer(b), size(s) {}
-
-  //! Copy constructor
-  DataBlock(const DataBlock& block);
-
-  //! Makes a copy of the data block
-  DataBlock clone() const;
-
-  char* buffer;
-  uint32_t size;
-};
-
-//! The typedef for the accepted callbacks
-/*! A Callback is the only accepted function signature for a task.
- *  It takes n>=0  DataBlocks as input and produces m>=0 DataBlocks
- *  as output. The callback will assume ownership of the input buffers
- *  as is responsible for deleting any associated memory. Similarly,
- *  the callback will give up ownership of all output buffers to the
- *  caller
- *
- * @param inputs A set of DataBlocks that are the inputs
- * @param outputs A set of DataBlocks storing the outputs
- * @return 1 if successful and 0 otherwise
- */
-typedef int (*Callback)(std::vector<DataBlock>& inputs, std::vector<DataBlock>& outputs, TaskId task);
+namespace mpi {
 
 /*! A controller handles the communication as well as thread
  *  management for the tasks assigned to it
@@ -67,14 +62,14 @@ public:
   ~Controller() {}
 
   //! Initialize the controller
-  int initialize(const TaskGraph& graph, const TaskMap* task_map, MPI_Comm comm = MPI_COMM_WORLD,
-                 const ControllerMap* controller_map = new ControllerMap());
+  int initialize(const DataFlow::TaskGraph& graph, const DataFlow::TaskMap* task_map, MPI_Comm comm = MPI_COMM_WORLD,
+                 const DataFlow::ControllerMap* controller_map = new DataFlow::ControllerMap());
 
   //! Register a callback for the given id
   int registerCallback(CallbackId id, Callback func);
 
   //! Start the computation
-  int run(std::map<TaskId,DataBlock>& initial_inputs);
+  int run(std::map<TaskId,Payload>& initial_inputs);
 
 //private:
 
@@ -84,7 +79,7 @@ public:
   public:
 
     //! Default constructor
-    TaskWrapper(const Task& t);
+    TaskWrapper(const DataFlow::Task& t);
 
     //! Copy constructor
     TaskWrapper(const TaskWrapper& t);
@@ -95,16 +90,16 @@ public:
     TaskWrapper& operator=(const TaskWrapper& t);
 
     //! Return the corresponding task
-    const Task& task() const {return mTask;}
+    const DataFlow::Task& task() const {return mTask;}
 
     //! Add an input
-    bool addInput(TaskId source, DataBlock data);
+    bool addInput(TaskId source, Payload data);
 
     //! Return whether this task is ready to be executed
     bool ready() const;
 
     //! The task
-    Task mTask;
+    DataFlow::Task mTask;
 
     //! Mutex to check if task is ready. We use this in the addInput routine as
     //! both the master and the worker thready can check if a task is ready and
@@ -112,10 +107,10 @@ public:
     std::mutex mTaskReadyMutex;
 
     //! The input buffers
-    std::vector<DataBlock> mInputs;
+    std::vector<Payload> mInputs;
 
     //! The output buffers
-    std::vector<DataBlock> mOutputs;
+    std::vector<Payload> mOutputs;
   };
 
   //! A list of registered callbacks
@@ -123,12 +118,12 @@ public:
    
   //! Post a send of the given data to all destinations
   int initiateSend(TaskId source,const std::vector<TaskId>& destinations, 
-                   DataBlock data);
+                   Payload data);
 
 private:
 
   //! The id of this controller
-  ControllerId mId;
+  ShardId mId;
 
   //! The MPI rank used by the controller. If no MPI rank its TNULL
   int mRank;
@@ -141,10 +136,10 @@ private:
   std::map<TaskId,TaskWrapper> mTasks;
 
   //! The active task map
-  const TaskMap* mTaskMap;
+  const DataFlow::TaskMap* mTaskMap;
 
   //! The active controller map
-  const ControllerMap* mControllerMap;
+  const DataFlow::ControllerMap* mControllerMap;
 
   //! The map from rank-id to the number of expected messages
   std::map<int, uint32_t> mMessageLog;
@@ -202,9 +197,9 @@ private:
 
   //! Send all outstanding messages
   char* packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator pIt,
-                    TaskId source, DataBlock data ) ;
+                    TaskId source, Payload data) ;
 
-  TaskId* unPackMessage(char* messsage, DataBlock* data_block, 
+  TaskId* unPackMessage(char* messsage, Payload* data_block,
                         TaskId* source_task, uint32_t* num_tasks_msg);
 
   //! Test for MPI events to guarantee progress and handle receives
@@ -218,5 +213,6 @@ private:
 //! Execute the given task and send the outputs
 int execute(Controller* c, Controller::TaskWrapper task);
 
-
+}
+}
 #endif /* CONTROLLER_H_ */

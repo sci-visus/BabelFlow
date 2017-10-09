@@ -1,8 +1,30 @@
 /*
- * Controller.cpp
+ * Copyright (c) 2017 University of Utah 
+ * All rights reserved.
  *
- *  Created on: Dec 12, 2014
- *      Author: bremer5
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the copyright holder nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <unistd.h>
@@ -13,6 +35,11 @@
 
 #include "Controller.h"
 #include "RelayTask.h"
+
+namespace DataFlow {
+
+namespace mpi {
+
 
 //#define DEBUG_PRINTS
 const int RANKID=0;
@@ -26,6 +53,8 @@ const int RANKID=0;
 # define PRINT_RANK(x) do {} while (0)
 #endif
 
+
+/*
 DataBlock::DataBlock(const DataBlock& block)
 {
   size = block.size;
@@ -42,9 +71,9 @@ DataBlock DataBlock::clone() const
   memcpy(data_copy.buffer, buffer, size);
   return data_copy;
 }
+*/
 
-
-Controller::TaskWrapper::TaskWrapper(const Task& t) : mTask(t)
+Controller::TaskWrapper::TaskWrapper(const DataFlow::Task& t) : mTask(t)
 {
   mInputs.resize(t.fanin());
   mOutputs.resize(t.fanout());
@@ -66,7 +95,7 @@ Controller::TaskWrapper& Controller::TaskWrapper::operator=(const TaskWrapper& t
 
 //! Adds the new input to the task. If all inputs have arrived returns true as
 //! this task can now be staged
-bool Controller::TaskWrapper::addInput(TaskId source, DataBlock data)
+bool Controller::TaskWrapper::addInput(TaskId source, Payload data)
 {
   TaskId i;
   bool is_ready = true;
@@ -75,11 +104,11 @@ bool Controller::TaskWrapper::addInput(TaskId source, DataBlock data)
   mTaskReadyMutex.lock();
   for (i=0;i<mTask.fanin();i++) {
     if (mTask.incoming()[i] == source) {
-      assert(mInputs[i].buffer == NULL);
+      assert(mInputs[i].buffer() == NULL);
       mInputs[i] = data;
       input_added = true;
     }
-    if (mInputs[i].buffer == NULL)
+    if (mInputs[i].buffer() == NULL)
       is_ready = false;
   }
   mTaskReadyMutex.unlock();
@@ -102,7 +131,7 @@ Controller::Controller() : mRecvBufferSize(1024*1024*128)
   mRank = TNULL;
 }
 
-int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map, 
+int Controller::initialize(const TaskGraph& graph, const DataFlow::TaskMap* task_map,
                            MPI_Comm comm, const ControllerMap* controller_map)
 {
   mTaskMap = task_map;
@@ -120,7 +149,7 @@ int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map,
   std::vector<Task>::const_iterator tIt;
   std::vector<TaskId>::const_iterator it;
   std::map<int,uint32_t>::iterator mIt;
-  ControllerId cId;
+  ShardId cId;
   int c_rank;
 
   // Now collect the message log
@@ -133,7 +162,7 @@ int Controller::initialize(const TaskGraph& graph, const TaskMap* task_map,
       //PRINT_RANK(" Incoming: " << *it);
       // If this is an input that will come from the dataflow
       if (*it != TNULL) {
-        cId = mTaskMap->controller(*it);
+        cId = mTaskMap->shard(*it);
 
         // And one that comes from the outside
         if (cId != mId) {
@@ -170,10 +199,10 @@ int Controller::registerCallback(CallbackId id, Callback func)
 }
 
 //! Start the computation
-int Controller::run(std::map<TaskId,DataBlock>& initial_inputs)
+int Controller::run(std::map<TaskId,Payload>& initial_inputs)
 {
   std::map<int,uint32_t>::iterator mIt;
-  std::map<TaskId,DataBlock>::iterator tIt;
+  std::map<TaskId,Payload>::iterator tIt;
   std::map<TaskId,TaskWrapper>::iterator wIt;
 
   int num_processes;
@@ -191,7 +220,7 @@ int Controller::run(std::map<TaskId,DataBlock>& initial_inputs)
   // Look through all tasks to find leaf tasks that need outside inputs
   for (wIt=mTasks.begin();wIt!=mTasks.end();wIt++) {
 
-    // For now we assume that leaf tasks only hvae a single input
+    // For now we assume that leaf tasks only have a single input
     // indicated by TNULL task id
     if (wIt->second.task().incoming()[0] == TNULL) { // If this is a leaf task
       // Look for the approriate input
@@ -271,7 +300,7 @@ int Controller::startTask(TaskWrapper& task)
 
 
 
-TaskId* Controller::unPackMessage(char* message, DataBlock* data_block, 
+TaskId* Controller::unPackMessage(char* message, Payload* data_block,
                                   TaskId* source_task, uint32_t* num_tasks_msg) {
 
   uint32_t message_size = *(uint32_t*)(message + sizeof(uint32_t));
@@ -281,10 +310,12 @@ TaskId* Controller::unPackMessage(char* message, DataBlock* data_block,
   char* data_ptr        = (char*)(task_ids + *num_tasks_msg);
 
   // Create DataBlock from message
-  data_block->size = (int)message_size - 
-                    (sizeof(uint32_t)*3 + sizeof(TaskId)*(1 + *num_tasks_msg));
-  data_block->buffer = new char[data_block->size];
-  memcpy(data_block->buffer, data_ptr, data_block->size);
+  int32_t size = (int)message_size - (sizeof(uint32_t)*3 + sizeof(TaskId)*(1 + *num_tasks_msg));
+  char* buffer =  new char[size];
+  memcpy(buffer, data_ptr, size);
+
+
+  data_block->initialize(size,buffer);
 
   //PRINT("Rank : " << mRank << "Data Size :: " << data_block->size << \
    " Msg Size :: " << message_size << \
@@ -299,12 +330,12 @@ TaskId* Controller::unPackMessage(char* message, DataBlock* data_block,
 
 
 char* Controller::packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator pIt,
-                              TaskId source, DataBlock data ) {
+                              TaskId source, Payload data ) {
 
   uint32_t size = 3*sizeof(uint32_t)                  // dest rank, size, no. dest tasks
                   + sizeof(TaskId)                    // source taskId
                   + pIt->second.size()*sizeof(TaskId) // the destination tasks
-                  + data.size;                        // payload
+                  + data.size();                      // payload
 
   char* msg = new char[size];
   *(uint32_t*)msg = pIt->first;
@@ -325,7 +356,7 @@ char* Controller::packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator 
   // This memcpy is annoying but appears necessary if we want to encode multiple
   // destination task ids. Might look at this later
   memcpy(ptr + sizeof(uint32_t) + sizeof(TaskId) + 
-         pIt->second.size()*sizeof(TaskId), data.buffer, data.size);
+         pIt->second.size()*sizeof(TaskId), data.buffer(), data.size());
 
   return msg;
 }
@@ -333,7 +364,7 @@ char* Controller::packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator 
 
 int Controller::initiateSend(TaskId source, 
                              const std::vector<TaskId>& destinations, 
-                             DataBlock data)
+                             Payload data)
 {
   std::vector<TaskId>::const_iterator it;
   std::map<TaskId,TaskWrapper>::iterator tIt;
@@ -344,8 +375,9 @@ int Controller::initiateSend(TaskId source,
   for (it=destinations.begin();it!=destinations.end();it++) {
     
     if (*it == TNULL) {
-      assert (false);
-      return 1;
+      //assert (false);
+      continue;
+      // return 1;
     }
 
     // First, we check whether the destination is a local task
@@ -361,7 +393,7 @@ int Controller::initiateSend(TaskId source,
       //PRINT_RANK("Source task: " << source << " Dest Task: " << *it);
 
       // Figure out where it needs to go
-      rank = mControllerMap->rank(mTaskMap->controller(*it));
+      rank = mControllerMap->rank(mTaskMap->shard(*it));
 
       // See whether somebody else already send to the same MPI rank
       pIt = packets.find(rank);
@@ -388,7 +420,7 @@ int Controller::initiateSend(TaskId source,
   }
   
   //TODO: enable the delete after full parallelMT code has been ported
-  delete[] data.buffer;
+  data.reset();
   return 1;
 }
 
@@ -442,7 +474,7 @@ int Controller::testMPI()
     if (dest == mRank) { // This is a received message
 
       // Unpack the message
-      DataBlock data_block;
+      Payload data_block;
       TaskId* task_ids;
       uint32_t num_tasks_msg;
       TaskId source_task=0;
@@ -561,4 +593,5 @@ int execute(Controller *c,Controller::TaskWrapper task)
 }
 
 
-
+} // namespace mpi
+} // namespace DataFlow

@@ -26,32 +26,52 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "TaskGraph.h"
+#ifndef HIERARCHICAL_TASK_H
+#define HIERARCHICAL_TASK_H
 
-using namespace DataFlow;
+#include <vector>
+#include <cstdio>
+#include <map>
 
-int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output)
-{
-  fprintf(output,"digraph G {\n");
+#include "Task.h"
 
-  std::vector<Task> tasks;
-  std::vector<Task>::iterator tIt;
-  std::vector<TaskId>::iterator it;
+namespace DataFlow {
+ 
+static TaskId ht_global_id = 1000000;
 
-  for (uint32_t i=0;i<count;i++) {
-    tasks = localGraph(i,task_map);
+class HierarchicalTask : public Task{
 
-    for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
-      for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
-        if (*it != TNULL)
-          fprintf(output,"%d -> %d\n",*it,tIt->id());
-      }
-    }
-  }
+private: HierarchicalTask(const Task& task) : Task(task){};
+  
+public:
+  
+  HierarchicalTask(){id(ht_global_id++);};
+   
+  void reduce(int32_t hfactor, int32_t vfactor);
+  void expand(int32_t hfactor, int32_t vfactor);
+  
+  // Recursive subtask search
+  bool isInternalTask(TaskId tid, bool recursive = true);
 
-  fprintf(output,"}\n");
-  return 1;
+//  void checkUnresolvedReduce(std::vector<HierarchicalTask*>& new_leaves, HierarchicalTask* supertask);
+  void resolveEdgesReduce(HierarchicalTask* supertask);
+  void resolveEdgesExpand(HierarchicalTask* supertask);
+
+  HierarchicalTask* getParentTask(TaskId tid, bool recursive = true);
+  HierarchicalTask* getTask(TaskId tid, bool recursive = true);
+  bool addSubTask(HierarchicalTask task, bool recursive = true);
+  void addSubTask(Task task){
+    addSubTask(HierarchicalTask(task));
+  };
+
+  bool isLeafTask();
+  
+  std::vector<HierarchicalTask> mSubtasks;
+  
+  std::map<TaskId,TaskId> incoming_map;
+  std::map<TaskId,TaskId> outgoing_map;
+
+};
+
 }
-
-
+#endif /* HIERARCHICAL_TASK_H */

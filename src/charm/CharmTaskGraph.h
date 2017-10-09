@@ -26,32 +26,34 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef CHARMTASKGRAPH_H
+#define CHARMTASKGRAPH_H
+
 #include "TaskGraph.h"
 
-using namespace DataFlow;
+namespace DataFlow {
+namespace charm {
 
-int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output)
-{
-  fprintf(output,"digraph G {\n");
 
-  std::vector<Task> tasks;
-  std::vector<Task>::iterator tIt;
-  std::vector<TaskId>::iterator it;
+inline void operator|(PUP::er &p, DataFlow::TaskGraph& graph) {
+  if (!p.isUnpacking()) {
+    DataFlow::Payload buffer = graph.serialize();
+    p(buffer.buffer(),buffer.size());
 
-  for (uint32_t i=0;i<count;i++) {
-    tasks = localGraph(i,task_map);
-
-    for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
-      for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
-        if (*it != TNULL)
-          fprintf(output,"%d -> %d\n",*it,tIt->id());
-      }
-    }
+    delete[] buffer.buffer();
   }
+  else {
+    // First we serialize bogus data
+    DataFlow::Payload buffer = graph.serialize();
 
-  fprintf(output,"}\n");
-  return 1;
+    // TO have enough room to read in the actual data
+    p(buffer.buffer(),buffer.size());
+    graph.deserialize(buffer);
+  }
 }
 
+}
+}
 
+#endif
