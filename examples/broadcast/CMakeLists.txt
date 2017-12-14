@@ -8,11 +8,11 @@ if (ENABLE_MPI)
     
     add_subdirectory(mpi)
     
-    #set (SRC ${SRC} ./mpi/main.cpp Reduction.cpp)
+    #set (SRC ${SRC} ./mpi/main.cpp Broadcast.cpp)
 
-    #add_executable(reduction ${SRC})
+    #add_executable(broadcast ${SRC})
     
-    #target_link_libraries(reduction dataflow dataflow_mpi)
+    #target_link_libraries(broadcast dataflow dataflow_mpi)
 
 elseif(ENABLE_CHARM)
  

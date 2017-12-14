@@ -1,6 +1,6 @@
 set(SRC
-    ../Broadcast.h
-    ../Broadcast.cpp
+    ../Reduction.h
+    ../Reduction.cpp
     main.cpp
 )
 
@@ -9,9 +9,9 @@ include_directories(
     ${DATAFLOW_INCLUDE_PATH}
 )
 
-add_executable(broadcast ${SRC})
-target_link_libraries(broadcast dataflow dataflow_mpi)
+add_executable(reduction ${SRC})
+target_link_libraries(reduction dataflow dataflow_mpi)
 
-INSTALL(TARGETS broadcast
+INSTALL(TARGETS reduction
         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
     
