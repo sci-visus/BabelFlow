@@ -23,3 +23,8 @@ INSTALL(TARGETS dataflow_mpi
 
 export(TARGETS dataflow dataflow_mpi
   FILE "${PROJECT_BINARY_DIR}/DataFlowTargets.cmake")
+
+INSTALL(TARGETS dataflow_mpi
+        EXPORT DataFlowTargets
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)

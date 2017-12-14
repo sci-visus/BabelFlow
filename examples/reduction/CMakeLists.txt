@@ -5,20 +5,8 @@ include_directories(
 )
 
 if (ENABLE_MPI)
-    
     add_subdirectory(mpi)
-    
-    #set (SRC ${SRC} ./mpi/main.cpp Reduction.cpp)
-
-    #add_executable(reduction ${SRC})
-    
-    #target_link_libraries(reduction dataflow dataflow_mpi)
-
 elseif(ENABLE_CHARM)
+    add_subdirectory(charm)
+ endif()
  
-     add_subdirectory(charm)
- 
- endif()   
-
-
-

@@ -32,10 +32,6 @@ INSTALL(TARGETS dataflow_charm
 export(TARGETS dataflow dataflow_charm
   FILE "${PROJECT_BINARY_DIR}/DataFlowTargets.cmake")
 
-#INSTALL(TARGETS ${PROJECT_BINARY_DIR}/src/charm/charm_dataflow.decl.h POST_BUILD 
-#	DESTINATION ${CMAKE_INSTALL_PREFIX}/include/charm
-#)
-
 add_custom_command(TARGET dataflow_charm POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy
                    ${PROJECT_BINARY_DIR}/src/charm/charm_dataflow.decl.h ${CMAKE_INSTALL_PREFIX}/include/DataFlow/charm/charm_dataflow.decl.h)
@@ -43,3 +39,8 @@ add_custom_command(TARGET dataflow_charm POST_BUILD
 add_custom_command(TARGET dataflow_charm POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy
                    ${PROJECT_BINARY_DIR}/src/charm/charm_dataflow.def.h ${CMAKE_INSTALL_PREFIX}/include/DataFlow/charm/charm_dataflow.def.h)
+
+INSTALL(TARGETS dataflow_charm
+        EXPORT DataFlowTargets
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)

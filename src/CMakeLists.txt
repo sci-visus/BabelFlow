@@ -23,16 +23,18 @@ SET (DATAFLOW_SRC
     HierarchicalTaskGraph.cpp
 )
 
-
 add_library(dataflow STATIC ${DATAFLOW_SRC})
-  
-set(DATAFLOW_LIBRARIES 
-    ${DATAFLOW_LIBRARIES}
-    dataflow
-    PARENT_SCOPE
-) 
 
- 
+if (ENABLE_MPI)
+    add_subdirectory(mpi)
+    set(DATAFLOW_LIBRARIES dataflow dataflow_mpi PARENT_SCOPE)
+elseif(ENABLE_CHARM)
+    add_subdirectory(charm)
+    set(DATAFLOW_LIBRARIES dataflow dataflow_charm PARENT_SCOPE)
+else()
+    message(FATAL_ERROR "Unrecognized runtime")
+endif()
+
 INSTALL(FILES ${DATAFLOW_HEADERS}
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include/DataFlow
 )
@@ -41,11 +43,3 @@ INSTALL(TARGETS dataflow
         EXPORT DataFlowTargets
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
-
-if (ENABLE_MPI)
-    add_subdirectory(mpi)
-elseif(ENABLE_CHARM)
-    add_subdirectory(charm)
-else()
-    message(FATAL_ERROR "Unrecognized runtime")
-endif()

@@ -10,7 +10,7 @@ include_directories(
 )
 
 add_executable(reduction ${SRC})
-target_link_libraries(reduction dataflow dataflow_mpi)
+target_link_libraries(reduction ${DATAFLOW_LIBRARIES})
 
 INSTALL(TARGETS reduction
         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
