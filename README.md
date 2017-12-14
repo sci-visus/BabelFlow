@@ -41,8 +41,33 @@ Examples included
 The reduction graph example executes a k-way reduction dataflow. 
 The tasks defined in this examples perform a simple sum operation.
 
+The executable requires 2 inputs: `<nr-of-leafs> <fan_in>`
+
 To execute the version built using the MPI runtime you can run (using for example 8 cores):
-`mpirun -np 8 examples/reduction/reduction 8 2`
+`mpirun -np 8 examples/reduction/mpi/reduction 16 2`
 
 To execute the version built using the Charm++ runtime you can run (8-way SMP):
-`examples/reduction/charm/reduction +p8 8 2`
+`examples/reduction/charm/reduction +p8 16 2`
+
+Note that the size of the graph (e.g., number of leafs) is not bounded by
+the number of cores you are using. For example we are using 8 ranks to execute
+a reduction graph with 16 leafs.
+
+This means that you can easily debug bigger scale runs on a limited number
+of computing resources.
+
+**Broadcast**
+
+The broadcast graph example execute a k-way broadcast dataflow.
+This examples contains only one task which compute the sum of the numbers
+from 0 to 99 and compares the result with the input data which has been
+propagated through the broadcast dataflow.
+
+The executable requires 2 inputs: `<nr-of-leafs> <fan_out>`
+
+To execute the version built using the MPI runtime you can run (using for example 8 cores):
+`mpirun -np 8 examples/broadcast/mpi/broadcast 16 2`
+
+To execute the version built using the Charm++ runtime you can run (8-way SMP):
+`examples/broadcast/charm/broadcast +p8 16 2`
+
