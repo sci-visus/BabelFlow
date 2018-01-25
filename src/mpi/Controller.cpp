@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <cstring>
-#include "mpi.h"
+#include <mpi.h>
 #include <iostream>
 
 #include "Controller.h"

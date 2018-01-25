@@ -29,6 +29,7 @@ else()
     set(ENABLE_MPI TRUE)
     
     Find_Package(MPI)
+    include_directories(${MPI_C_INCLUDE_PATH})
     set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
     set(CMAKE_C_COMPILER ${MPI_C_COMPILER})
 
