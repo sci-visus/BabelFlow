@@ -32,14 +32,14 @@
 #include <cstdlib>
 #include <sstream>
 
-#include "ReductionGraph.h"
-#include "ReductionCallbacks.h"
+#include "BroadcastGraph.h"
+#include "BroadcastCallbacks.h"
 #include "ModuloMap.h"
 #include "RelayTask.h"
 #include "charm/CharmTask.h"
 #include "charm/Controller.h"
 
-#include "reduction.decl.h"
+#include "broadcast.decl.h"
 
 /* readonly */ CProxy_Main mainProxy;
 
@@ -52,9 +52,7 @@ DataFlow::Callback registered_callback(DataFlow::CallbackId id)
     case 0:
       return DataFlow::relay_message;
     case 1:
-      return add_int;
-    case 2:
-      return report_sum;
+      return print_message;
     default:
       assert(false);
       break;
@@ -64,9 +62,8 @@ DataFlow::Callback registered_callback(DataFlow::CallbackId id)
 
 DataFlow::TaskGraph* make_task_graph(DataFlow::Payload buffer)
 {
-  return DataFlow::charm::make_task_graph_template<ReductionGraph>(buffer);
+  return DataFlow::charm::make_task_graph_template<BroadcastGraph>(buffer);
 }
-
 
 class Main : public CBase_Main
 {
@@ -79,48 +76,55 @@ public:
   {
 
     if (m->argc < 3) {
-      fprintf(stderr,"Usage: %s <nr-of-leafs> <fan-in> \n", m->argv[0]);
+      fprintf(stderr,"Usage: %s <nr-of-leafs> <fanout> \n", m->argv[0]);
+      return;
     }
-    else
-      fprintf(stderr,"Starting program with %d leafs and fanin %d\n",atoi(m->argv[1]),atoi(m->argv[2]));
 
     mainProxy = thisProxy;
 
     uint32_t leafs = atoi(m->argv[1]);
     uint32_t valence = atoi(m->argv[2]);
 
-    ReductionGraph graph(leafs,valence);
-
+    BroadcastGraph graph(leafs,valence);
 
     // Output the graph for testing
     ModuloMap task_map(1,graph.size());
-    FILE* output=fopen("output.dot","w");
+    FILE* output=fopen("broadcast_task_graph.dot","w");
     graph.output_graph(1,&task_map,output);
     fclose(output);
 
-    DataFlow::charm::Controller controller;
-    
+    Controller controller;
+
     DataFlow::charm::Controller::ProxyType proxy;
     proxy = controller.initialize(graph.serialize(),graph.size());
     
-    uint32_t count=1;
-    mSum = 0;
-    for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
+    std::map<TaskId,Payload> inputs;
+    
+    int32_t size = arr_length*sizeof(int);
+    char* buffer = (char*)(new int[size]);
 
-      std::vector<char> buffer(sizeof(uint32_t));
-
-      buffer.assign((char*)&count,((char *)&count) + sizeof(uint32_t));
-
-      proxy[graph.gId(i)].addInput(TNULL,buffer);
-      mSum += count++;
+    int *arr = (int*)buffer;
+    // Initialize the array with ints
+    for (int i=0; i<arr_length; i++) {
+      arr[i] = i;
     }
+    // Collect the sum in the first element
+    for (int i=1; i<arr_length; i++) 
+      arr[0] += arr[i];
+
+    std::vector<char> vbuffer(buffer, buffer+size);
+
+    proxy[graph.gId(0)].addInput(TNULL,vbuffer);
+
+    printf("Sum: %d\n", arr[0]);
+    
   }
 
   Main(CkMigrateMessage *m) {}
 
-  void done() {fprintf(stderr,"Correct total sum is %d\n",mSum);CkExit();}
+  void done() {fprintf(stderr,"Done\n");CkExit();}
 };
 
 
-#include "reduction.def.h"
+#include "broadcast.def.h"
 

@@ -1,7 +1,8 @@
 
 set(SRC
-    ../Reduction.h
-    ../Reduction.cpp
+    ../ReductionCallbacks.h
+    ../ReductionGraph.h
+    ../ReductionGraph.cpp
     main.cpp
 )
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
