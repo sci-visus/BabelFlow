@@ -28,81 +28,45 @@
  */
 
 #include <cmath>
-#include "Broadcast.h"
-#include <iostream>
 #include <sstream>
+
+#include "ReductionGraph.h"
 
 using namespace DataFlow;
 
-Broadcast::Broadcast(uint32_t endpoints, uint32_t valence) : TaskGraph(),
+ReductionGraph::ReductionGraph(uint32_t leafs, uint32_t valence) : TaskGraph(),
     mValence(valence)
 {
-  // Find the number of endpoints that is a power of valence
-  mEndpoints = 1;
+  // Find the number of leafs that is a power of valence
+  mLeafs = 1;
   mLevels = 0;
 
-  while (mEndpoints < endpoints) {
-    mEndpoints *= mValence;
+  while (mLeafs < leafs) {
+    mLeafs *= mValence;
     mLevels++;
   }
 }
 
-Broadcast::Broadcast(std::string config)
+ReductionGraph::ReductionGraph(std::string config)
 {
   std::stringstream cmd(config);
 
-  uint32_t endpoints;
+  uint32_t leafs;
 
-  cmd >> endpoints;
+  cmd >> leafs;
   cmd >> mValence;
 
-  // Find the number of endpoints that is a power of valence
-  mEndpoints = 1;
+  // Find the number of leafs that is a power of valence
+  mLeafs = 1;
   mLevels = 0;
 
-  while (endpoints < endpoints) {
-    mEndpoints *= mValence;
+  while (mLeafs < leafs) {
+    mLeafs *= mValence;
     mLevels++;
   }
 }
 
-DataFlow::Task Broadcast::task(uint64_t gId) const
-{
-  DataFlow::Task task(gId);
-
-  std::vector<TaskId> incoming(1); // There will always be 1 incoming
-  std::vector<std::vector<TaskId> > outgoing(1); // and one output
-  outgoing[0].resize(mValence); // That goes to valence many other tasks
-  uint32_t i;
-
-  // If this is a leaf
-  if (task.id() >= (size() - pow(mValence,mLevels)))
-    task.callback(1);
-  else { // If we are not the leaf
-    task.callback(0); // We are a relay task
-
-    // And we have valence many outputs
-    for (i=0;i<mValence;i++)
-      outgoing[0][i] = task.id()*mValence + i + 1;
-
-    task.outputs() = outgoing;
-  }
-
-  // If we are not the root we have one incoming
-  if (task.id() > 0) {
-    incoming[0] = (task.id()-1) / mValence;
-    task.incoming() = incoming;
-  }
-  else { // If we are the root we have one outside input
-    incoming[0] = TNULL;
-    task.incoming() = incoming;
-  }
-
-  return task;
-
-}
-
-std::vector<Task> Broadcast::localGraph(ShardId id, const TaskMap* task_map) const
+std::vector<Task> ReductionGraph::localGraph(ShardId id, const TaskMap* task_map) const
 {
   // First get all the ids we need
   std::vector<TaskId> ids = task_map->tasks(id);
@@ -116,27 +80,61 @@ std::vector<Task> Broadcast::localGraph(ShardId id, const TaskMap* task_map) con
   return tasks;
 }
 
-DataFlow::Payload Broadcast::serialize() const
+DataFlow::Task ReductionGraph::task(uint64_t gId) const
+{
+  DataFlow::Task task(gId);
+  std::vector<DataFlow::TaskId> incoming; // There will be at most valence many incoming
+  std::vector<std::vector<DataFlow::TaskId> > outgoing(1); // and one output
+  uint32_t i;
+
+  if (gId < size() - leafCount()) {
+    incoming.resize(mValence);
+    for (i=0;i<mValence;i++)
+      incoming[i] = task.id()*mValence + i + 1;
+
+    task.incoming(incoming);
+  }
+  else { // Otherwise we expect one external input
+    incoming.resize(1,TNULL);
+  }
+
+  // Then we assign the outputs
+  if (task.id() != 0) {// If we are not the root
+    task.callback(1); // We do a reduction
+    outgoing.resize(1);
+    outgoing[0].resize(1);
+    outgoing[0][0] = (task.id() - 1) / mValence;
+  }
+  else {
+    task.callback(2); // Otherwise we report the result
+    outgoing.clear();
+  }
+
+  task.incoming(incoming);
+  task.outputs(outgoing);
+
+  return task;
+}
+
+DataFlow::Payload ReductionGraph::serialize() const
 {
   uint32_t* buffer = new uint32_t[3];
 
-  buffer[0] = mEndpoints;
+  buffer[0] = mLeafs;
   buffer[1] = mValence;
   buffer[2] = mLevels;
 
   return Payload(3*sizeof(uint32_t),(char*)buffer);
 }
 
-void Broadcast::deserialize(DataFlow::Payload buffer)
+void ReductionGraph::deserialize(DataFlow::Payload buffer)
 {
   assert (buffer.size() == 3*sizeof(uint32_t));
   uint32_t *tmp = (uint32_t *)(buffer.buffer());
 
-  mEndpoints = tmp[0];
+  mLeafs = tmp[0];
   mValence = tmp[1];
   mLevels = tmp[2];
 
   delete[] buffer.buffer();
 }
-
-

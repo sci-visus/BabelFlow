@@ -27,8 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef BROADCAST_H_
-#define BROADCAST_H_
+#ifndef BROADCAST_GRAPH_H_
+#define BROADCAST_GRAPH_H_
 
 #include <stdint.h>
 #include <cmath>
@@ -37,7 +37,7 @@
 #include "TaskGraph.h"
 
 //! A broadcast implements a task graph describing an tree based broadcast
-class Broadcast : public DataFlow::TaskGraph
+class BroadcastGraph : public DataFlow::TaskGraph
 {
 public:
 
@@ -48,14 +48,14 @@ public:
    * @param endpoints The minimal number of leafs
    * @param valence The fanout of the broadcast
    */
-  Broadcast(uint32_t endpoints, uint32_t valence);
+  BroadcastGraph(uint32_t endpoints, uint32_t valence);
 
-  Broadcast(std::string config);
+  BroadcastGraph(std::string config);
 
-  Broadcast(){};
+  BroadcastGraph(){};
 
   //! Default destructor
-  virtual ~Broadcast() {}
+  virtual ~BroadcastGraph() {}
 
   //! Return the taskId for the given global task id
   virtual DataFlow::Task task(uint64_t gId) const;

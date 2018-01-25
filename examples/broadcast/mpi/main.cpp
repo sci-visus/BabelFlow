@@ -33,37 +33,17 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "mpi.h"
-#include "../Broadcast.h"
+#include <mpi.h>
+
+#include "BroadcastGraph.h"
+#include "BroadcastCallbacks.h"
 #include "ModuloMap.h"
 #include "mpi/Controller.h"
 
 uint32_t gCount = 0;
-int arr_length = 100;
 
 using namespace DataFlow;
 using namespace DataFlow::mpi;
-
-int print_message(std::vector<Payload>& inputs, std::vector<Payload>& output, TaskId task)
-{
-  //char* str = (char*)inputs[0].buffer;
-  int* arr = (int*)inputs[0].buffer();
-  int sum = arr[0];
-  arr[0] = 0;
-  for (int i=1; i<arr_length; i++) {
-    arr[0] += arr[i]; 
-  }
-
-  if (sum != arr[0])
-    printf("Sum Incorrect: %d %d TASK: %d FAILED\n", sum, arr[0], task);
-  int r = rand() % 3000000;
-  usleep(r);
-
-  //printf("Got message \"%s\"  %d\n",str,task);
-
-  return 1;
-}
-
 
 int main(int argc, char* argv[])
 {
@@ -84,7 +64,7 @@ int main(int argc, char* argv[])
   uint32_t leafs = atoi(argv[1]);
   uint32_t valence = atoi(argv[2]);
 
-  Broadcast graph(leafs,valence);
+  BroadcastGraph graph(leafs,valence);
   //std::cout << "graph size " << graph.size() << "\n";
   ModuloMap task_map(mpi_width,graph.size());
 

@@ -27,8 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef REDUCTION_H_
-#define REDUCTION_H_
+#ifndef REDUCTION_GRAPH_H_
+#define REDUCTION_GRAPH_H_
 
 #include <stdint.h>
 #include <cmath>
@@ -36,7 +36,7 @@
 #include "Definitions.h"
 #include "TaskGraph.h"
 
-class Reduction : public DataFlow::TaskGraph
+class ReductionGraph : public DataFlow::TaskGraph
 {
 public:
 
@@ -49,13 +49,13 @@ public:
    * @param leafs: The minimal number of leafs to create
    * @param valence: The fanin of the reduction
    */
-  Reduction(uint32_t leafs = 1, uint32_t valence = 1);
+  ReductionGraph(uint32_t leafs = 1, uint32_t valence = 1);
 
   //! Construct from command line arguments
-  Reduction(std::string config);
+  ReductionGraph(std::string config);
 
   //! Default destructor
-  virtual ~Reduction() {}
+  virtual ~ReductionGraph() {}
 
   //! Compute the fully specified tasks for the
   //! given controller id and task map

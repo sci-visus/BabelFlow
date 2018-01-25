@@ -1,6 +1,7 @@
 set(SRC
-    ../Reduction.h
-    ../Reduction.cpp
+    ../ReductionGraph.h
+    ../ReductionCallbacks.h
+    ../ReductionGraph.cpp
     main.cpp
 )
 

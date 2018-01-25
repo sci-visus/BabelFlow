@@ -27,83 +27,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef BROADCAST_CALLBACKS_H_
+#define BROADCAST_CALLBACKS_H_
+
 #include <cstdio>
-#include <unistd.h>
-#include <cstdlib>
 
-#include <mpi.h>
+int arr_length = 100;
 
-#include "ReductionGraph.h"
-#include "ReductionCallbacks.h"
-#include "ModuloMap.h"
-#include "mpi/Controller.h"
-
-using namespace DataFlow;
-using namespace DataFlow::mpi;
-
-int main(int argc, char* argv[])
+int print_message(std::vector<DataFlow::Payload>& inputs, std::vector<DataFlow::Payload>& output,
+                  DataFlow::TaskId task)
 {
-  if (argc < 3) {
-    fprintf(stderr,"Usage: %s <nr-of-leafs> <fan-in> \n", argv[0]);
-    return 0;
+  //char* str = (char*)inputs[0].buffer;
+  int* arr = (int*)inputs[0].buffer();
+  int sum = arr[0];
+  arr[0] = 0;
+  for (int i=1; i<arr_length; i++) {
+    arr[0] += arr[i]; 
   }
 
-  srand(100);
+  if (sum != arr[0])
+    printf("Sum Incorrect: %d %d TASK: %d FAILED\n", sum, arr[0], task);
+  int r = rand() % 3000000;
+  usleep(r);
 
-  MPI_Init(&argc, &argv);
+  //printf("Got message \"%s\"  %d\n",str,task);
 
-  // Find out how many controllers we need
-  int mpi_width;
-  MPI_Comm_size(MPI_COMM_WORLD, &mpi_width);
-
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  if (rank == 0)
-    fprintf(stderr,"Using %d ranks\n",mpi_width);
-
-  uint32_t leafs = atoi(argv[1]);
-  uint32_t valence = atoi(argv[2]);
-
-  ReductionGraph graph(leafs,valence);
-  ModuloMap task_map(mpi_width,graph.size());
-
-  Controller master;
-
-  FILE* output = fopen("task_graph.dot","w");
-  graph.output_graph(mpi_width,&task_map,output);
-  fclose(output);
-
-  master.initialize(graph,&task_map);
-  master.registerCallback(1,add_int);
-  master.registerCallback(2,report_sum);
-
-  std::map<TaskId,Payload> inputs;
-
-
-  uint32_t count=1;
-  uint32_t sum = 0;
-  for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
-
-    int32_t size = sizeof(uint32_t);
-    char* buffer = (char*)(new uint32_t[1]);
-    *((uint32_t*)buffer) = count;
-
-
-    Payload data(size,buffer);
-
-    inputs[i] = data;
-
-    sum += count++;
-  }
-
-  master.run(inputs);
-
-  if (rank == 0)
-    fprintf(stderr,"The result was supposed to be %d\n",sum);
-
-  MPI_Finalize();
-  return 0;
+  return 1;
 }
 
-
+#endif

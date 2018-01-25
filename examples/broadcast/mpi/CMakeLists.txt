@@ -1,6 +1,7 @@
 set(SRC
-    ../Broadcast.h
-    ../Broadcast.cpp
+    ../BroadcastCallbacks.h
+    ../BroadcastGraph.h
+    ../BroadcastGraph.cpp
     main.cpp
 )
 
