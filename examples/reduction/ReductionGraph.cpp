@@ -32,7 +32,7 @@
 
 #include "ReductionGraph.h"
 
-using namespace DataFlow;
+using namespace BabelFlow;
 
 ReductionGraph::ReductionGraph(uint32_t leafs, uint32_t valence) : TaskGraph(),
     mValence(valence)
@@ -72,7 +72,7 @@ std::vector<Task> ReductionGraph::localGraph(ShardId id, const TaskMap* task_map
   std::vector<TaskId> ids = task_map->tasks(id);
 
   // Create the required number of tasks
-  std::vector<DataFlow::Task> tasks(ids.size());
+  std::vector<BabelFlow::Task> tasks(ids.size());
   for (int i=0; i< ids.size(); i++) {
     tasks[i] = task(ids[i]);
   }
@@ -80,11 +80,11 @@ std::vector<Task> ReductionGraph::localGraph(ShardId id, const TaskMap* task_map
   return tasks;
 }
 
-DataFlow::Task ReductionGraph::task(uint64_t gId) const
+BabelFlow::Task ReductionGraph::task(uint64_t gId) const
 {
-  DataFlow::Task task(gId);
-  std::vector<DataFlow::TaskId> incoming; // There will be at most valence many incoming
-  std::vector<std::vector<DataFlow::TaskId> > outgoing(1); // and one output
+  BabelFlow::Task task(gId);
+  std::vector<BabelFlow::TaskId> incoming; // There will be at most valence many incoming
+  std::vector<std::vector<BabelFlow::TaskId> > outgoing(1); // and one output
   uint32_t i;
 
   if (gId < size() - leafCount()) {
@@ -116,7 +116,7 @@ DataFlow::Task ReductionGraph::task(uint64_t gId) const
   return task;
 }
 
-DataFlow::Payload ReductionGraph::serialize() const
+BabelFlow::Payload ReductionGraph::serialize() const
 {
   uint32_t* buffer = new uint32_t[3];
 
@@ -127,7 +127,7 @@ DataFlow::Payload ReductionGraph::serialize() const
   return Payload(3*sizeof(uint32_t),(char*)buffer);
 }
 
-void ReductionGraph::deserialize(DataFlow::Payload buffer)
+void ReductionGraph::deserialize(BabelFlow::Payload buffer)
 {
   assert (buffer.size() == 3*sizeof(uint32_t));
   uint32_t *tmp = (uint32_t *)(buffer.buffer());

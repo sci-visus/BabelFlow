@@ -33,7 +33,7 @@
 #include <stdint.h>
 #include <cstdlib>
 
-namespace DataFlow {
+namespace BabelFlow {
 
 //! Index type used to identify tasks
 typedef uint32_t TaskId;

@@ -34,8 +34,8 @@
 
 int arr_length = 100;
 
-int print_message(std::vector<DataFlow::Payload>& inputs, std::vector<DataFlow::Payload>& output,
-                  DataFlow::TaskId task)
+int print_message(std::vector<BabelFlow::Payload>& inputs, std::vector<BabelFlow::Payload>& output,
+                  BabelFlow::TaskId task)
 {
   //char* str = (char*)inputs[0].buffer;
   int* arr = (int*)inputs[0].buffer();

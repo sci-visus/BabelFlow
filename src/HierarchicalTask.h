@@ -35,7 +35,7 @@
 
 #include "Task.h"
 
-namespace DataFlow {
+namespace BabelFlow {
  
 static TaskId ht_global_id = 1000000;
 

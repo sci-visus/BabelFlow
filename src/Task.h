@@ -34,7 +34,7 @@
 
 #include "Definitions.h"
 
-namespace DataFlow{
+namespace BabelFlow{
 
 class TaskGraph;
 

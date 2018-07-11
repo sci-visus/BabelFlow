@@ -29,7 +29,7 @@
 
 #include "Controller.h"
 
-namespace DataFlow {
+namespace BabelFlow {
 namespace charm {
 
 

@@ -29,7 +29,7 @@
 
 #include "HierarchicalTaskGraph.h"
 
-using namespace DataFlow;
+using namespace BabelFlow;
 
 HierarchicalTaskGraph::HierarchicalTaskGraph(std::vector<Task> tasks, int32_t hfactor, int32_t vfactor){
   

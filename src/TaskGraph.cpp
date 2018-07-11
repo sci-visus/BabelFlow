@@ -28,7 +28,7 @@
  */
 #include "TaskGraph.h"
 
-using namespace DataFlow;
+using namespace BabelFlow;
 
 int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output)
 {

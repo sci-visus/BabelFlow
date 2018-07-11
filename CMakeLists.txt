@@ -1,5 +1,7 @@
-Project(DataFlow)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.4)
+
+Project(BabelFlow)
+
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake")
@@ -18,23 +20,27 @@ else()
 endif()
 
 if (ENABLE_CHARM)
-    find_package(Charm)
+    find_package(Charm REQUIRED)
 
     set(CMAKE_C_COMPILER ${CHARM_COMPILER}) 
     set(CMAKE_CXX_COMPILER ${CHARM_COMPILER})
  
-    set(DATAFLOW_INCLUDE_PATH ${CMAKE_CURRENT_BINARY_DIR}/src/charm)
+    set(BABELFLOW_INCLUDE_PATH ${CMAKE_CURRENT_BINARY_DIR}/src/charm)
     
 else()
+    if(CMAKE_GENERATOR STREQUAL Xcode)
+      set(APPLE_CXX_COMPILER mpicxx)
+    endif()
+
     set(ENABLE_MPI TRUE)
     
-    Find_Package(MPI)
+    find_package(MPI REQUIRED)
     include_directories(${MPI_C_INCLUDE_PATH})
     set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
     set(CMAKE_C_COMPILER ${MPI_C_COMPILER})
-
-    set(DATAFLOW_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH})
-    set(DATAFLOW_LIBRARIES ${MPI_CXX_LIBRARIES}) 
+    
+    set(BABELFLOW_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH})
+    set(BABELFLOW_LIBRARIES ${MPI_CXX_LIBRARIES})
 
 endif()
 

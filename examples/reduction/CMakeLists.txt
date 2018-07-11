@@ -2,7 +2,7 @@
 include_directories(
     ./
     ${CMAKE_SOURCE_DIR}/src
-    ${DATAFLOW_INCLUDE_PATH}
+    ${BABELFLOW_INCLUDE_PATH}
 )
 
 if (ENABLE_MPI)

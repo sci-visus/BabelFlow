@@ -36,7 +36,7 @@
 #include "Controller.h"
 #include "RelayTask.h"
 
-namespace DataFlow {
+namespace BabelFlow {
 
 namespace mpi {
 
@@ -73,7 +73,7 @@ DataBlock DataBlock::clone() const
 }
 */
 
-Controller::TaskWrapper::TaskWrapper(const DataFlow::Task& t) : mTask(t)
+Controller::TaskWrapper::TaskWrapper(const BabelFlow::Task& t) : mTask(t)
 {
   mInputs.resize(t.fanin());
   mOutputs.resize(t.fanout());
@@ -131,7 +131,7 @@ Controller::Controller() : mRecvBufferSize(1024*1024*128)
   mRank = TNULL;
 }
 
-int Controller::initialize(const TaskGraph& graph, const DataFlow::TaskMap* task_map,
+int Controller::initialize(const TaskGraph& graph, const BabelFlow::TaskMap* task_map,
                            MPI_Comm comm, const ControllerMap* controller_map)
 {
   mTaskMap = task_map;
@@ -594,4 +594,4 @@ int execute(Controller *c,Controller::TaskWrapper task)
 
 
 } // namespace mpi
-} // namespace DataFlow
+} // namespace BabelFlow

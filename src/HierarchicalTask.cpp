@@ -29,7 +29,7 @@
 
 #include "HierarchicalTask.h"
 
-using namespace DataFlow;
+using namespace BabelFlow;
 
 bool HierarchicalTask::isInternalTask(TaskId tid, bool recursive){
   for(uint32_t i=0; i < mSubtasks.size(); i++){

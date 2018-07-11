@@ -37,7 +37,7 @@
 #include "TaskGraph.h"
 
 //! A broadcast implements a task graph describing an tree based broadcast
-class BroadcastGraph : public DataFlow::TaskGraph
+class BroadcastGraph : public BabelFlow::TaskGraph
 {
 public:
 
@@ -58,23 +58,23 @@ public:
   virtual ~BroadcastGraph() {}
 
   //! Return the taskId for the given global task id
-  virtual DataFlow::Task task(uint64_t gId) const;
+  virtual BabelFlow::Task task(uint64_t gId) const;
 
   //! Return the global id of the given task id
-  virtual uint64_t gId(DataFlow::TaskId tId) const {return tId;}
+  virtual uint64_t gId(BabelFlow::TaskId tId) const {return tId;}
 
   //! Compute the fully specified tasks for the
   //! given controller and task map
-  virtual std::vector<DataFlow::Task> localGraph(DataFlow::ShardId id, const DataFlow::TaskMap* task_map) const;
+  virtual std::vector<BabelFlow::Task> localGraph(BabelFlow::ShardId id, const BabelFlow::TaskMap* task_map) const;
 
   //! Return the total number of tasks
-  DataFlow::TaskId size() const {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
+  BabelFlow::TaskId size() const {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
 
   //! Serialize a task graph
-  virtual DataFlow::Payload serialize() const;
+  virtual BabelFlow::Payload serialize() const;
 
   //! Deserialize a task graph. This will consume the payload
-  virtual void deserialize(DataFlow::Payload buffer);
+  virtual void deserialize(BabelFlow::Payload buffer);
 
 private:
 

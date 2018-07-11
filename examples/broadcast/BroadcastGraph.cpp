@@ -32,7 +32,7 @@
 #include <iostream>
 #include <sstream>
 
-using namespace DataFlow;
+using namespace BabelFlow;
 
 BroadcastGraph::BroadcastGraph(uint32_t endpoints, uint32_t valence) : TaskGraph(),
     mValence(valence)
@@ -66,9 +66,9 @@ BroadcastGraph::BroadcastGraph(std::string config)
   }
 }
 
-DataFlow::Task BroadcastGraph::task(uint64_t gId) const
+BabelFlow::Task BroadcastGraph::task(uint64_t gId) const
 {
-  DataFlow::Task task(gId);
+  BabelFlow::Task task(gId);
 
   std::vector<TaskId> incoming(1); // There will always be 1 incoming
   std::vector<std::vector<TaskId> > outgoing(1); // and one output
@@ -108,7 +108,7 @@ std::vector<Task> BroadcastGraph::localGraph(ShardId id, const TaskMap* task_map
   std::vector<TaskId> ids = task_map->tasks(id);
 
   // Create the required number of tasks
-  std::vector<DataFlow::Task> tasks(ids.size());
+  std::vector<BabelFlow::Task> tasks(ids.size());
   for (int i=0; i< ids.size(); i++) {
     tasks[i] = task(ids[i]);
   }
@@ -116,7 +116,7 @@ std::vector<Task> BroadcastGraph::localGraph(ShardId id, const TaskMap* task_map
   return tasks;
 }
 
-DataFlow::Payload BroadcastGraph::serialize() const
+BabelFlow::Payload BroadcastGraph::serialize() const
 {
   uint32_t* buffer = new uint32_t[3];
 
@@ -127,7 +127,7 @@ DataFlow::Payload BroadcastGraph::serialize() const
   return Payload(3*sizeof(uint32_t),(char*)buffer);
 }
 
-void BroadcastGraph::deserialize(DataFlow::Payload buffer)
+void BroadcastGraph::deserialize(BabelFlow::Payload buffer)
 {
   assert (buffer.size() == 3*sizeof(uint32_t));
   uint32_t *tmp = (uint32_t *)(buffer.buffer());

@@ -32,8 +32,8 @@
 
 #include <cstdio>
 
-int add_int(std::vector<DataFlow::Payload>& inputs, std::vector<DataFlow::Payload>& output,
-            DataFlow::TaskId task)
+int add_int(std::vector<BabelFlow::Payload>& inputs, std::vector<BabelFlow::Payload>& output,
+            BabelFlow::TaskId task)
 {
   int32_t size = sizeof(int32_t);
   char* buffer = (char*)(new uint32_t[1]);
@@ -53,8 +53,8 @@ int add_int(std::vector<DataFlow::Payload>& inputs, std::vector<DataFlow::Payloa
   return 1;
 }
 
-int report_sum(std::vector<DataFlow::Payload>& inputs, std::vector<DataFlow::Payload>& output,
-               DataFlow::TaskId task)
+int report_sum(std::vector<BabelFlow::Payload>& inputs, std::vector<BabelFlow::Payload>& output,
+               BabelFlow::TaskId task)
 {
   uint32_t result = 0;
 

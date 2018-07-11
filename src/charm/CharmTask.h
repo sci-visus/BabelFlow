@@ -37,22 +37,22 @@
 #include "../TaskGraph.h"
 #include "../Payload.h"
 
-#include "charm_dataflow.decl.h"
+#include "charm_babelflow.decl.h"
 
 //! Global function returning the callbacks
 //! Must be implemented by the calling application code
-extern DataFlow::Callback registered_callback(DataFlow::CallbackId id);
+extern BabelFlow::Callback registered_callback(BabelFlow::CallbackId id);
 
 //! Global function to create a task graph
 //! Must be implemented by the calling application code
-extern DataFlow::TaskGraph* make_task_graph(DataFlow::Payload buffer);
+extern BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload buffer);
 
 
-namespace DataFlow {
+namespace BabelFlow {
 namespace charm {
 
 //! Allow us to send Payload buffers using charm++
-inline void operator|(PUP::er &p, DataFlow::Payload& buffer) {
+inline void operator|(PUP::er &p, BabelFlow::Payload& buffer) {
 
   p|buffer.mSize;
   if (p.isUnpacking())

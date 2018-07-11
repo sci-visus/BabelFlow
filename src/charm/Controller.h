@@ -36,9 +36,9 @@
 #include "../Definitions.h"
 #include "../TaskGraph.h"
 
-#include "charm_dataflow.decl.h"
+#include "charm_babelflow.decl.h"
 
-namespace DataFlow {
+namespace BabelFlow {
 
 namespace charm {
 

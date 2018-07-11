@@ -6,25 +6,26 @@ set(MPI_HEADERS
     Controller.h
 )
 
+include_directories(${MPI_CXX_HEADER_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(dataflow_mpi ${MPI_SRC})
-target_link_libraries(dataflow_mpi dataflow)
+add_library(babelflow_mpi ${MPI_SRC})
+target_link_libraries(babelflow_mpi babelflow)
 
 INSTALL(FILES ${MPI_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/DataFlow/mpi
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/BabelFlow/mpi
 )
 
-INSTALL(TARGETS dataflow_mpi
-        EXPORT DataFlowTargets
+INSTALL(TARGETS babelflow_mpi
+        EXPORT BabelFlowTargets
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
 
-export(TARGETS dataflow dataflow_mpi
-  FILE "${PROJECT_BINARY_DIR}/DataFlowTargets.cmake")
+export(TARGETS babelflow babelflow_mpi
+  FILE "${PROJECT_BINARY_DIR}/BabelFlowTargets.cmake")
 
-INSTALL(TARGETS dataflow_mpi
-        EXPORT DataFlowTargets
+INSTALL(TARGETS babelflow_mpi
+        EXPORT BabelFlowTargets
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )

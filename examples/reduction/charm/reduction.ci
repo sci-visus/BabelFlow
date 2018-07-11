@@ -1,6 +1,6 @@
 mainmodule reduction {
 
-  extern module charm_dataflow;
+  extern module charm_babelflow;
 
   readonly CProxy_Main mainProxy;
  

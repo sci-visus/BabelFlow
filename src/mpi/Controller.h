@@ -44,7 +44,7 @@
 #include "../Payload.h"
 #include "mpi.h"
 
-namespace DataFlow {
+namespace BabelFlow {
 
 namespace mpi {
 
@@ -62,8 +62,8 @@ public:
   ~Controller() {}
 
   //! Initialize the controller
-  int initialize(const DataFlow::TaskGraph& graph, const DataFlow::TaskMap* task_map, MPI_Comm comm = MPI_COMM_WORLD,
-                 const DataFlow::ControllerMap* controller_map = new DataFlow::ControllerMap());
+  int initialize(const BabelFlow::TaskGraph& graph, const BabelFlow::TaskMap* task_map, MPI_Comm comm = MPI_COMM_WORLD,
+                 const BabelFlow::ControllerMap* controller_map = new BabelFlow::ControllerMap());
 
   //! Register a callback for the given id
   int registerCallback(CallbackId id, Callback func);
@@ -79,7 +79,7 @@ public:
   public:
 
     //! Default constructor
-    TaskWrapper(const DataFlow::Task& t);
+    TaskWrapper(const BabelFlow::Task& t);
 
     //! Copy constructor
     TaskWrapper(const TaskWrapper& t);
@@ -90,7 +90,7 @@ public:
     TaskWrapper& operator=(const TaskWrapper& t);
 
     //! Return the corresponding task
-    const DataFlow::Task& task() const {return mTask;}
+    const BabelFlow::Task& task() const {return mTask;}
 
     //! Add an input
     bool addInput(TaskId source, Payload data);
@@ -99,7 +99,7 @@ public:
     bool ready() const;
 
     //! The task
-    DataFlow::Task mTask;
+    BabelFlow::Task mTask;
 
     //! Mutex to check if task is ready. We use this in the addInput routine as
     //! both the master and the worker thready can check if a task is ready and
@@ -136,10 +136,10 @@ private:
   std::map<TaskId,TaskWrapper> mTasks;
 
   //! The active task map
-  const DataFlow::TaskMap* mTaskMap;
+  const BabelFlow::TaskMap* mTaskMap;
 
   //! The active controller map
-  const DataFlow::ControllerMap* mControllerMap;
+  const BabelFlow::ControllerMap* mControllerMap;
 
   //! The map from rank-id to the number of expected messages
   std::map<int, uint32_t> mMessageLog;

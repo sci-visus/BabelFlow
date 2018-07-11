@@ -33,7 +33,7 @@
 #include <cassert>
 #include "Payload.h"
 
-namespace DataFlow {
+namespace BabelFlow {
 
 int relay_message(std::vector<Payload>& inputs, std::vector<Payload>& outputs, TaskId task)
 {

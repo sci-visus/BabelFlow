@@ -38,8 +38,8 @@
 #include "ModuloMap.h"
 #include "mpi/Controller.h"
 
-using namespace DataFlow;
-using namespace DataFlow::mpi;
+using namespace BabelFlow;
+using namespace BabelFlow::mpi;
 
 int main(int argc, char* argv[])
 {

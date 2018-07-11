@@ -36,7 +36,7 @@
 #include "TaskGraph.h"
 #include "HierarchicalTask.h"
 
-namespace DataFlow{
+namespace BabelFlow{
 
 class HierarchicalTaskGraph : public TaskGraph{
 public:

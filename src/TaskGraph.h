@@ -38,7 +38,7 @@
 #include "Task.h"
 #include "Payload.h"
 
-namespace DataFlow {
+namespace BabelFlow {
 
 class TaskMap;
 

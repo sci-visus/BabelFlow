@@ -33,9 +33,9 @@
 #include "Definitions.h"
 #include "TaskGraph.h"
 
-namespace DataFlow {
+namespace BabelFlow {
 
-class ModuloMap : public DataFlow::TaskMap
+class ModuloMap : public BabelFlow::TaskMap
 {
 public:
 

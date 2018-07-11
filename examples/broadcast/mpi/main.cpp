@@ -42,8 +42,8 @@
 
 uint32_t gCount = 0;
 
-using namespace DataFlow;
-using namespace DataFlow::mpi;
+using namespace BabelFlow;
+using namespace BabelFlow::mpi;
 
 int main(int argc, char* argv[])
 {

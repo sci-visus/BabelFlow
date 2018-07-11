@@ -43,14 +43,14 @@
 
 /* readonly */ CProxy_Main mainProxy;
 
-using namespace DataFlow;
+using namespace BabelFlow;
 using namespace charm;
 
-DataFlow::Callback registered_callback(DataFlow::CallbackId id)
+BabelFlow::Callback registered_callback(BabelFlow::CallbackId id)
 {
   switch (id) {
     case 0:
-      return DataFlow::relay_message;
+      return BabelFlow::relay_message;
     case 1:
       return add_int;
     case 2:
@@ -62,9 +62,9 @@ DataFlow::Callback registered_callback(DataFlow::CallbackId id)
   return NULL;
 }
 
-DataFlow::TaskGraph* make_task_graph(DataFlow::Payload buffer)
+BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload buffer)
 {
-  return DataFlow::charm::make_task_graph_template<ReductionGraph>(buffer);
+  return BabelFlow::charm::make_task_graph_template<ReductionGraph>(buffer);
 }
 
 
@@ -98,9 +98,9 @@ public:
     graph.output_graph(1,&task_map,output);
     fclose(output);
 
-    DataFlow::charm::Controller controller;
+    BabelFlow::charm::Controller controller;
     
-    DataFlow::charm::Controller::ProxyType proxy;
+    BabelFlow::charm::Controller::ProxyType proxy;
     proxy = controller.initialize(graph.serialize(),graph.size());
     
     uint32_t count=1;

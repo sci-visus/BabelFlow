@@ -1,6 +1,6 @@
 
 
-SET (DATAFLOW_HEADERS
+SET (BABELFLOW_HEADERS
     Definitions.h
     Payload.h
     Task.h
@@ -14,7 +14,7 @@ SET (DATAFLOW_HEADERS
     HierarchicalTaskGraph.h
 )
 
-SET (DATAFLOW_SRC
+SET (BABELFLOW_SRC
     Task.cpp    
     TaskGraph.cpp
     ModuloMap.cpp
@@ -23,23 +23,23 @@ SET (DATAFLOW_SRC
     HierarchicalTaskGraph.cpp
 )
 
-add_library(dataflow STATIC ${DATAFLOW_SRC})
+add_library(babelflow STATIC ${BABELFLOW_SRC})
 
 if (ENABLE_MPI)
     add_subdirectory(mpi)
-    set(DATAFLOW_LIBRARIES ${DATAFLOW_LIBRARIES} dataflow dataflow_mpi PARENT_SCOPE)
+    set(BABELFLOW_LIBRARIES ${BABELFLOW_LIBRARIES} babelflow babelflow_mpi PARENT_SCOPE)
 elseif(ENABLE_CHARM)
     add_subdirectory(charm)
-    set(DATAFLOW_LIBRARIES ${DATAFLOW_LIBRARIES} dataflow dataflow_charm PARENT_SCOPE)
+    set(BABELFLOW_LIBRARIES ${BABELFLOW_LIBRARIES} babelflow babelflow_charm PARENT_SCOPE)
 else()
     message(FATAL_ERROR "Unrecognized runtime")
 endif()
 
-INSTALL(FILES ${DATAFLOW_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/DataFlow
+INSTALL(FILES ${BABELFLOW_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/BabelFlow
 )
 
-INSTALL(TARGETS dataflow
-        EXPORT DataFlowTargets
+INSTALL(TARGETS babelflow
+        EXPORT BabelFlowTargets
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )

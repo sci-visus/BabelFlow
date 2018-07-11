@@ -29,7 +29,7 @@
 
 #include "CharmTask.h"
 
-namespace DataFlow {
+namespace BabelFlow {
 namespace charm {
 
 
@@ -137,6 +137,6 @@ void CharmTask::addInput(TaskId source, Buffer buffer)
 }
 }
 
-#include "charm_dataflow.def.h"
+#include "charm_babelflow.def.h"
 
 

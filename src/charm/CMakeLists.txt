@@ -12,35 +12,35 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 
-add_charm_module(charm_dataflow)
+add_charm_module(charm_babelflow)
 
-add_dependencies(dataflow charm_dataflowCharm)
+add_dependencies(babelflow charm_babelflowCharm)
 
-add_charm_library(charm_dataflow dataflow_charm ${CHARM_HEADERS} ${CHARM_SRC})
-target_link_libraries(dataflow_charm dataflow)
+add_charm_library(charm_babelflow babelflow_charm ${CHARM_HEADERS} ${CHARM_SRC})
+target_link_libraries(babelflow_charm babelflow)
 
 
 INSTALL(FILES ${CHARM_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/DataFlow/charm
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/BabelFlow/charm
 )
 
-INSTALL(TARGETS dataflow_charm 
-        EXPORT DataFlowTargets
+INSTALL(TARGETS babelflow_charm 
+        EXPORT BabelFlowTargets
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
 
-export(TARGETS dataflow dataflow_charm
-  FILE "${PROJECT_BINARY_DIR}/DataFlowTargets.cmake")
+export(TARGETS babelflow babelflow_charm
+  FILE "${PROJECT_BINARY_DIR}/BabelFlowTargets.cmake")
 
-add_custom_command(TARGET dataflow_charm POST_BUILD
+add_custom_command(TARGET babelflow_charm POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy
-                   ${PROJECT_BINARY_DIR}/src/charm/charm_dataflow.decl.h ${CMAKE_INSTALL_PREFIX}/include/DataFlow/charm/charm_dataflow.decl.h)
+                   ${PROJECT_BINARY_DIR}/src/charm/charm_babelflow.decl.h ${CMAKE_INSTALL_PREFIX}/include/BabelFlow/charm/charm_babelflow.decl.h)
 
-add_custom_command(TARGET dataflow_charm POST_BUILD
+add_custom_command(TARGET babelflow_charm POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy
-                   ${PROJECT_BINARY_DIR}/src/charm/charm_dataflow.def.h ${CMAKE_INSTALL_PREFIX}/include/DataFlow/charm/charm_dataflow.def.h)
+                   ${PROJECT_BINARY_DIR}/src/charm/charm_babelflow.def.h ${CMAKE_INSTALL_PREFIX}/include/BabelFlow/charm/charm_babelflow.def.h)
 
-INSTALL(TARGETS dataflow_charm
-        EXPORT DataFlowTargets
+INSTALL(TARGETS babelflow_charm
+        EXPORT BabelFlowTargets
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )

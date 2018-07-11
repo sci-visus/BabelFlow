@@ -29,7 +29,7 @@
 
 #include "ModuloMap.h"
 
-namespace DataFlow {
+namespace BabelFlow {
 
 ModuloMap::ModuloMap(ShardId shard_count, TaskId task_count) : TaskMap(),
 mShardCount(shard_count), mTaskCount(task_count)
