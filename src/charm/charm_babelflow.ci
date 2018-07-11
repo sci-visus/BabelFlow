@@ -1,0 +1,13 @@
+module charm_babelflow {
+
+  namespace BabelFlow {
+    namespace charm {
+  
+    array [1D] CharmTask {
+        entry CharmTask(Payload buffer);
+        entry void addInput(BabelFlow::TaskId source, std::vector<char> input);
+      };
+
+    }          
+  }
+};
