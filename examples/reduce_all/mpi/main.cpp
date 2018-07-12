@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 
   ReduceAllGraph graph(leafs, valence);
 
-  printf("Graph size %d reduction size %d leaf %d\n", graph.size(), graph.reductionSize(), graph.leafCount());
+  printf("Graph size %d reduction size %d leaf tasks %d\n", graph.size(), graph.reductionSize(), graph.leafCount());
 
   ModuloMap task_map(mpi_width, graph.size());
 
@@ -76,21 +76,22 @@ int main(int argc, char *argv[]) {
   FILE *output = fopen("task_graph.dot", "w");
   graph.output_graph(mpi_width, &task_map, output);
   fclose(output);
-/*
+
   master.initialize(graph,&task_map);
-  master.registerCallback(1,add_int);
-  master.registerCallback(2,report_sum);
+  master.registerCallback(LOCAL_COMPUTE_TASK, add_int);
+  master.registerCallback(REDUCTION_TASK, add_int);
+  master.registerCallback(COMPLETE_REDUCTION_TASK, add_int_broadcast);
+  master.registerCallback(RESULT_REPORT_TASK, print_result);
 
   std::map<TaskId,Payload> inputs;
 
   uint32_t count=1;
   uint32_t sum = 0;
-  for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
+  for (TaskId i = graph.reductionSize() - graph.leafCount(); i < graph.reductionSize(); i++) {
 
     int32_t size = sizeof(uint32_t);
     char* buffer = (char*)(new uint32_t[1]);
     *((uint32_t*)buffer) = count;
-
 
     Payload data(size,buffer);
 
@@ -103,7 +104,7 @@ int main(int argc, char *argv[]) {
 
   if (rank == 0)
     fprintf(stderr,"The result was supposed to be %d\n",sum);
-*/
+
   MPI_Finalize();
   return 0;
 }

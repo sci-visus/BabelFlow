@@ -50,7 +50,7 @@ int print_message(std::vector<BabelFlow::Payload>& inputs, std::vector<BabelFlow
   int r = rand() % 3000000;
   usleep(r);
 
-  //printf("Got message \"%s\"  %d\n",str,task);
+  //printf("Got sum \"%d\"  %d\n",sum,task);
 
   return 1;
 }

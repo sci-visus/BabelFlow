@@ -108,17 +108,23 @@ BabelFlow::Task ReduceAllGraph::task(uint64_t gId) const {
     } else {
       task.callback(COMPLETE_REDUCTION_TASK); // Otherwise we start the broadcast
       outgoing.resize(1);
-      outgoing[0].resize(1);
-      outgoing[0][0] = reductionSize() + 1;
+      outgoing[0].resize(mValence);
+
+      for (i = 0; i < mValence; i++)
+        outgoing[0][i] = reductionSize() + i;
     }
   } else {
     outgoing.resize(1);
-    outgoing[0].resize(1);
+    outgoing[0].resize(mValence);
     incoming.resize(1);
 
     // If this is a leaf
-    if (task.id() > (size() - leafCount()))
+    if (task.id() >= (size() - leafCount())) {
       task.callback(RESULT_REPORT_TASK);    // Report result
+//      for (i = 0; i < mValence; i++)
+//        outgoing[0][i] = TNULL;
+      outgoing.clear();
+    }
     else { // If we are not the leaf
       task.callback(RESULT_BROADCAST_TASK); // We are a relay task
 
@@ -130,16 +136,21 @@ BabelFlow::Task ReduceAllGraph::task(uint64_t gId) const {
       task.outputs() = outgoing;
     }
 
-    // If we are not the root of the broadcast we have one incoming
+    // If we are the task connecting to the root of the reduction
     if (task.id() < (reductionSize() + mValence))
       incoming[0] = 0;
-    else {
+    else { // if we are the broadcast tasks
       incoming[0] = (task.id() - 1) / mValence + leafCount() - 1;
       //printf("task %d incoming %d\n", task.id(), incoming[0]);
     }
 
     task.incoming() = incoming;
   }
+
+//  printf("task %d in: ", task.id());
+//  for(auto in : incoming)
+//    printf("%d ", in);
+//  printf("\n");
 
   task.incoming(incoming);
   task.outputs(outgoing);

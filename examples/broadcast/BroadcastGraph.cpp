@@ -98,6 +98,11 @@ BabelFlow::Task BroadcastGraph::task(uint64_t gId) const
     task.incoming() = incoming;
   }
 
+//  printf("task %d out:", task.id());
+//  for(auto out:outgoing)
+//    printf(" (%d,%d)", out[0], out[1]);
+//  printf("\n");
+
   return task;
 
 }

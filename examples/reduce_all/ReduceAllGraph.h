@@ -47,14 +47,22 @@ enum CallbackTypes {
 class ReduceAllGraph : public BabelFlow::TaskGraph {
 public:
 
-    /*! Create a tree based reduction with at least the given number of
-     *  leafs and the given fanin. All nodes but the root will
-     *  have callback=1 and the root will have callback=2. Note that for
-     *  simplicity this create a full tree if necessary increasing the
+    /*! Create a tree based reduce all with at least the given number of
+     *  leafs and the given fanin. During the reduction phase the nodes will
+     *  have ids assigned as follow:
+     *  - root of the reduction id=0 and callback=COMPLETE_REDUCTION_TASK
+     *  - leaves (input tasks) will have callback=LOCAL_COMPUTE_TASK
+     *  - all other tasks in the reduction will have callback=REDUCTION_TASK
+     *  After the reduction tree we attach a symmetric broadcast tree
+     *  with the following rules:
+     *  - every task in the broadcast tree is a relay task with callback=RESULT_BROADCAST_TASK (0)
+     *  - the output leaf tasks have callback=RESULT_REPORT_TASK
+     *
+     *  Note that for simplicity this create a full tree if necessary increasing the
      *  number of leafs. Leafs will be the last leafCount() many tasks
      *
      * @param leafs: The minimal number of leafs to create
-     * @param valence: The fanin of the reduction
+     * @param valence: The fanin of the reduction (and broadcast)
      */
     ReduceAllGraph(uint32_t leafs = 1, uint32_t valence = 1);
 

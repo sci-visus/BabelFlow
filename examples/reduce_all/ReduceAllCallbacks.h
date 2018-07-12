@@ -27,8 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef REDUCEALL_CALLBACKS_H_
-#define REDUCEALL_CALLBACKS_H_
+#ifndef REDUCE_ALL_CALLBACKS_H_
+#define REDUCE_ALL_CALLBACKS_H_
 
 #include <cstdio>
 
@@ -39,10 +39,14 @@ int add_int(std::vector<BabelFlow::Payload> &inputs, std::vector<BabelFlow::Payl
 
   uint32_t *result = (uint32_t *) buffer;
 
+//  printf("task %d: ", task);
+
   *result = 0;
   for (uint32_t i = 0; i < inputs.size(); i++) {
     *result += *((uint32_t *) inputs[i].buffer());
+//    printf("%d + ", *(uint32_t *)inputs[i].buffer());
   }
+//  printf(" = %d\n", *(uint32_t *)buffer);
 
   output[0].initialize(size, buffer);
 
@@ -52,16 +56,37 @@ int add_int(std::vector<BabelFlow::Payload> &inputs, std::vector<BabelFlow::Payl
   return 1;
 }
 
-int report_sum(std::vector<BabelFlow::Payload> &inputs, std::vector<BabelFlow::Payload> &output,
-               BabelFlow::TaskId task) {
-  uint32_t result = 0;
+int add_int_broadcast(std::vector<BabelFlow::Payload> &inputs, std::vector<BabelFlow::Payload> &output,
+                      BabelFlow::TaskId task) {
+  size_t size = sizeof(uint32_t);
+  char *buffer = (char *) (new uint32_t[1]);
 
-  for (uint32_t i = 0; i < inputs.size(); i++)
-    result += *((uint32_t *) inputs[i].buffer());
+  uint32_t *result = (uint32_t *) buffer;
 
-  fprintf(stderr, "Total sum is %d\n", result);
+//  printf("task %d: ", task);
+  for (uint32_t i = 0; i < inputs.size(); i++) {
+    *result += *((uint32_t *) inputs[i].buffer());
+//    printf("%d + ", *(uint32_t *)inputs[i].buffer());
+  }
+//  printf(" = %d\n", *(uint32_t *)buffer);
+
+  fprintf(stderr, "task %d: Total sum is %d\n", task, *result);
+
+  output[0].initialize(size, buffer);
 
   int r = rand() % 100000;
+  usleep(r);
+
+  return 1;
+}
+
+int print_result(std::vector<BabelFlow::Payload> &inputs, std::vector<BabelFlow::Payload> &output,
+                 BabelFlow::TaskId task) {
+  uint32_t *result = (uint32_t *) inputs[0].buffer();
+
+  fprintf(stderr, "task %d: Broadcast result %d\n", task, *result);
+
+  int r = rand() % 3000000;
   usleep(r);
 
   return 1;
