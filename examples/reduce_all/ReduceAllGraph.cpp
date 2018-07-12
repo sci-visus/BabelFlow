@@ -44,8 +44,6 @@ ReduceAllGraph::ReduceAllGraph(uint32_t leafs, uint32_t valence) : TaskGraph(),
     mLeafs *= mValence;
     mLevels++;
   }
-
-  printf("levels %d\n", mLevels);
 }
 
 ReduceAllGraph::ReduceAllGraph(std::string config) {
@@ -70,11 +68,15 @@ std::vector<Task> ReduceAllGraph::localGraph(ShardId id, const TaskMap *task_map
   // First get all the ids we need
   std::vector<TaskId> ids = task_map->tasks(id);
 
+//  printf("shard %d has %d tasks: ", id, ids.size());
+
   // Create the required number of tasks
   std::vector<BabelFlow::Task> tasks(ids.size());
   for (int i = 0; i < ids.size(); i++) {
     tasks[i] = task(ids[i]);
+//    printf("%d ",ids[i]);
   }
+//  printf("\n");
 
   return tasks;
 }

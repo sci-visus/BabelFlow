@@ -30,17 +30,20 @@
 #include <cstdio>
 #include <unistd.h>
 #include <cstdlib>
-
+#include <sstream>
+#include <iostream>
 #include <mpi.h>
-#include <ReduceAllGraph.h>
 
 #include "ReduceAllGraph.h"
 #include "ReduceAllCallbacks.h"
 #include "ModuloMap.h"
 #include "mpi/Controller.h"
 
+
 using namespace BabelFlow;
 using namespace BabelFlow::mpi;
+
+#define OUTPUT_GRAPH 1
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
@@ -65,17 +68,27 @@ int main(int argc, char *argv[]) {
   uint32_t leafs = atoi(argv[1]);
   uint32_t valence = atoi(argv[2]);
 
+  clock_t start, finish;
+
+  start = clock();
   ReduceAllGraph graph(leafs, valence);
 
-  printf("Graph size %d reduction size %d leaf tasks %d\n", graph.size(), graph.reductionSize(), graph.leafCount());
+  if (rank == 0)
+    printf("Graph size %d reduction size %d leaf tasks %d\n", graph.size(), graph.reductionSize(), graph.leafCount());
 
   ModuloMap task_map(mpi_width, graph.size());
 
   Controller master;
 
-  FILE *output = fopen("task_graph.dot", "w");
-  graph.output_graph(mpi_width, &task_map, output);
-  fclose(output);
+#if OUTPUT_GRAPH
+  if (rank == 0) {
+    std::stringstream graph_name;
+    graph_name << "task_graph_" << rank << ".dot";
+    FILE *output = fopen(graph_name.str().c_str(), "w");
+    graph.output_graph(mpi_width, &task_map, output);
+    fclose(output);
+  }
+#endif
 
   master.initialize(graph,&task_map);
   master.registerCallback(LOCAL_COMPUTE_TASK, add_int);
@@ -102,10 +115,28 @@ int main(int argc, char *argv[]) {
 
   master.run(inputs);
 
+  finish = clock();
+
   if (rank == 0)
     fprintf(stderr,"The result was supposed to be %d\n",sum);
 
+  double max_proc_time;
+  double proc_time = (double(finish) - double(start)) / CLOCKS_PER_SEC;
+  MPI_Reduce(&proc_time, &max_proc_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    std::cout << "max proc time without finalize= " << max_proc_time << std::endl;
+  }
+  start = clock();
+
   MPI_Finalize();
+
+  finish = clock();
+  max_proc_time += (double(finish) - double(start)) / CLOCKS_PER_SEC;
+  if (rank == 0) {
+    std::cout << "max proc time = " << max_proc_time << std::endl;
+  }
+
   return 0;
 }
 

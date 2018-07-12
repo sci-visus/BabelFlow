@@ -96,6 +96,29 @@ public:
     //! Deserialize a task graph. This will consume the payload
     virtual void deserialize(BabelFlow::Payload buffer);
 
+    /*
+    int output_local_graph(BabelFlow::ShardId id, const BabelFlow::TaskMap* task_map, FILE* output)
+    {
+      fprintf(output,"digraph G {\n");
+
+      std::vector<BabelFlow::Task> tasks;
+      std::vector<BabelFlow::Task>::iterator tIt;
+      std::vector<BabelFlow::TaskId>::iterator it;
+
+      tasks = localGraph(id,task_map);
+
+      for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
+        fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
+        for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
+          if (*it != BabelFlow::TNULL)
+            fprintf(output,"%d -> %d\n",*it,tIt->id());
+        }
+      }
+
+      fprintf(output,"}\n");
+      return 1;
+    }*/
+
 protected:
 
     //! The number of leafs in the reduction
