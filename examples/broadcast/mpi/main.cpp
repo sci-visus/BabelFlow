@@ -45,6 +45,21 @@ uint32_t gCount = 0;
 using namespace BabelFlow;
 using namespace BabelFlow::mpi;
 
+
+class Point : public Payload {
+public:
+    int x, y, z;
+
+    void serialize() {
+
+    }
+
+    void deserialize() {
+
+    }
+
+};
+
 int main(int argc, char* argv[])
 {
   if (argc < 3) {
@@ -98,6 +113,14 @@ int main(int argc, char* argv[])
   }
 
   master.run(inputs);
+
+  std::vector<Point> mypoints; // --> Payload
+
+  size_t v_size;
+
+  char *buffer;
+  Payload pay;
+
   
   fprintf(stderr,"Done\n");
   MPI_Finalize();

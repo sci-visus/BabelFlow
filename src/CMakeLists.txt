@@ -1,4 +1,5 @@
 
+include(GNUInstallDirs)
 
 SET (BABELFLOW_HEADERS
     Definitions.h
@@ -34,12 +35,26 @@ elseif(ENABLE_CHARM)
 else()
     message(FATAL_ERROR "Unrecognized runtime")
 endif()
+#
+#INSTALL(FILES ${BABELFLOW_HEADERS}
+#        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/BabelFlow
+#)
+#
+#INSTALL(TARGETS babelflow
+#        EXPORT BabelFlowTargets
+#        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+#)
 
-INSTALL(FILES ${BABELFLOW_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/BabelFlow
-)
+target_include_directories(babelflow PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<INSTALL_INTERFACE:include>
+        PRIVATE ./)
 
-INSTALL(TARGETS babelflow
-        EXPORT BabelFlowTargets
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-)
+install(TARGETS babelflow EXPORT BabelFlowConfig
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})  # This is for Windows
+install(DIRECTORY ./ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/BabelFlow)
+
+install(EXPORT BabelFlowConfig DESTINATION cmake)
+export(TARGETS babelflow FILE BabelFlowConfig.cmake)

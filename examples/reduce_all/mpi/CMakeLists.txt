@@ -12,7 +12,6 @@ include_directories(
 )
 
 add_executable(reduceall ${SRC})
-message("LIBRARIES for reduceall ${BABELFLOW_LIBRARIES}")
 target_link_libraries(reduceall ${BABELFLOW_LIBRARIES})
 
 INSTALL(TARGETS reduceall

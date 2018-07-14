@@ -6,11 +6,11 @@
  
 # Compute paths
 get_filename_component(BABELFLOW_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-set(BABELFLOW_INCLUDE_DIRS ${DataFlow_DIR}/../include)
+set(BABELFLOW_INCLUDE_DIRS ${BabelFlow_DIR}/../include)
  
 # Our library dependencies (contains definitions for IMPORTED targets)
 if(NOT TARGET DataFlow AND NOT BABELFLOW_BINARY_DIR)
-  include("${BABELFLOW_CMAKE_DIR}/DataFlowTargets.cmake")
+    include("${BABELFLOW_CMAKE_DIR}/BabelFlowTargets.cmake")
 endif()
 
 if(${RUNTIME_TYPE} MATCHES "MPI")

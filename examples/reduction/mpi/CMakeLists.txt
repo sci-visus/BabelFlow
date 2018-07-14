@@ -12,7 +12,6 @@ include_directories(
 )
 
 add_executable(reduction ${SRC})
-message ("LIBRARIES for reduction ${BABELFLOW_LIBRARIES}")
 target_link_libraries(reduction ${BABELFLOW_LIBRARIES})
 
 INSTALL(TARGETS reduction
