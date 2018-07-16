@@ -45,10 +45,12 @@ endif()
 #        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 #)
 
-target_include_directories(babelflow PUBLIC
+target_include_directories(babelflow
+        PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include>
-        PRIVATE ./)
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR})
 
 install(TARGETS babelflow EXPORT BabelFlowConfig
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -56,5 +58,4 @@ install(TARGETS babelflow EXPORT BabelFlowConfig
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})  # This is for Windows
 install(DIRECTORY ./ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/BabelFlow)
 
-install(EXPORT BabelFlowConfig DESTINATION cmake)
-export(TARGETS babelflow FILE BabelFlowConfig.cmake)
+install(EXPORT BabelFlowConfig FILE BabelFlowConfig.cmake NAMESPACE BabelFlow:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/BabelFlow)

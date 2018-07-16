@@ -23,6 +23,7 @@ endif()
 
 FIND_PATH(BABELFLOW_INCLUDE_DIR BabelFlow/TaskGraph.h
   HINTS
+        ${BabelFlow_DIR}/../../../include
   ${BABELFLOW_DIR}/include
   ${CMAKE_SOURCE_DIR}/../BabelFlow/build_${RUNTIME_SUFFIX}/
   $ENV{BABELFLOW_DIR}
