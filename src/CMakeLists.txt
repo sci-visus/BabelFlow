@@ -59,3 +59,5 @@ install(TARGETS babelflow EXPORT BabelFlowConfig
 install(DIRECTORY ./ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/BabelFlow)
 
 install(EXPORT BabelFlowConfig FILE BabelFlowConfig.cmake NAMESPACE BabelFlow:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/BabelFlow)
+
+install(FILES "${PROJECT_BINARY_DIR}/BabelFlowTargets.cmake" DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/BabelFlow)

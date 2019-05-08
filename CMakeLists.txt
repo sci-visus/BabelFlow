@@ -66,4 +66,5 @@ add_subdirectory(src)
 
 add_subdirectory(examples)
 
+export(PACKAGE BabelFlow)
 install(FILES CMake/FindBabelFlow.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/BabelFlow)

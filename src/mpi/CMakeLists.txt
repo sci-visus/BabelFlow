@@ -22,7 +22,10 @@ INSTALL(TARGETS babelflow_mpi
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
 
-export(TARGETS babelflow babelflow_mpi
+export(TARGETS babelflow NAMESPACE BabelFlow::
+  FILE "${PROJECT_BINARY_DIR}/BabelFlowTargets.cmake")
+
+export(TARGETS babelflow_mpi babelflow NAMESPACE BabelFlow::
   FILE "${PROJECT_BINARY_DIR}/BabelFlowTargets.cmake")
 
 INSTALL(TARGETS babelflow_mpi
