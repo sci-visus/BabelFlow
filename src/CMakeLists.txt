@@ -32,9 +32,13 @@ if (ENABLE_MPI)
 elseif(ENABLE_CHARM)
     add_subdirectory(charm)
     set(BABELFLOW_LIBRARIES ${BABELFLOW_LIBRARIES} babelflow babelflow_charm PARENT_SCOPE)
+elseif(ENABLE_LEGION)
+    add_subdirectory(legion)
+    set(BABELFLOW_LIBRARIES ${BABELFLOW_LIBRARIES} babelflow babelflow_legion PARENT_SCOPE)
 else()
     message(FATAL_ERROR "Unrecognized runtime")
 endif()
+
 #
 #INSTALL(FILES ${BABELFLOW_HEADERS}
 #        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/BabelFlow
@@ -59,5 +63,3 @@ install(TARGETS babelflow EXPORT BabelFlowConfig
 install(DIRECTORY ./ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/BabelFlow)
 
 install(EXPORT BabelFlowConfig FILE BabelFlowConfig.cmake NAMESPACE BabelFlow:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/BabelFlow)
-
-install(FILES "${PROJECT_BINARY_DIR}/BabelFlowTargets.cmake" DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/BabelFlow)
