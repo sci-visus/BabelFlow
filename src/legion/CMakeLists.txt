@@ -10,7 +10,6 @@ SET (LEGION_CONTROLLER_HEADERS
     DataFlowMapper.h
     datatypes.h
     Utils.h
-    TypeDefinitions.h
 #    SuperTask.h
 )
 
