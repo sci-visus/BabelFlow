@@ -25,22 +25,11 @@ INSTALL(FILES ${CHARM_HEADERS}
 )
 
 INSTALL(TARGETS babelflow_charm 
-        EXPORT BabelFlowTargets
+        EXPORT BabelFlowConfig
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
 
-export(TARGETS babelflow babelflow_charm
-  FILE "${PROJECT_BINARY_DIR}/BabelFlowTargets.cmake")
+export(TARGETS babelflow_charm babelflow NAMESPACE BabelFlow::
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/BabelFlowConfig.cmake")
 
-add_custom_command(TARGET babelflow_charm POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy
-                   ${PROJECT_BINARY_DIR}/src/charm/charm_babelflow.decl.h ${CMAKE_INSTALL_PREFIX}/include/BabelFlow/charm/charm_babelflow.decl.h)
-
-add_custom_command(TARGET babelflow_charm POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy
-                   ${PROJECT_BINARY_DIR}/src/charm/charm_babelflow.def.h ${CMAKE_INSTALL_PREFIX}/include/BabelFlow/charm/charm_babelflow.def.h)
-
-INSTALL(TARGETS babelflow_charm
-        EXPORT BabelFlowTargets
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-)
+install(FILES ${PROJECT_BINARY_DIR}/src/charm/charm_babelflow.decl.h ${PROJECT_BINARY_DIR}/src/charm/charm_babelflow.def.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include/BabelFlow/charm/)

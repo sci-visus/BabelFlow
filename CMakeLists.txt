@@ -6,17 +6,24 @@ set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake")
 
-set(RUNTIME_TYPE "MPI" CACHE STRING "Runtime Controller (MPI, CHARM)")
-set_property(CACHE RUNTIME_TYPE PROPERTY STRINGS MPI CHARM)
+set(RUNTIME_TYPE "MPI" CACHE STRING "Runtime Controller (MPI, CHARM, LEGION)")
+set_property(CACHE RUNTIME_TYPE PROPERTY STRINGS MPI CHARM LEGION)
 
 if(${RUNTIME_TYPE} MATCHES "MPI")
     set(ENABLE_MPI TRUE)
     set(ENABLE_CHARM FALSE)
+    set(ENABLE_LEGION FALSE)
     message("Using MPI Runtime Controller")
-else()
+elseif(${RUNTIME_TYPE} MATCHES "CHARM")
     set(ENABLE_CHARM TRUE)
     set(ENABLE_MPI FALSE)
+    set(ENABLE_LEGION FALSE)
     message("Using Charm++ Runtime Controller")
+elseif(${RUNTIME_TYPE} MATCHES "LEGION")
+    set(ENABLE_CHARM FALSE)
+    set(ENABLE_MPI FALSE)
+    set(ENABLE_LEGION TRUE)
+    message("Using Legion Runtime Controller")
 endif()
 
 if (ENABLE_CHARM)
@@ -27,13 +34,11 @@ if (ENABLE_CHARM)
  
     set(BABELFLOW_INCLUDE_PATH ${CMAKE_CURRENT_BINARY_DIR}/src/charm)
     
-else()
+elseif(ENABLE_MPI)
     if(CMAKE_GENERATOR STREQUAL Xcode)
       set(APPLE_CXX_COMPILER mpicxx)
     endif()
 
-    set(ENABLE_MPI TRUE)
-    
     find_package(MPI REQUIRED)
     include_directories(${MPI_C_INCLUDE_PATH})
     set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
@@ -41,6 +46,8 @@ else()
     
     set(BABELFLOW_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH})
     set(BABELFLOW_LIBRARIES ${MPI_CXX_LIBRARIES})
+
+elseif(ENABLE_LEGION)
 
 endif()
 
@@ -55,9 +62,9 @@ CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 
 
 if(COMPILER_SUPPORTS_CXX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")# -stdlib=libc++")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 elseif(COMPILER_SUPPORTS_CXX0X)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")# -stdlib=libc++")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
         message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()

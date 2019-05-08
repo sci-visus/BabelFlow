@@ -24,8 +24,3 @@ install(TARGETS babelflow_mpi
 
 export(TARGETS babelflow_mpi babelflow NAMESPACE BabelFlow::
   FILE "${CMAKE_CURRENT_BINARY_DIR}/BabelFlowConfig.cmake")
-
-#export(TARGETS babelflow babelflow_mpi NAMESPACE BabelFlow::
-#        FILE "${CMAKE_CURRENT_BINARY_DIR}/BabelFlowTargets.cmake")
-
-#install(EXPORT BabelFlowTargets FILE BabelFlowTargets.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/BabelFlow)
