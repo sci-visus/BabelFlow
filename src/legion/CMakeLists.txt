@@ -28,12 +28,10 @@ INSTALL(FILES ${LEGION_CONTROLLER_HEADERS}
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include/BabelFlow/legion
         )
 
+export(TARGETS babelflow babelflow_legion NAMESPACE BabelFlow::
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/BabelFlowConfig.cmake")
+
 install(TARGETS babelflow_legion
-        EXPORT BabelFlowTargets
+        EXPORT BabelFlowConfig
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
         )
-
-export(TARGETS babelflow babelflow_legion NAMESPACE BabelFlow::
-        FILE "${CMAKE_CURRENT_BINARY_DIR}/BabelFlowTargets.cmake")
-
-install(EXPORT BabelFlowTargets FILE BabelFlowTargets.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/BabelFlow)
