@@ -22,7 +22,7 @@
 
 #include "datatypes.h"
 
-#define PROFILING_TIMING 1
+#define PROFILING_TIMING 0
 //TODO this will be moved in BabelFlow
 // namespace BabelFlow{
 //   class SuperTask;

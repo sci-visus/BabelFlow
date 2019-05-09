@@ -45,14 +45,12 @@ using namespace LegionRuntime::Accessor;
 //#define USE_SINGLE_REGION 1
 
 #define TEMP_PMT_HARDCODED 1
-
-//#define IO_READ_BLOCK 1
-
-#define BRAIN_DATAFLOW 0
+#define IO_READ_BLOCK 1
 
 //#define OUTPUT_SIZE 5000000
-
-#define DATA_SIZE_POINT 1024*1024*1024
+#ifndef DATA_SIZE_POINT
+#define DATA_SIZE_POINT 200*200*200
+#endif
 
 struct ShardArgs{
   int rank;
@@ -586,19 +584,6 @@ bool Controller::load_task(const Task *task,
     fprintf(stdout,"invalid data %d %d %d - %d %d %d \n", box.low[0],box.low[1],box.low[2],box.high[0],box.high[1],box.high[2]);
     assert(false);
     }*/
-
-#if BRAIN_DATAFLOW
-
-  size_t size = sizeof(InputDomainSelection);
-  char* in_pay = (char*)malloc(size);
-  memcpy(in_pay, &box, size);
-
-  assert(elem_rect_in.volume() >= size/BYTES_PER_POINT);
-
-  bufferToRegion(in_pay, size/BYTES_PER_POINT, elem_rect_in, regions[0]);
-  return true;
-
-#endif
 
   FunctionType threshold = (FunctionType)(-1)*FLT_MAX;
   char* dataset = NULL;
