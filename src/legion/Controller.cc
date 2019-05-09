@@ -45,7 +45,8 @@ using namespace LegionRuntime::Accessor;
 //#define USE_SINGLE_REGION 1
 
 #define TEMP_PMT_HARDCODED 1
-#define IO_READ_BLOCK 0
+
+//#define IO_READ_BLOCK 1
 
 #define BRAIN_DATAFLOW 0
 
@@ -415,7 +416,7 @@ int relay_task(const Task *task,
 }
 
 // Copy the content of a Region into an array 
-int regionToBuffer(char*& buffer, RegionsIndexType& size, RegionsIndexType offset, 
+int Controller::regionToBuffer(char*& buffer, RegionsIndexType& size, RegionsIndexType offset,
       const PhysicalRegion& region){ 
   
   RegionAccessor<AccessorType::Generic, RegionPointType> acc_in =
@@ -484,7 +485,7 @@ int regionToBuffer(char*& buffer, RegionsIndexType& size, RegionsIndexType offse
 }
 
 // Copy the content of a buffer into a Region
-int bufferToRegion(char* buffer, RegionsIndexType size, Rect<1> rect, const PhysicalRegion& region){ //, Context* ctx, Legion::Runtime* runtime){
+int Controller::bufferToRegion(char* buffer, RegionsIndexType size, Rect<1> rect, const PhysicalRegion& region){ //, Context* ctx, Legion::Runtime* runtime){
   
   RegionAccessor<AccessorType::Generic, RegionPointType> acc_in =
      region.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
@@ -566,6 +567,7 @@ void printColors(std::set<Color> colors){
   printf("}\n");
 }
 
+#if 0
 // Task for data loading
 bool Controller::load_task(const Task *task,
                    const std::vector<PhysicalRegion> &regions,
@@ -686,7 +688,7 @@ bool Controller::load_task(const Task *task,
   return true;
 }
 
-
+#endif
 
 // Generic task. Accordingly with the task descriptor received takes a number input regions, 
 // copy them into arrays, executes a callback, copy the output arrays into output regions
@@ -1727,7 +1729,7 @@ void Controller::top_level_task(const Task *task,
                     const std::vector<PhysicalRegion> &phy_regions,
                     Context ctx, Runtime *runtime){
 
-std::cout << "START TOP LEVEL" << std::endl;
+  std::cout << "START TOP LEVEL" << std::endl;
   double ts_start, ts_end;
   double init_time_start = Realm::Clock::current_time_in_microseconds();
   
@@ -2609,9 +2611,9 @@ Controller::Controller()
                       Processor::LOC_PROC, true/*single*/, false/*index*/,
                       AUTO_GENERATE_ID, TaskConfigOptions(false/*leaf*/), "generic_task");
 
-  Runtime::register_legion_task<bool, load_task>(LOAD_TASK_ID,
-                      Processor::LOC_PROC, true/*single*/, false/*index*/,
-                      AUTO_GENERATE_ID, TaskConfigOptions(false/*leaf*/), "load_task");
+//  Runtime::register_legion_task<bool, load_task>(LOAD_TASK_ID,
+//                      Processor::LOC_PROC, true/*single*/, false/*index*/,
+//                      AUTO_GENERATE_ID, TaskConfigOptions(false/*leaf*/), "load_task");
 
 #if USE_VIRTUAL_MAPPING
   Runtime::preregister_projection_functor(PFID_USE_DATA_TASK,

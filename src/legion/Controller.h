@@ -15,9 +15,9 @@
 // TODO when we move back the Legion controller to the BabelFlow project
 // we need to update these includes
 
-#include "Definitions.h"
-#include "TaskGraph.h"
-#include "Payload.h"
+#include "../Definitions.h"
+#include "../TaskGraph.h"
+#include "../Payload.h"
 #include "legion.h"
 
 #include "datatypes.h"
@@ -186,6 +186,11 @@ public:
 
   int initialize(const BabelFlow::TaskGraph* graph, const BabelFlow::TaskMap* task_map, int argc = 0, char **argv = NULL);
 
+  static int regionToBuffer(char*& buffer, RegionsIndexType& size, RegionsIndexType offset,
+                               const PhysicalRegion& region);
+
+  static int bufferToRegion(char* buffer, RegionsIndexType size, Rect<1> rect, const PhysicalRegion& region);
+
   //int initialize(BabelFlow::SuperTask* st, int argc, char **argv);
 
   //! Register a callback for the given id
@@ -197,9 +202,9 @@ public:
   //! A list of registered callbacks
   static std::vector<Callback> mCallbacks;
 
-  static bool load_task(const Task *task,
-                   const std::vector<PhysicalRegion> &regions,
-                   Context ctx, HighLevelRuntime *runtime);
+//  static bool load_task(const Task *task,
+//                   const std::vector<PhysicalRegion> &regions,
+//                   Context ctx, HighLevelRuntime *runtime);
 
   static int generic_task(const Task *task,
                   const std::vector<PhysicalRegion> &regions,
