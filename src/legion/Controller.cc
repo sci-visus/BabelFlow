@@ -18,7 +18,7 @@
 
 #include "Utils.h"
 #include "datatypes.h"
-#include "DataFlowMapper.h"
+
 #include "Controller.h"
 #include "default_mapper.h"
 #include "cgmapper.h"
@@ -27,6 +27,7 @@
 
 using namespace Legion;
 using namespace Legion::Mapping;
+using namespace LegionRuntime::Arrays;
 using namespace LegionRuntime::HighLevel;
 using namespace LegionRuntime::Accessor;
 
@@ -261,7 +262,7 @@ FieldHelper<PhaseBarrier> fid_done_barrier("done_barrier");
 void print_domain(Context ctx, Runtime *runtime, LogicalRegion newlr){
   IndexSpace newis = newlr.get_index_space();
   Domain dom_new = runtime->get_index_space_domain(ctx, newis);
-  Rect<1> rect_new = dom_new.get_rect<1>();
+  auto rect_new = dom_new.get_rect<1>();
   printf("domain volume %zu lo %d hi %d\n", rect_new.volume(), (int)rect_new.lo, (int)rect_new.hi);
 
 }
@@ -312,7 +313,7 @@ int relay_task(const Task *task,
       acc_in.convert<AccessorType::Affine<1> >();
 
   IndexSpace is = task->regions[0].region.get_index_space();
-  Rect<1> rect = runtime->get_index_space_domain(ctx, is).get_rect<1>();
+  auto rect = runtime->get_index_space_domain(ctx, is).get_rect<1>();
     
 
   //printf("copying size %d in size %llu\n", size, (RegionsIndexType*)aff_in[rect.lo[0]]);
@@ -388,7 +389,7 @@ int relay_task(const Task *task,
       acc_out.convert<AccessorType::Affine<1> >();
 
     IndexSpace curr_is = task->regions[i+1].region.get_index_space();
-    Rect<1> curr_rect = runtime->get_index_space_domain(ctx, curr_is).get_rect<1>();
+    auto curr_rect = runtime->get_index_space_domain(ctx, curr_is).get_rect<1>();
     RegionsIndexType curr_full_size = RegionsIndexType(curr_rect.hi[0]-curr_rect.lo[0]+1);
 
     memset(&aff_out[RegionsIndexType(curr_rect.lo[0])],0,curr_full_size*BYTES_PER_POINT);
@@ -456,7 +457,7 @@ int Controller::regionToBuffer(char*& buffer, RegionsIndexType& size, RegionsInd
     
     RegionsIndexType size_offset = offset/BYTES_PER_POINT+sizeof(RegionsIndexType)/BYTES_PER_POINT;
 
-    Rect<1> elem_rect_size((Point<1>(offset/BYTES_PER_POINT)),(Point<1>(size_offset-1)));
+    LegionRuntime::Arrays::Rect<1> elem_rect_size((LegionRuntime::Arrays::Point<1>(offset/BYTES_PER_POINT)),(LegionRuntime::Arrays::Point<1>(size_offset-1)));
     
     RegionsIndexType i=0;
     for (GenericPointInRectIterator<1> pir(elem_rect_size); pir; pir++){
@@ -470,8 +471,8 @@ int Controller::regionToBuffer(char*& buffer, RegionsIndexType& size, RegionsInd
     memcpy(buffer, &size, sizeof(RegionsIndexType));
     //printf("size found %d\n", size);
 
-    Rect<1> elem_rect_in((Point<1>(size_offset)),
-                         (Point<1>(size_offset+size-1)));
+    LegionRuntime::Arrays::Rect<1> elem_rect_in((LegionRuntime::Arrays::Point<1>(size_offset)),
+                         (LegionRuntime::Arrays::Point<1>(size_offset+size-1)));
 
     i=0;
     for (GenericPointInRectIterator<1> pir(elem_rect_in); pir; pir++){
@@ -483,7 +484,7 @@ int Controller::regionToBuffer(char*& buffer, RegionsIndexType& size, RegionsInd
 }
 
 // Copy the content of a buffer into a Region
-int Controller::bufferToRegion(char* buffer, RegionsIndexType size, Rect<1> rect, const PhysicalRegion& region){ //, Context* ctx, Legion::Runtime* runtime){
+int Controller::bufferToRegion(char* buffer, RegionsIndexType size, LegionRuntime::Arrays::Rect<1> rect, const PhysicalRegion& region){ //, Context* ctx, Legion::Runtime* runtime){
   
   RegionAccessor<AccessorType::Generic, RegionPointType> acc_in =
      region.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
@@ -527,10 +528,9 @@ int Controller::bufferToRegion(char* buffer, RegionsIndexType size, Rect<1> rect
 #else
 
       RegionsIndexType size_offset = offset/BYTES_PER_POINT+sizeof(RegionsIndexType)/BYTES_PER_POINT;
-
-      Rect<1> elem_rect_size((Point<1>(offset/BYTES_PER_POINT)),(Point<1>(size_offset-1)));
-      Rect<1> elem_rect_in((Point<1>(size_offset)),
-                           (Point<1>(size_offset+size-1)));
+      LegionRuntime::Arrays::Rect<1> elem_rect_size((LegionRuntime::Arrays::Point<1>(offset/BYTES_PER_POINT)),(LegionRuntime::Arrays::Point<1>(size_offset-1)));
+      LegionRuntime::Arrays::Rect<1> elem_rect_in((LegionRuntime::Arrays::Point<1>(size_offset)),
+                           (LegionRuntime::Arrays::Point<1>(size_offset+size-1)));
 
       //Rect<1> elem_rect_in(Point<1>(0),Point<1>(size-1));
       // RegionAccessor<AccessorType::Generic, char> acc_in =
@@ -549,7 +549,7 @@ int Controller::bufferToRegion(char* buffer, RegionsIndexType size, Rect<1> rect
         acc_in.write(DomainPoint::from_point<1>(pir.p), ((RegionPointType*)(buffer))[i++]);
       }
     
-    }
+    //}
 #endif
 
   return 1;
@@ -729,7 +729,7 @@ int Controller::generic_task(const Task *task,
       
     Domain dom_incall = runtime->get_index_space_domain(ctx, newlr.get_index_space());
     
-    Rect<1> rect_incall = dom_incall.get_rect<1>();
+    auto rect_incall = dom_incall.get_rect<1>();
 
     RegionsIndexType input_size = RegionsIndexType(rect_incall.hi[0]-rect_incall.lo[0])+1;//rect_incall.volume();
 
@@ -858,7 +858,7 @@ int Controller::generic_task(const Task *task,
 #endif
 
     Domain dom_out = runtime->get_index_space_domain(ctx, is);
-    Rect<1> rect_all = dom_out.get_rect<1>();
+    auto rect_all = dom_out.get_rect<1>();
     DEBUG_PRINT((stderr,"out size before BTR %d lo %lld hi %lld\n", pay.size()/BYTES_PER_POINT, rect_all.lo[0], rect_all.hi[0]));
 
 #if USE_VIRTUAL_MAPPING
@@ -1277,7 +1277,7 @@ bool shard_main_task(const Task *task,
 
   IndexSpace pb_is = regions[0].get_logical_region().get_index_space();
   Domain pb_dom = runtime->get_index_space_domain(ctx, pb_is);
-  Rect<1> pb_rec = pb_dom.get_rect<1>();
+  auto pb_rec = pb_dom.get_rect<1>();
   
   //printf("%d: externals_map size %d\n", shard.rank, externals_map.size());
   std::vector<BabelFlow::Task>& ordered_tasks = shard_ordered;//[shard.rank];
@@ -1480,7 +1480,7 @@ bool shard_main_task(const Task *task,
               else if(inro == 0){ // create new region
 
                 //printf("create new region\n");
-                IndexSpace curr_is = runtime->create_index_space(ctx, Domain::from_rect<1>(Rect<1>(0, estimate_output_size(int_task.callback(), ro, input_block_size))));//OUTPUT_SIZE-1)));
+                IndexSpace curr_is = runtime->create_index_space(ctx, Domain::from_rect<1>(LegionRuntime::Arrays::Rect<1>(0, estimate_output_size(int_task.callback(), ro, input_block_size))));//OUTPUT_SIZE-1)));
 
                 curr_lr = runtime->create_logical_region(ctx, curr_is, pay_fs);
                 
@@ -1756,7 +1756,7 @@ void Controller::top_level_task(const Task *task,
     if(input_block_size < num_elmts)
       input_block_size = num_elmts;
 
-    IndexSpace data_is = runtime->create_index_space(ctx, Domain::from_rect<1>(Rect<1>(0, input_block_size-1)));
+    IndexSpace data_is = runtime->create_index_space(ctx, Domain::from_rect<1>(LegionRuntime::Arrays::Rect<1>(0, input_block_size-1)));
     LogicalRegion data_lr = runtime->create_logical_region(ctx, data_is, pay_fs);
 
     //printf("input_block_size %d\n", input_block_size);
@@ -1844,7 +1844,7 @@ void Controller::top_level_task(const Task *task,
   fid_edge_shard.allocate(runtime, ctx, fs_blks);
   fid_done_barrier.allocate(runtime, ctx, fs_blks);
 
-  IndexSpace lr_is = runtime->create_index_space(ctx, Domain::from_rect<1>(Rect<1>(0, offset_count-1)));
+  IndexSpace lr_is = runtime->create_index_space(ctx, Domain::from_rect<1>(LegionRuntime::Arrays::Rect<1>(0, offset_count-1)));
   LogicalRegion lr_blks = runtime->create_logical_region(ctx, lr_is, fs_blks);
 
   //DomainColoring pb_color = Utils::partitionInput(1, lr_blks, ctx, runtime);
@@ -2000,7 +2000,7 @@ for(int round=0; round < 1; round++){
       it->second.edge_index = edge_count++;
       
       if(found == used_regions.end()){
-        IndexSpace curr_is = runtime->create_index_space(ctx, Domain::from_rect<1>(Rect<1>(0, EST_OUTPUT_SIZE-1)));
+        IndexSpace curr_is = runtime->create_index_space(ctx, Domain::from_rect<1>(LegionRuntime::Arrays::Rect<1>(0, EST_OUTPUT_SIZE-1)));
         curr_lr = runtime->create_logical_region(ctx, curr_is, pay_fs);
         used_regions[edge] = curr_lr;
         // used_regions[it->first].second = shard;
@@ -2429,6 +2429,9 @@ int Controller::initialize(const BabelFlow::TaskGraph* _graph, const BabelFlow::
   return 1;
 }
 
+
+#if USE_DATAFLOWMAPPER
+#include "DataFlowMapper.h"
 void Controller::mapper_registration(Machine machine, Runtime *rt,
                          const std::set<Processor> &local_procs)
 {
@@ -2438,6 +2441,7 @@ void Controller::mapper_registration(Machine machine, Runtime *rt,
 
   }
 }
+#endif
 
 int Controller::run(std::map<BabelFlow::TaskId,BabelFlow::Payload>& initial_inputs){
   mInitial_inputs = initial_inputs;
@@ -2492,7 +2496,7 @@ int Controller::run(std::map<BabelFlow::TaskId,BabelFlow::Payload>& initial_inpu
    if(input_block_size < num_elmts)
       input_block_size = num_elmts;
 
-    Rect<1> subrect(Point<1>(index),Point<1>(index+num_elmts-1));
+    LegionRuntime::Arrays::Rect<1> subrect(LegionRuntime::Arrays::Point<1>(index),LegionRuntime::Arrays::Point<1>(index+num_elmts-1));
     init_launch.vparts[0].coloring[input_count] = Domain::from_rect<1>(subrect);
     init_launch.vparts[0].input = true;
 
@@ -2502,7 +2506,7 @@ int Controller::run(std::map<BabelFlow::TaskId,BabelFlow::Payload>& initial_inpu
     vpart_id.color = input_count;
 
     //init_launch.arg_map.set_point(DomainPoint::from_point<1>(Point<1>(input_count)), TaskArgument(&boxes[input_count],sizeof(InputDomainSelection)));
-    init_launch.arg_map[DomainPoint::from_point<1>(Point<1>(input_count))] = TaskArgument(&boxes[input_count],sizeof(InputDomainSelection));
+    init_launch.arg_map[DomainPoint::from_point<1>(LegionRuntime::Arrays::Point<1>(input_count))] = TaskArgument(&boxes[input_count],sizeof(InputDomainSelection));
 
     vpart_map[std::make_pair(BabelFlow::TNULL,task_id)] = vpart_id;
     current_inputs.insert(std::make_pair(BabelFlow::TNULL,task_id));
@@ -2607,5 +2611,4 @@ Controller::Controller()
   Runtime::set_registration_callback(update_mappers);
 
   //Runtime::set_registration_callback(mapper_registration);
-  
 }
