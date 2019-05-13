@@ -11,8 +11,8 @@
 //#include "TypeDefinitions.h"
 #include "Controller.h"
 #include "legion.h"
-#include "Definitions.h"
-#include "TaskGraph.h"
+#include "../Definitions.h"
+#include "../TaskGraph.h"
 
 using namespace LegionRuntime::HighLevel;
 using namespace LegionRuntime::Accessor;
