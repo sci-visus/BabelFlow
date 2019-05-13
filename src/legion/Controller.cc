@@ -43,14 +43,12 @@ using namespace LegionRuntime::Accessor;
 
 #define USE_AFFINE_ACCESSOR 1
 
-//#define USE_SINGLE_REGION 1
-
 #define TEMP_PMT_HARDCODED 1
 #define IO_READ_BLOCK 1
 
 //#define OUTPUT_SIZE 5000000
 #ifndef DATA_SIZE_POINT
-#define DATA_SIZE_POINT 200*200*200
+#define DATA_SIZE_POINT 100*100*100
 #endif
 
 struct ShardArgs{
@@ -164,12 +162,6 @@ public:
     }
 
 };
-
-#if TEMP_PMT_HARDCODED
-BabelFlow::Payload make_local_block(FunctionType* data, 
-                           GlobalIndexType low[3], GlobalIndexType high[3], 
-                           FunctionType threshold);
-#endif
 
 std::vector<LaunchData> launch_data;
 std::map<BabelFlow::TaskId,BabelFlow::Task> taskmap;
@@ -335,14 +327,14 @@ int relay_task(const Task *task,
 
     IndexSpace curr_is = curr_lr.get_index_space();
 
-    Rect<1> my_bounds = runtime->get_index_space_domain(curr_is).get_rect<1>();
+    LegionRuntime::Arrays::Rect<1> my_bounds = runtime->get_index_space_domain(curr_is).get_rect<1>();
     RegionsIndexType bounds_lo = my_bounds.lo[0];
    
     // remember rectangle bounds are inclusive on both sides
-    Rect<1> alloc_bounds(my_bounds.lo, bounds_lo + size - 1);
+    LegionRuntime::Arrays::Rect<1> alloc_bounds(my_bounds.lo, bounds_lo + size - 1);
 
     DomainColoring dc;
-    Domain color_space = Domain::from_rect<1>(Rect<1>(0, 0));
+    Domain color_space = Domain::from_rect<1>(LegionRuntime::Arrays::Rect<1>(0, 0));
     dc[0] = Domain::from_rect<1>(alloc_bounds);
 
     
@@ -375,7 +367,7 @@ int relay_task(const Task *task,
     RegionAccessor<AccessorType::Affine<1>, RegionPointType> aff_out =
       acc_out.convert<AccessorType::Affine<1> >();
 
-    Rect<1> curr_rect = runtime->get_index_space_domain(ctx, alloc_is).get_rect<1>();
+    LegionRuntime::Arrays::Rect<1> curr_rect = runtime->get_index_space_domain(ctx, alloc_is).get_rect<1>();
    //RegionsIndexType curr_full_size = RegionsIndexType(curr_rect.hi[0]-curr_rect.lo[0]+1);
 
     //memset(&aff_out[RegionsIndexType(curr_rect.lo[0])],0,curr_full_size*BYTES_PER_POINT);
@@ -565,127 +557,11 @@ void printColors(std::set<Color> colors){
   printf("}\n");
 }
 
-#if 0
-// Task for data loading
-bool Controller::load_task(const Task *task,
-                   const std::vector<PhysicalRegion> &regions,
-                   Context ctx, Runtime *runtime){
-   //printf("entering arglen %d\n", task->local_arglen);
-  Domain dom_incall = runtime->get_index_space_domain(ctx, task->regions[0].region.get_index_space());
-  Rect<1> elem_rect_in = dom_incall.get_rect<1>();
-
-  //printf("from task %lld volume %d!\n", task->index_point.point_data[0], elem_rect_in.volume());
-  //assert(task->local_arglen == sizeof(InputDomainSelection));
-  assert(task->arglen == sizeof(InputDomainSelection));
-  
-  InputDomainSelection box = *(InputDomainSelection*)task->args;//task->local_args;//args;
-  /*if(elem_rect_in.volume() == 0){
-    fprintf(stdout,"invalid rect %llu %llu\n", elem_rect_in.lo,elem_rect_in.hi);
-    fprintf(stdout,"invalid data %d %d %d - %d %d %d \n", box.low[0],box.low[1],box.low[2],box.high[0],box.high[1],box.high[2]);
-    assert(false);
-    }*/
-
-  FunctionType threshold = (FunctionType)(-1)*FLT_MAX;
-  char* dataset = NULL;
-  //fprintf(stderr, "input initialization started\n");
-
-  for (int i = 1; i < legion_argc; i++){
-#if TEMP_PMT_HARDCODED
-    if (!strcmp(legion_argv[i],"-t"))
-#else
-    if (!strcmp(legion_argv[i],"-i"))
-#endif
-      threshold = atof(legion_argv[++i]);
-    if (!strcmp(legion_argv[i],"-f"))
-      dataset = legion_argv[++i];
-  }
-
-  DEBUG_PRINT((stdout,"Load data %d %d %d - %d %d %d thr %f\n", box.low[0],box.low[1],box.low[2],box.high[0],box.high[1],box.high[2], threshold));
-
-  char* data_block;
-
-#if IO_READ_BLOCK
-  data_block = read_block(dataset,box.low,box.high);
-#else
-  box.low[0] = 0;
-  box.low[1] = 0;
-  box.low[2] = 0;
-  box.high[0] = 1;
-  box.high[1] = 1;
-  box.high[2] = 1;
-
-  data_block = (char*)malloc(sizeof(FunctionType));
-  FunctionType v = 1;
-  memcpy(data_block, &v, sizeof(FunctionType));
-  fprintf(stderr, "NO IO READ\n");
-#endif
-
-#if TEMP_PMT_HARDCODED
-  BabelFlow::Payload pay = make_local_block((FunctionType*)(data_block), box.low, box.high, threshold);
-#else
-
-  #if IO_READ_BLOCK
-    uint32_t block_size = (box.high[0]-box.low[0]+1)*(box.high[1]-box.low[1]+1)*(box.high[2]-box.low[2]+1);
-    uint32_t input_size = sizeof(InputDomainSelection)+sizeof(float)+block_size*sizeof(FunctionType);
-    char* input = (char*)malloc(input_size);
-
-    memcpy(input, &box, sizeof(InputDomainSelection));
-    memcpy(input+sizeof(InputDomainSelection), &threshold, sizeof(float));
-    memcpy(input+sizeof(float)+sizeof(InputDomainSelection), data_block, block_size);
-
-    BabelFlow::Payload pay(input_size, input);
-  #else
-    BabelFlow::Payload pay(sizeof(FunctionType), data_block);
-  #endif
-
-#endif
-
-  // char filename[128];
-  // sprintf(filename,"dump_%d_%d_%d.raw", box.low[0],box.low[1],box.low[2]);
-  // std::ofstream outfile (filename,std::ofstream::binary);
-
-  // outfile.write (pay.buffer(),pay.size());
-
-  // outfile.close();
-
-  // char filename[128];
-  // sprintf(filename, "outblock_%d.raw", task->index_point.point_data[0]);
-  // std::ofstream outfile (filename,std::ofstream::binary);
-  // outfile.write(pay.buffer(), pay.size());
-  // outfile.close();
-
-  //printf("volume in %d size %d\n", task->index_point.point_data[0], pay.size());
-  assert(elem_rect_in.volume() >= pay.size()/BYTES_PER_POINT);
-
-  bufferToRegion(pay.buffer(), pay.size()/BYTES_PER_POINT, elem_rect_in, regions[0]);//&ctx, runtime);
-  //runtime->unmap_region(ctx,regions[0]);
-
-  // char offname[128];
-  //   sprintf(offname,"read_%d.raw", RegionsIndexType(elem_rect_in.lo));
-  //   std::ofstream outresfile(offname,std::ofstream::binary);
-   
-  //    outresfile.write(reinterpret_cast<char*>(pay.buffer()),pay.size());
-
-  //    outresfile.close();
-
-  delete [] pay.buffer();
-
-  return true;
-}
-
-#endif
-
 // Generic task. Accordingly with the task descriptor received takes a number input regions, 
 // copy them into arrays, executes a callback, copy the output arrays into output regions
 int Controller::generic_task(const Task *task,
                    const std::vector<PhysicalRegion> &regions,
                    Context ctx, Runtime *runtime){
-
-// #if USE_VIRTUAL_MAPPING
-//   TaskInfo info = *(TaskInfo*)task->local_args;
-// #else
-//   TaskInfo info = *(TaskInfo*)task->local_args;
-// #endif
 
   double g_start = Realm::Clock::current_time_in_microseconds();
 
@@ -787,19 +663,20 @@ int Controller::generic_task(const Task *task,
     PhysicalRegion pr = regions[i+info.lenInput];
 
 #if USE_VIRTUAL_MAPPING
-  
-  // bool was_virtual_mapped = !pr.is_mapped();
-  // if(was_virtual_mapped){
-    Rect<1> my_bounds = runtime->get_index_space_domain(is).get_rect<1>();
+
+  bool was_virtual_mapped = !pr.is_mapped();
+  assert(was_virtual_mapped);
+   if(was_virtual_mapped){
+     LegionRuntime::Arrays::Rect<1> my_bounds = runtime->get_index_space_domain(is).get_rect<1>();
     RegionsIndexType bounds_lo = my_bounds.lo[0];
    
     // remember rectangle bounds are inclusive on both sides
-    Rect<1> alloc_bounds(my_bounds.lo, (const RegionsIndexType)(bounds_lo + pay.size()/BYTES_PER_POINT - 1));
+    LegionRuntime::Arrays::Rect<1> alloc_bounds(my_bounds.lo, (const RegionsIndexType)(bounds_lo + pay.size()/BYTES_PER_POINT - 1));
 
     // create a new partition with a known part_color so that other tasks can find
     // the color space will consist of the single color '0'
     DomainColoring dc;
-    Domain color_space = Domain::from_rect<1>(Rect<1>(0, 0));
+    Domain color_space = Domain::from_rect<1>(LegionRuntime::Arrays::Rect<1>(0, 0));
     dc[0] = Domain::from_rect<1>(alloc_bounds);
 
     IndexPartition alloc_ip = runtime->create_index_partition(ctx,
@@ -809,6 +686,16 @@ int Controller::generic_task(const Task *task,
                     DISJOINT_KIND, // trivial
                     PID_ALLOCED_DATA
                     );
+
+//     Transform<1,1> transform;
+//     transform[0][0] = 0;
+//     IndexSpaceT<1> new_color_space = runtime->create_index_space(ctx, Legion::Rect<1>(0, 0));
+//     IndexPartition alloc_ip = runtime->create_partition_by_restriction(ctx, is,
+//                                                                        new_color_space, transform,
+//                                                                        Domain::from_rect<1>(alloc_bounds),
+//                                                               DISJOINT_KIND, // trivial
+//                                                               PID_ALLOCED_DATA
+//     );
 
     // now we get the name of the logical subregion we just created and inline map
     // it to generate our output
@@ -823,7 +710,7 @@ int Controller::generic_task(const Task *task,
     std::set<Color> colors;
     runtime->get_index_space_partition_colors(ctx,curr_lr.get_index_space(), colors);
 
-    DEBUG_PRINT((stdout,"callback %d has colors %d subregion_index %d tree_id\n", info.callbackID, colors.size(), subregion_index));
+    DEBUG_PRINT((stdout,"callback %d has colors %d subregion_index %d tree_id\n", info.callbackID, colors.size(), alloc_lr.get_index_space().get_id()));
 #endif
     // tell the default mapper that we want exactly this region to be mapped
     // otherwise, its heuristics may cause it to try to map the (huge) parent
@@ -841,7 +728,7 @@ int Controller::generic_task(const Task *task,
     // data movement, this should be fast because we are just allocating new space
     pr.wait_until_valid();
 
-  // }
+   }
     
 #endif
 
@@ -1656,8 +1543,13 @@ bool shard_main_task(const Task *task,
 
       if(curr_lr.get_tree_id() != 0){
         //printf("%d: req out %d \n", int_task.id(), curr_lr.get_tree_id());
+#if USE_VIRTUAL_MAPPING
+        launcher.add_region_requirement(RegionRequirement(curr_lr, WRITE_DISCARD, EXCLUSIVE, curr_lr, DefaultMapper::VIRTUAL_MAP)
+                                                .add_field(FID_PAYLOAD));
+#else
         launcher.add_region_requirement(RegionRequirement(curr_lr, WRITE_DISCARD, EXCLUSIVE, curr_lr)
              .add_field(FID_PAYLOAD));
+#endif
 
         if(edge_future != EdgeTaskId(BabelFlow::TNULL,BabelFlow::TNULL)){
           //printf("FOUND EDGE to copy from %d %d\n", edge_future.first, edge_future.second);
@@ -1976,14 +1868,6 @@ void Controller::top_level_task(const Task *task,
 #else
     const RegionsIndexType EST_OUTPUT_SIZE = 2048*2048*20;
 #endif
-
-
-// #if USE_SINGLE_REGION
-//     DomainColoring coloring;
-//     uint32_t lo = 0;
-//     uint32_t hi = EST_OUTPUT_SIZE;
-
-// #endif
 
     for(std::map<EdgeTaskId, ExternalInfo>::iterator it=s_ext.begin();it != s_ext.end(); it++){
 
@@ -2607,8 +2491,8 @@ Controller::Controller()
 //                      AUTO_GENERATE_ID, TaskConfigOptions(false/*leaf*/), "load_task");
 
 #if USE_VIRTUAL_MAPPING
-  Runtime::preregister_projection_functor(PFID_USE_DATA_TASK,
-             new UseDataProjectionFunctor);
+//  Runtime::preregister_projection_functor(PFID_USE_DATA_TASK,
+//             new UseDataProjectionFunctor);
 #endif
   Runtime::set_registration_callback(update_mappers);
 
