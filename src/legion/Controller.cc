@@ -848,7 +848,7 @@ int Controller::generic_task(const Task *task,
 #ifdef DEBUG_DATAFLOW
     
     Domain dom_out_deb = runtime->get_index_space_domain(ctx, is);
-    Rect<1> rect_all_deb = dom_out_deb.get_rect<1>();
+    LegionRuntime::Arrays::Rect<1> rect_all_deb = dom_out_deb.get_rect<1>();
     
     if(rect_all_deb.volume()*BYTES_PER_POINT < pay.size()){
       fprintf(stderr,"ERROR: output region too small for the BabelFlow::Payload\n\t out[%d] volume %d BabelFlow::Payload %d callback %d\n",i,rect_all_deb.volume(), pay.size(),info.callbackID);
@@ -1908,11 +1908,13 @@ void Controller::top_level_task(const Task *task,
   double temp_start = 0;
  // This is the timing of the top_level_task launches
   ts_start = Realm::Clock::current_time_in_microseconds();
-for(int round=0; round < 1; round++){
-   temp_start= Realm::Clock::current_time_in_microseconds(); 
+
+  temp_start= Realm::Clock::current_time_in_microseconds();
 
   std::map<EdgeTaskId, LogicalRegion > used_regions;
   MustEpochLauncher must;
+
+  int round =0; // TODO remove this round information (not used anymore)
 
   std::vector<TaskLauncher> launchers;
   std::vector<std::string> metadatas(num_shards);
@@ -2010,7 +2012,8 @@ for(int round=0; round < 1; round++){
 
       DEBUG_PRINT((stderr,"[%d-%d r %d (%d)] ", it->first.first, it->first.second, curr_lr.get_tree_id(), it->second.owner));
 
-      launcher.add_region_requirement(RegionRequirement(curr_lr, READ_WRITE, SIMULTANEOUS, curr_lr, CGMapper::SHARD_TAG(it->second.owner)).add_field(FID_PAYLOAD).add_flags(NO_ACCESS_FLAG));
+      // TODO understand why there was an ".add_flags(NO_ACCESS_FLAG));"
+      launcher.add_region_requirement(RegionRequirement(curr_lr, READ_WRITE, SIMULTANEOUS, curr_lr, CGMapper::SHARD_TAG(it->second.owner)).add_field(FID_PAYLOAD));//.add_flags(NO_ACCESS_FLAG));
     }
     DEBUG_PRINT((stderr,"\n"));
 
@@ -2058,7 +2061,6 @@ for(int round=0; round < 1; round++){
   double round_end_time = (Realm::Clock::current_time_in_microseconds())/1000000.f ;
   std::cout << "ROUND " << round << " round_end_time = " << std::fixed << round_end_time << std::endl;
 #endif
-}
 
 #if DETAILED_TIMING
   ts_end = Realm::Clock::current_time_in_microseconds();
@@ -2078,10 +2080,10 @@ void init_shards_task(const Task *task,
   int max_shard = init_args[0];//*(const int *)(task->args);
   int round = init_args[1];
 
-  //std::cout << "init_shards_task shard=" << shard.rank << std::endl;
+  std::cout << "init_shards_task for n shards=" << max_shard << std::endl;
 
   RegionAccessor<AccessorType::Affine<1>, EdgeTaskId> fa_edge = fid_edge_shard.accessor<AccessorType::Affine<1> >(regions[0]);
-  RegionAccessor<AccessorType::Affine<1>, PhaseBarrier> fa_done = fid_done_barrier.fold_accessor<AccessorType::Affine<1> >(regions[1]);
+  RegionAccessor<AccessorType::Affine<1>, PhaseBarrier> fa_done = fid_done_barrier.accessor<AccessorType::Affine<1> >(regions[1]);
 
   std::map<EdgeTaskId, std::pair<PhaseBarrier, int> > pbs;
 
