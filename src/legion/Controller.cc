@@ -500,7 +500,7 @@ int Controller::bufferToRegion(char* buffer, RegionsIndexType size, LegionRuntim
     memcpy(&aff_in[offset], buffer, size*BYTES_PER_POINT); //dom_rect.lo],buffer, size);
  #else
 
-    RegionsIndexType full_size = RegionsIndexType(rect.hi[0]-rect.lo[0]);
+    //RegionsIndexType full_size = RegionsIndexType(rect.hi[0]-rect.lo[0]);
     
     //memset(&aff_in[offset],0,full_size*BYTES_PER_POINT);
 
@@ -1558,8 +1558,13 @@ bool shard_main_task(const Task *task,
 
           for(int c=0; c < cr.size()-1; c++){
             //printf("COPY FROM %d TO REGION %d (%d)\n", curr_lr.get_tree_id(), cr[c], task->regions[cr[c]].region.get_tree_id());
+#if USE_VIRTUAL_MAPPING
+            launcher.add_region_requirement(RegionRequirement(task->regions[cr[c]].region, WRITE_DISCARD, EXCLUSIVE, task->regions[cr[c]].region, DefaultMapper::VIRTUAL_MAP)
+                                                    .add_field(FID_PAYLOAD));
+#else
             launcher.add_region_requirement(RegionRequirement(task->regions[cr[c]].region, WRITE_DISCARD, EXCLUSIVE, task->regions[cr[c]].region)
              .add_field(FID_PAYLOAD));
+#endif
           }
 
         }
@@ -2494,7 +2499,7 @@ Controller::Controller()
 //  Runtime::preregister_projection_functor(PFID_USE_DATA_TASK,
 //             new UseDataProjectionFunctor);
 #endif
-  Runtime::set_registration_callback(update_mappers);
+  //Runtime::set_registration_callback(update_mappers);
 
   //Runtime::set_registration_callback(mapper_registration);
 }
