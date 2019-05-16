@@ -2,7 +2,7 @@
 
 #include "cgmapper.h"
 
-LegionRuntime::Logger::Category log_cgmap("cgmapper");
+Logger log_cgmap("cgmapper");
 
 // thanks to the wonders of ADL, this template has to be in either the Realm or std
 //  namespace to be found...
@@ -33,36 +33,41 @@ namespace std {
   }
 };
 
-CGMapper::CGMapper(Machine machine, HighLevelRuntime *rt, Processor local)
+CGMapper::CGMapper(Machine machine, Runtime *rt, Processor local)
   : ShimMapper(machine, rt, rt->get_mapper_runtime(), local)
   , shard_per_proc(false)
   , runtime(rt)
 {
   // check to see if there any input arguments to parse
- //  {
- //    int argc = HighLevelRuntime::get_input_args().argc;
- //    const char **argv = (const char **)HighLevelRuntime::get_input_args().argv;
+  {
+    int argc = Runtime::get_input_args().argc;
+    const char **argv = (const char **)Runtime::get_input_args().argv;
 
- //    for(int i=1; i < argc; i++) {
- //      if(!strcmp(argv[i], "-perproc")) {
-	// shard_per_proc = true;
-	// continue;
- //      }
- //    }
- //  }
-  //  fprintf(stderr,"MAPPER START INIT\n");
-  shard_per_proc = true;
+    for(int i=1; i < argc; i++) {
+      if(!strcmp(argv[i], "-perproc")) {
+	shard_per_proc = true;
+	continue;
+      }
+    }
+  }
 
   // we're going to do a SPMD distribution with one shard per "system memory"
   // (there's one of these per node right now, but we might have more with NUMA
   // eventually)
-  //  double start = Realm::Clock::current_time_in_microseconds()/1000000.0f ;
-
   Machine::MemoryQuery mq(machine);
   mq.only_kind(Memory::SYSTEM_MEM);
-
-  //fprintf("FOUND %d MEMORIES\n", mq.size());
-  int n_mems = 0;
+  if(mq.count() == 0) {
+    log_cgmap.info() << "no sysmems found - trying socket memories";
+    mq = Machine::MemoryQuery(machine).only_kind(Memory::SOCKET_MEM);
+    if(mq.count() == 0) {
+      log_cgmap.info() << "no socket memories found either - trying regdma";
+      mq = Machine::MemoryQuery(machine).only_kind(Memory::REGDMA_MEM);
+      if(mq.count() == 0) {
+	log_cgmap.fatal() << "HELP!  No system memories (or socket or regdma) found!?";
+	assert(false);
+      }
+    }
+  }
   for(Machine::MemoryQuery::iterator it = mq.begin();
       it != mq.end();
       it++) {
@@ -71,21 +76,15 @@ CGMapper::CGMapper(Machine machine, HighLevelRuntime *rt, Processor local)
     Machine::ProcessorQuery pq = Machine::ProcessorQuery(machine)
       .only_kind(Processor::LOC_PROC)
       .best_affinity_to(m);
-
     if(shard_per_proc) {
-
       // create an entry for each proc
       for(Machine::ProcessorQuery::iterator it2 = pq.begin(); it2; ++it2) {
 	Processor p = *it2;
 	sysmems.push_back(m);
 	procs.push_back(std::vector<Processor>(1, p));
 	proc_to_shard[p] = sysmems.size() - 1;
-	//std::cerr << "sysmem=" << m << " proc=" << p;
-      
-	//log_cgmap.debug() << "sysmem=" << m << " proc=" << p;
+	log_cgmap.debug() << "sysmem=" << m << " proc=" << p;
       }
-
-      // fprintf(stderr, "MEM %d\n", n_mems++);
     } else {
       // get one representative CPU processor associated with the memory
       std::vector<Processor> ps(pq.begin(), pq.end());
@@ -98,9 +97,6 @@ CGMapper::CGMapper(Machine machine, HighLevelRuntime *rt, Processor local)
       log_cgmap.debug() << "sysmem=" << m << " proc=" << ps;
     }
   }
-  //  double finish = Realm::Clock::current_time_in_microseconds()/1000000.0f ;
-
-  // printf("REALM INIT TIME %fms\n", finish-start);
 
 #if 0
   std::set<Memory> all_mems;
@@ -135,12 +131,8 @@ CGMapper::CGMapper(Machine machine, HighLevelRuntime *rt, Processor local)
       assert(p1 == p2);
     }
 #endif
-  
-  if(sysmems.empty()) {
-    log_cgmap.fatal() << "HELP!  No system memories found!?";
-    assert(false);
-    }
-  // fprintf(stderr, "MAPPER END INIT\n");
+
+  assert(!sysmems.empty());
 }
 
 CGMapper::~CGMapper(void)

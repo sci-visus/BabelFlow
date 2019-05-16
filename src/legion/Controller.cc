@@ -2499,7 +2499,7 @@ Controller::Controller()
 //  Runtime::preregister_projection_functor(PFID_USE_DATA_TASK,
 //             new UseDataProjectionFunctor);
 #endif
-  //Runtime::set_registration_callback(update_mappers);
+  Runtime::set_registration_callback(update_mappers);
 
   //Runtime::set_registration_callback(mapper_registration);
 }
