@@ -50,6 +50,7 @@ CGMapper::CGMapper(Machine machine, Runtime *rt, Processor local)
       }
     }
   }
+  shard_per_proc = true;
 
   // we're going to do a SPMD distribution with one shard per "system memory"
   // (there's one of these per node right now, but we might have more with NUMA
@@ -143,7 +144,7 @@ CGMapper::~CGMapper(void)
 void CGMapper::select_task_options(Task *task)
 {
   log_cgmap.info() << "select_task_options: id=" << task->task_id << " tag=" << task->tag;
-
+  
   // is this a sharded task?
   if(task->tag >= TAG_SHARD_BASE) {
     int shard = task->tag - TAG_SHARD_BASE;

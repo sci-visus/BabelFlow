@@ -48,7 +48,7 @@ using namespace LegionRuntime::Accessor;
 
 //#define OUTPUT_SIZE 5000000
 #ifndef DATA_SIZE_POINT
-#define DATA_SIZE_POINT 100*100*100
+#define DATA_SIZE_POINT 50*50*50
 #endif
 
 struct ShardArgs{
@@ -250,6 +250,7 @@ protected:
 
 FieldHelper<EdgeTaskId> fid_edge_shard("edge_shard");
 FieldHelper<PhaseBarrier> fid_done_barrier("done_barrier");
+FieldHelper<BabelFlow::Payload> fid_p("Payload");
 
 void print_domain(Context ctx, Runtime *runtime, LogicalRegion newlr){
   IndexSpace newis = newlr.get_index_space();
@@ -299,7 +300,7 @@ int relay_task(const Task *task,
                              Context ctx, Runtime *runtime){
 
   RegionAccessor<AccessorType::Generic, RegionPointType> acc_in =
-      regions[0].get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
+      regions[0].get_field_accessor(fid_p).typeify<RegionPointType>();
   
   RegionAccessor<AccessorType::Affine<1>, RegionPointType> aff_in =
       acc_in.convert<AccessorType::Affine<1> >();
@@ -358,12 +359,12 @@ int relay_task(const Task *task,
                 EXCLUSIVE,
                 curr_lr,
                 DefaultMapper::EXACT_REGION)
-          .add_field(FID_PAYLOAD));
-    PhysicalRegion pr = runtime->map_region(ctx, launcher);
+          .add_field(fid_p));
+    Physicalregion pr = runtime->map_region(ctx, launcher);
     pr.wait_until_valid();
 
     RegionAccessor<AccessorType::Generic, RegionPointType> acc_out =
-      pr.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
+      pr.get_field_accessor(fid_p).typeify<RegionPointType>();
     RegionAccessor<AccessorType::Affine<1>, RegionPointType> aff_out =
       acc_out.convert<AccessorType::Affine<1> >();
 
@@ -376,7 +377,7 @@ int relay_task(const Task *task,
 #else
 
     RegionAccessor<AccessorType::Generic, RegionPointType> acc_out =
-      regions[i+1].get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
+      regions[i+1].get_field_accessor(fid_p).typeify<RegionPointType>();
     RegionAccessor<AccessorType::Affine<1>, RegionPointType> aff_out =
       acc_out.convert<AccessorType::Affine<1> >();
 
@@ -411,7 +412,7 @@ int Controller::regionToBuffer(char*& buffer, RegionsIndexType& size, RegionsInd
       const PhysicalRegion& region){ 
   
   RegionAccessor<AccessorType::Generic, RegionPointType> acc_in =
-    region.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
+    region.get_field_accessor(fid_p).typeify<RegionPointType>();
   
   //  bool affine = acc_in.can_convert<AccessorType::Affine<1> >();
   //Domain dom_incall = runtime->get_index_space_domain(*ctx, region.get_logical_region().get_index_space());
@@ -479,7 +480,7 @@ int Controller::regionToBuffer(char*& buffer, RegionsIndexType& size, RegionsInd
 int Controller::bufferToRegion(char* buffer, RegionsIndexType size, LegionRuntime::Arrays::Rect<1> rect, const PhysicalRegion& region){ //, Context* ctx, Legion::Runtime* runtime){
   
   RegionAccessor<AccessorType::Generic, RegionPointType> acc_in =
-     region.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
+     region.get_field_accessor(fid_p).typeify<RegionPointType>();
   
   RegionsIndexType offset = RegionsIndexType(rect.lo);
 
@@ -720,7 +721,7 @@ int Controller::generic_task(const Task *task,
                 EXCLUSIVE,
                 curr_lr,
                 DefaultMapper::EXACT_REGION)
-          .add_field(FID_PAYLOAD));
+          .add_field(fid_p));
     pr = runtime->map_region(ctx, launcher);
 
     // this would be done as part of asking for an accessor, but do it explicitly for
@@ -785,8 +786,8 @@ int Controller::generic_task(const Task *task,
                             EXCLUSIVE, task->regions[last_out].region),
           RegionRequirement(task->regions[i].region, WRITE_DISCARD,
                             EXCLUSIVE, task->regions[i].region));
-      copy_launcher.add_src_field(0, FID_PAYLOAD);
-      copy_launcher.add_dst_field(0, FID_PAYLOAD);
+      copy_launcher.add_src_field(0, fid_p);
+      copy_launcher.add_dst_field(0, fid_p);
       
       runtime->issue_copy_operation(ctx, copy_launcher);
 
@@ -1094,7 +1095,7 @@ bool shard_main_task(const Task *task,
 
   ShardArgs shard = metadata.sargs;
 
-  //printf("%d: SHARDS N %d\n", shard.rank, shard.max_shard);
+  fprintf(stdout,"%d: SHARDS N %d\n", shard.rank, shard.max_shard);
 
   std::map<EdgeTaskId, ExternalInfo>& externals_map = metadata.externals_map;
   std::vector<BabelFlow::Task>& shard_ordered = metadata.shard_ordered;
@@ -1152,11 +1153,12 @@ bool shard_main_task(const Task *task,
   // WHAT is fold_accessor??
 
   FieldSpace pay_fs = runtime->create_field_space(ctx);
-  {
+  fid_p.allocate(runtime, ctx, pay_fs);
+  /*{
     FieldAllocator allocator = runtime->create_field_allocator(ctx, pay_fs);
     allocator.allocate_field(sizeof(RegionPointType),FID_PAYLOAD);
   }
-
+  */
   std::map<EdgeTaskId, std::pair<PhaseBarrier, int> > pbs;
   //std::set<EdgeTaskId> externals;
 
@@ -1462,7 +1464,7 @@ bool shard_main_task(const Task *task,
 
       //if(!pbs_found)
         launcher.add_region_requirement(RegionRequirement(curr_lr, READ_ONLY, EXCLUSIVE, curr_lr)
-            .add_field(FID_PAYLOAD));
+            .add_field(fid_p));
       // else
       //   launcher.add_region_requirement(RegionRequirement(curr_lr, READ_WRITE, SIMULTANEOUS, curr_lr)
       //        .add_field(FID_PAYLOAD));
@@ -1545,10 +1547,10 @@ bool shard_main_task(const Task *task,
         //printf("%d: req out %d \n", int_task.id(), curr_lr.get_tree_id());
 #if USE_VIRTUAL_MAPPING
         launcher.add_region_requirement(RegionRequirement(curr_lr, WRITE_DISCARD, EXCLUSIVE, curr_lr, DefaultMapper::VIRTUAL_MAP)
-                                                .add_field(FID_PAYLOAD));
+                                                .add_field(fid_p));
 #else
         launcher.add_region_requirement(RegionRequirement(curr_lr, WRITE_DISCARD, EXCLUSIVE, curr_lr)
-             .add_field(FID_PAYLOAD));
+             .add_field(fid_p));
 #endif
 
         if(edge_future != EdgeTaskId(BabelFlow::TNULL,BabelFlow::TNULL)){
@@ -1560,10 +1562,10 @@ bool shard_main_task(const Task *task,
             //printf("COPY FROM %d TO REGION %d (%d)\n", curr_lr.get_tree_id(), cr[c], task->regions[cr[c]].region.get_tree_id());
 #if USE_VIRTUAL_MAPPING
             launcher.add_region_requirement(RegionRequirement(task->regions[cr[c]].region, WRITE_DISCARD, EXCLUSIVE, task->regions[cr[c]].region, DefaultMapper::VIRTUAL_MAP)
-                                                    .add_field(FID_PAYLOAD));
+                                                    .add_field(fid_p));
 #else
             launcher.add_region_requirement(RegionRequirement(task->regions[cr[c]].region, WRITE_DISCARD, EXCLUSIVE, task->regions[cr[c]].region)
-             .add_field(FID_PAYLOAD));
+             .add_field(fid_p));
 #endif
           }
 
@@ -1616,10 +1618,11 @@ void Controller::top_level_task(const Task *task,
   double init_time_start = Realm::Clock::current_time_in_microseconds();
   
   FieldSpace pay_fs = runtime->create_field_space(ctx);
-  {
+  fid_p.allocate(runtime, ctx, pay_fs);
+  /*{
     FieldAllocator allocator = runtime->create_field_allocator(ctx, pay_fs);
     allocator.allocate_field(sizeof(RegionPointType),FID_PAYLOAD);
-  }
+    }*/
  
   std::vector<LogicalRegion> in_lr;
 
@@ -1665,15 +1668,15 @@ void Controller::top_level_task(const Task *task,
         Predicate::TRUE_PRED, 0 /*default mapper*/, CGMapper::TAG_LOCAL_SHARD); //CGMapper::SHARD_TAG(i));
 
     launcher.add_region_requirement(RegionRequirement(data_lr, WRITE_DISCARD, EXCLUSIVE, data_lr));//, CGMapper::SHARD_TAG(i)));
-    launcher.region_requirements[0].add_field(FID_PAYLOAD);
+    launcher.region_requirements[0].add_field(fid_p);
 
     must_load.add_single_task(DomainPoint::from_point<1>(i), launcher);
   
   }
 
   FutureMap fm_load = runtime->execute_must_epoch(ctx, must_load);
-  //fm_load.wait_all_results();
-
+  fm_load.wait_all_results();
+  printf("LOAD DONE\n");
   /*
   for(int i=0; i < boxes.size(); i++) {
     bool shard_ok = fm_load.get_result<bool>(DomainPoint::from_point<1>(i));
@@ -1760,16 +1763,13 @@ void Controller::top_level_task(const Task *task,
   // LogicalPartition pb_disjoint_lp = runtime->get_logical_partition(ctx, lr_blks, pb_disjoint_ip);
 
   // printf("after lp\n");
-  //for(int shard=0; shard < num_shards; shard++){
-
+  for(int shard=0; shard < num_shards; shard++)
   {  
     int init_args[2] = {num_shards, 0};
     TaskLauncher launcher(INIT_SHARDS_TASK_ID,
       TaskArgument(init_args, sizeof(int)*2),
         //TaskArgument(&sargs_vec[shard], sizeof(ShardArgs)),
-        Predicate::TRUE_PRED,
-        0 /*default mapper*/);//,
-        // CGMapper::SHARD_TAG(shard));
+        Predicate::TRUE_PRED, 0 /*default mapper*/, CGMapper::SHARD_TAG(shard));
 
     launcher.add_region_requirement(RegionRequirement(lr_blks, WRITE_DISCARD, EXCLUSIVE, lr_blks)
             .add_field(fid_edge_shard));
@@ -1782,15 +1782,14 @@ void Controller::top_level_task(const Task *task,
 
     Future f = runtime->execute_task(ctx, launcher);
     futures.push_back(f);
-  //}
+  }
 
   // now wait on all the futures
   for(std::vector<Future>::iterator it = futures.begin();
     it != futures.end();
     it++)
     it->get_void_result();
-  
-  }
+  //}
 
   // std::map<EdgeTaskId, EdgeTaskId>::iterator its;
 
@@ -1813,7 +1812,11 @@ void Controller::top_level_task(const Task *task,
 
   int round =0; // TODO remove this round information (not used anymore)
 
-  std::vector<TaskLauncher> launchers;
+  //std::vector<TaskLauncher> launchers;
+
+  int num_r_shards = runtime->select_tunable_value(ctx, CGMapper::TID_NUM_SHARDS).get_result<int>();
+  fprintf(stdout,"NUM SHARDS from runtime %d\n", num_r_shards); 
+
   std::vector<std::string> metadatas(num_shards);
   preparation_time += Realm::Clock::current_time_in_microseconds() - temp_start;
   for(int shard = 0; shard < num_shards; shard++){
@@ -1844,20 +1847,20 @@ void Controller::top_level_task(const Task *task,
     TaskLauncher launcher(SHARD_MAIN_TASK_ID,
         TaskArgument(metadatas[shard].c_str(), metadatas[shard].size()),
         Predicate::TRUE_PRED,
-        0 /*default mapper*/, CGMapper::SHARD_TAG(shard));
+	0 /*default mapper*/, 
+        CGMapper::SHARD_TAG(shard));
 
     launcher.add_region_requirement(RegionRequirement(lr_blks, READ_ONLY, EXCLUSIVE, lr_blks)
                               .add_field(fid_edge_shard)
-				    .add_field(fid_done_barrier)
-            );//.add_flags(NO_ACCESS_FLAG));
+			      .add_field(fid_done_barrier));
 
-    // LogicalRegion lr_solblk = runtime->get_logical_subregion_by_color(ctx,
+    //LogicalRegion lr_solblk = runtime->get_logical_subregion_by_color(ctx,
     //                       disjoint_lp,
     //                       shard);
 
-    launcher.add_region_requirement(RegionRequirement(in_lr[shard], READ_ONLY, EXCLUSIVE, in_lr[shard], 
-						      CGMapper::SHARD_TAG(shard)).add_field(FID_PAYLOAD));//.add_flags(NO_ACCESS_FLAG));//,
-
+    launcher.add_region_requirement(RegionRequirement(in_lr[shard], READ_ONLY, SIMULTANEOUS, in_lr[shard], 
+    						      CGMapper::SHARD_TAG(shard)).add_field(fid_p).add_flags(NO_ACCESS_FLAG));
+    
     // launcher.add_region_requirement(RegionRequirement(lr_solblk, READ_ONLY, EXCLUSIVE, data_lr, 
     //   CGMapper::SHARD_TAG(shard)).add_field(FID_PAYLOAD));//,
                     // CGMapper::SHARD_TAG(shard))
@@ -1900,9 +1903,9 @@ void Controller::top_level_task(const Task *task,
         curr_lr = found->second;
 
       DEBUG_PRINT((stderr,"[%d-%d r %d (%d)] ", it->first.first, it->first.second, curr_lr.get_tree_id(), it->second.owner));
-
       // TODO understand why there was an ".add_flags(NO_ACCESS_FLAG));"
-      launcher.add_region_requirement(RegionRequirement(curr_lr, READ_WRITE, SIMULTANEOUS, curr_lr, CGMapper::SHARD_TAG(it->second.owner)).add_field(FID_PAYLOAD));//.add_flags(NO_ACCESS_FLAG));
+      launcher.add_region_requirement(RegionRequirement(curr_lr, READ_WRITE, SIMULTANEOUS, curr_lr, CGMapper::SHARD_TAG(it->second.owner)).add_field(fid_p).add_flags(NO_ACCESS_FLAG));
+    
     }
     DEBUG_PRINT((stderr,"\n"));
 
@@ -1928,6 +1931,8 @@ void Controller::top_level_task(const Task *task,
 #if PROFILING_TIMING
   std::cout << std::fixed << gasnet_mynode() << ",shard_prep,-1,"<<(preparation_time)/1000000.f << std::endl;
 #endif
+
+  printf("LAUNCHING %d shards\n", num_shards);
 
   FutureMap fm = runtime->execute_must_epoch(ctx, must);
 
@@ -2467,7 +2472,9 @@ Controller::Controller()
   {
     TaskVariantRegistrar registrar(TOP_LEVEL_TASK_ID, "top_level");
     registrar.add_constraint(ProcessorConstraint(Processor::LOC_PROC));
+    registrar.set_replicable();
     Runtime::preregister_task_variant<top_level_task>(registrar, "top_level");
+    Runtime::set_top_level_task_id(TOP_LEVEL_TASK_ID);
   }
   
   // Runtime::set_top_level_task_id(TOP_LEVEL_TASK_ID);
