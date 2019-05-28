@@ -12,9 +12,10 @@
 #include "legion.h"
 #include "Utils.h"
 #include "datatypes.h"
+//#include "TypeDefinitions.h"
 #include "Controller.h"
-#include "../Definitions.h"
-#include "../TaskGraph.h"
+#include "Definitions.h"
+#include "TaskGraph.h"
 
 //#define DEBUG_DATAFLOW
 
@@ -27,6 +28,8 @@
 using namespace LegionRuntime::HighLevel;
 using namespace LegionRuntime::Accessor;
 using namespace LegionRuntime::Arrays;
+
+using namespace BabelFlow;
 
 namespace Utils {
 
@@ -101,16 +104,16 @@ namespace Utils {
     return sum;
   }
 
-  void indipendent_groups(std::set<BabelFlow::TaskId> nextEpochTasks, std::vector<std::set<BabelFlow::TaskId> >& round_groups,
-      std::map<BabelFlow::TaskId,BabelFlow::Task>& taskmap, std::map<EdgeTaskId,VPartId>& vpart_map){
+  void indipendent_groups(std::set<TaskId> nextEpochTasks, std::vector<std::set<TaskId> >& round_groups,
+      std::map<TaskId,BabelFlow::Task>& taskmap, std::map<EdgeTaskId,VPartId>& vpart_map){
 
-    std::set<BabelFlow::TaskId>::iterator it;
-    std::map<EdgeTaskId, std::set<BabelFlow::TaskId> > new_groups;
+    std::set<TaskId>::iterator it;
+    std::map<EdgeTaskId, std::set<TaskId> > new_groups;
 
     for (it = nextEpochTasks.begin(); it != nextEpochTasks.end(); ++it){
       const BabelFlow::Task& task = taskmap[*it];
       
-      if(task.id() == BabelFlow::TNULL){
+      if(task.id() == TNULL){
         DEBUG_PRINT((stderr,"TASK ID NULL, no map\n"));
         break;
       }
@@ -130,18 +133,18 @@ namespace Utils {
 
     }
 
-    std::map<EdgeTaskId, std::set<BabelFlow::TaskId> >::iterator itr;
+    std::map<EdgeTaskId, std::set<TaskId> >::iterator itr;
     for(itr = new_groups.begin(); itr != new_groups.end(); itr++){
       round_groups.push_back(itr->second);
     }
 
   }
 
-  uint32_t compute_virtual_partitions(uint32_t launch_id, const RegionsIndexType input_block_size, std::set<BabelFlow::TaskId> nextEpochTasks, ArgumentMap& arg_map,
-                        std::vector<VirtualPartition>& vparts, std::map<BabelFlow::TaskId,BabelFlow::Task>& taskmap,
+  uint32_t compute_virtual_partitions(uint32_t launch_id, const RegionsIndexType input_block_size, std::set<TaskId> nextEpochTasks, MyArgumentMap& arg_map,
+                        std::vector<VirtualPartition>& vparts, std::map<TaskId,BabelFlow::Task>& taskmap, 
                         std::map<EdgeTaskId,VPartId>& vpart_map, std::vector<LaunchData>& launch_data){
 
-     std::set<BabelFlow::TaskId>::iterator it;
+     std::set<TaskId>::iterator it;
      uint32_t task_counter = 0;
 
      std::vector<VPartId> verification;
@@ -149,19 +152,19 @@ namespace Utils {
      int ver_size = task0.incoming().size() + task0.outputs().size();
      verification.resize(ver_size);
      for(int i=0; i< verification.size(); i++)
-      verification[i].round_id = BabelFlow::TNULL;
+      verification[i].round_id = TNULL;
 
      for (it = nextEpochTasks.begin(); it != nextEpochTasks.end(); ++it){
       const BabelFlow::Task& task = taskmap[*it];
       
-      if(task.id() == BabelFlow::TNULL){
+      if(task.id() == TNULL){
         DEBUG_PRINT((stderr,"TASK ID NULL, no map\n"));
         break;
       }
 
       DEBUG_PRINT((stderr,"MAPPING task %d callback %d\n", task.id(), task.callback()));
       
-      //MetaDataFlow metadata;
+      //MetaBabelFlow metadata;
       //TaskInfo& ti = metadata.info;//argsvec[task_counter].info;
       TaskInfo ti;
       ti.id = task.id();
@@ -171,8 +174,10 @@ namespace Utils {
       // for(int to=0; to < task.outputs().size(); to++){
       //   ti.lenOutput += task.outputs()[to].size();
       // }
-      arg_map.set_point(DomainPoint::from_point<1>(Point<1>(task_counter)), TaskArgument(&ti,sizeof(TaskInfo)));//&metadata, sizeof(MetaDataFlow)));//
+      //arg_map.set_point(DomainPoint::from_point<1>(Point<1>(task_counter)), TaskArgument(&ti,sizeof(TaskInfo)));//&metadata, sizeof(MetaBabelFlow)));//
       
+      arg_map[DomainPoint::from_point<1>(Point<1>(task_counter))] = TaskArgument(&ti,sizeof(TaskInfo));
+
       if(vparts.size() < ti.lenInput+ti.lenOutput)      	
       	vparts.resize(ti.lenInput+ti.lenOutput);
       
@@ -201,7 +206,7 @@ namespace Utils {
         vparts[ri].input = true;
         vparts[ri].id = vpid;
 
-        if(verification[ri].round_id == BabelFlow::TNULL)
+        if(verification[ri].round_id == TNULL)
           verification[ri] = vpid;
 
         if(verification[ri].round_id != vpid.round_id || verification[ri].part_id != vpid.part_id){
@@ -255,7 +260,7 @@ namespace Utils {
 
         for(int inro=0; inro < task.outputs()[ro].size(); inro++){
 
-          if(task.outputs()[ro][inro] == BabelFlow::TNULL) continue;
+          if(task.outputs()[ro][inro] == TNULL) continue;
 
           EdgeTaskId out_edge = std::make_pair(task.id(), task.outputs()[ro][inro]);
           vpart_map[out_edge] = vpid;
@@ -290,25 +295,25 @@ namespace Utils {
     return false;
   }
 
-  void compute_launch_data(const RegionsIndexType input_block_size, std::set<BabelFlow::TaskId>& currEpochTasks, std::set<EdgeTaskId>& current_inputs,
-    std::set<EdgeTaskId>& current_outputs, std::map<BabelFlow::TaskId,BabelFlow::Task>& taskmap,
+  void compute_launch_data(const RegionsIndexType input_block_size, std::set<TaskId>& currEpochTasks, std::set<EdgeTaskId>& current_inputs, 
+    std::set<EdgeTaskId>& current_outputs, std::map<TaskId,BabelFlow::Task>& taskmap, 
     std::vector<LaunchData>& launch_data, std::map<EdgeTaskId,VPartId>& vpart_map){
 
     std::set<EdgeTaskId> toResolveEdges;
-    std::set<BabelFlow::TaskId> unresolvedTasks;
+    std::set<TaskId> unresolvedTasks;
 
     uint32_t round_id = 1;
    
     while(currEpochTasks.size() > 0){
 
-      std::set<BabelFlow::TaskId> nextEpochTasks;
-      std::set<BabelFlow::TaskId> round_tasks;
+      std::set<TaskId> nextEpochTasks;
+      std::set<TaskId> round_tasks;
       
       currEpochTasks.insert(unresolvedTasks.begin(), unresolvedTasks.end());
       unresolvedTasks.clear();
-      std::set<BabelFlow::TaskId> tempCurrEpoch;
+      std::set<TaskId> tempCurrEpoch;
 
-      std::set<BabelFlow::TaskId>::iterator currEpIt;
+      std::set<TaskId>::iterator currEpIt;
       for(currEpIt=currEpochTasks.begin(); currEpIt != currEpochTasks.end(); currEpIt++){
         const BabelFlow::Task& lt = taskmap[*currEpIt];
         //printf("task %d\n",lt.id());
@@ -328,7 +333,7 @@ namespace Utils {
 
           round_tasks.insert(lt.id());
 
-          const std::vector<std::vector<BabelFlow::TaskId> >& outputs = lt.outputs();
+          const std::vector<std::vector<TaskId> >& outputs = lt.outputs();
           for(int o=0; o < outputs.size(); o++){
           for(int inro=0; inro < outputs[o].size(); inro++){
             EdgeTaskId outedge = std::make_pair(lt.id(),outputs[o][inro]);
@@ -349,8 +354,8 @@ namespace Utils {
 
       }
 
-      // std::map<CallbackId, std::set<BabelFlow::TaskId> >::iterator rit;
-      std::vector<std::set<BabelFlow::TaskId> > round_groups;
+      // std::map<CallbackId, std::set<TaskId> >::iterator rit;
+      std::vector<std::set<TaskId> > round_groups;
 
       // Give the current round tasks slipt into independent groups (to satisfy index launches)
       indipendent_groups(round_tasks, round_groups, taskmap, vpart_map);
@@ -360,8 +365,8 @@ namespace Utils {
         LaunchData launch;
         launch.callback = taskmap[*round_groups[r].begin()].callback();
 
-        if(round_id > 0 && (*round_groups[r].begin())== BabelFlow::TNULL) { // TODO check why this happens
-          DEBUG_PRINT((stderr,"skipping invalid round with first task BabelFlow::TNULL (r>0)\n"));
+        if(round_id > 0 && (*round_groups[r].begin())== TNULL) { // TODO check why this happens
+          DEBUG_PRINT((stderr,"skipping invalid round with first task TNULL (r>0)\n"));
           continue;
         }
 
@@ -384,6 +389,194 @@ namespace Utils {
     }
    
 
+  }
+
+  struct classcomp {
+
+    bool operator() (const TaskId& lhs, const TaskId& rhs) const
+
+    {return lhs>rhs;}
+
+  };
+
+  void reorder_tasks(std::vector<BabelFlow::Task>& ordered_tasks, std::map<TaskId,BabelFlow::Task>& taskmap, std::set<TaskId>& currRoots){
+
+    std::vector<TaskId> leaves;
+    std::set<TaskId> order;
+    std::map<TaskId,BabelFlow::Task>::iterator it;
+
+    for(it = taskmap.begin(); it != taskmap.end(); it++){
+      BabelFlow::Task& task = it->second;
+
+      if(task.outputs().size() == 0){
+        leaves.push_back(task.id());
+        ordered_tasks.push_back(task);
+      }
+
+    }
+
+    order.insert(leaves.begin(), leaves.end());
+
+    std::set<TaskId>::iterator itl;
+
+    int nroots = 0;
+    // printf("roots in: ");
+    // for(itl = currRoots.begin(); itl != currRoots.end(); itl++){
+    //   printf("%d ", *itl);
+    // }
+    // printf("\n");
+    // printf("ORIGINAL ORDER ");
+    while(nroots < currRoots.size()){
+      std::vector<TaskId> next_leaves;
+
+      //for(itl = leaves.begin(); itl != leaves.end(); itl++){
+      for(int l=0; l < leaves.size(); l++){
+        BabelFlow::Task& task = taskmap[leaves[l]];//*itl];
+        
+        for(int i=0; i < task.incoming().size(); i++){
+          TaskId& tid = task.incoming()[i];
+          // printf("tid %d\n", tid);
+          if(currRoots.find(tid) != currRoots.end()) {
+            nroots++;
+            // printf("found root %d\n", tid);
+          }
+
+          if(taskmap.find(tid) != taskmap.end()){
+            if(order.find(tid) == order.end()){
+              ordered_tasks.push_back(taskmap[tid]);
+              order.insert(tid);
+            }
+            next_leaves.push_back(tid);
+            // printf("%d ", tid);
+            
+          }
+        }
+
+      }
+
+      leaves.clear();
+      leaves.insert(leaves.end(), next_leaves.begin(), next_leaves.end());
+
+    }
+    
+    // printf("\n");
+
+    // std::set<TaskId>::iterator itr;
+
+    // for(itr = order.begin(); itr != order.end(); itr++){
+    //   BabelFlow::Task& task = taskmap[*itr];
+    //   ordered_tasks.push_back(task);
+
+    // }
+
+    //printf("end compute_externals\n");
+
+    std::reverse(std::begin(ordered_tasks), std::end(ordered_tasks));
+
+
+  }
+
+  void reorder_tasks(std::vector<BabelFlow::Task>& ordered_tasks, std::set<EdgeTaskId> externals, std::set<TaskId>& currEpochTasks, 
+    std::map<TaskId,BabelFlow::Task>& taskmap, int shard){
+
+#if 0
+    for(std::map<TaskId,BabelFlow::Task, classcomp>::iterator it=taskmap.begin(); it !=taskmap.end(); it++){
+      ordered_tasks.push_back(it->second);
+    }
+
+#else
+    std::set<EdgeTaskId> current_inputs; 
+
+    std::set<TaskId>::iterator currEpIt;
+
+    for(currEpIt=currEpochTasks.begin(); currEpIt != currEpochTasks.end(); currEpIt++){
+      EdgeTaskId edge;
+      edge.first = TNULL; // This is not used
+      edge.second = *currEpIt;
+      current_inputs.insert(edge);
+
+      printf("curr epoch %d %d\n", edge.first, edge.second);
+    }
+
+    //current_inputs.insert(externals.begin(), externals.end());
+
+    std::set<EdgeTaskId> current_outputs;
+
+    std::set<EdgeTaskId> toResolveEdges;
+    std::set<TaskId> unresolvedTasks;
+
+    uint32_t round_id = 1;
+   
+    while(currEpochTasks.size() > 0){
+
+      std::set<TaskId> nextEpochTasks;
+      
+      currEpochTasks.insert(unresolvedTasks.begin(), unresolvedTasks.end());
+      unresolvedTasks.clear();
+      std::set<TaskId> tempCurrEpoch;
+
+      //printf("-----%d: Round %d-----\n", shard, round_id);
+
+      for(currEpIt=currEpochTasks.begin(); currEpIt != currEpochTasks.end(); currEpIt++){
+        
+        std::map<TaskId,BabelFlow::Task>::iterator it = taskmap.find(*currEpIt);
+
+        if(it == taskmap.end()){
+          //printf("(ext task %d)\n", *currEpIt);
+          continue;
+        }
+
+        const BabelFlow::Task& lt = it->second;//taskmap[*currEpIt];
+
+        //printf("task %d \n", lt.id());
+
+        int in_unresolved = lt.incoming().size();
+        for(int in=0; in < lt.incoming().size(); in++){
+          EdgeTaskId inedge = std::make_pair(lt.incoming()[in], lt.id());
+          //printf("\tlooking for edge %d %d\n", lt.incoming()[in], lt.id());
+          if(findEdge(inedge, current_inputs) || (externals.find(inedge) != externals.end())){
+            in_unresolved--; // one fail is enough
+          }else
+            break;
+        }
+
+        if(in_unresolved == 0){
+          //printf("task %d resolved callback %d\n\n", lt.id(), lt.callback());
+          nextEpochTasks.insert(lt.id());
+
+          ordered_tasks.push_back(lt);
+
+          const std::vector<std::vector<TaskId> >& outputs = lt.outputs();
+          for(int o=0; o < outputs.size(); o++){
+            for(int inro=0; inro < outputs[o].size(); inro++){
+              EdgeTaskId outedge = std::make_pair(lt.id(),outputs[o][inro]);
+              
+              if(in_unresolved == 0){
+                current_outputs.insert(outedge);
+              }
+              tempCurrEpoch.insert(outputs[o][inro]);
+
+              //printf("add to next input %d %d\n", lt.id(),outputs[o][inro]);
+            }
+        }
+          
+        }
+        else{
+          unresolvedTasks.insert(lt.id());
+        }
+
+      }
+
+      current_inputs.insert(current_outputs.begin(), current_outputs.end());
+      current_outputs.clear();
+
+      currEpochTasks.clear();
+      currEpochTasks.insert(tempCurrEpoch.begin(), tempCurrEpoch.end());  
+
+      round_id++;
+
+    }
+#endif
   }
 
 }

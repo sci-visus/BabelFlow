@@ -22,6 +22,13 @@
 
 #include "datatypes.h"
 
+#define PROFILING_TIMING 0
+//TODO this will be moved in BabelFlow
+// namespace BabelFlow{
+//   class SuperTask;
+// }
+// #include "SuperTask.h"
+
 
 using namespace LegionRuntime::HighLevel;
 using namespace LegionRuntime::Accessor;
@@ -46,6 +53,8 @@ typedef LegionRuntime::Arrays::coord_t RegionsIndexType;
 typedef uint32_t RegionPointType;
 #define BYTES_PER_POINT sizeof(RegionPointType)
 
+#define FILENAME_PATH_LENGTH 1024
+
 struct TaskInfo{
   BabelFlow::TaskId id;
   BabelFlow::CallbackId callbackID;
@@ -53,10 +62,29 @@ struct TaskInfo{
   size_t lenOutput;
 };
 
-class DomainSelection{
+struct TaskInfoExt{
+  BabelFlow::TaskId id;
+  BabelFlow::CallbackId callbackID;
+  size_t lenInput;
+  size_t lenOutput;
+  int n_pbs;
+  PhaseBarrier pbs[8];
+};
+
+// struct ExternalInfo{
+//   uint32_t pb_index;
+//   uint32_t edge_index;
+//   int owner;
+
+// };
+
+class InputDomainSelection{
  public:
   GlobalIndexType low[3];
   GlobalIndexType high[3];
+#if BRAIN_DATAFLOW
+  char file_path[FILENAME_PATH_LENGTH];
+#endif
 };
 
 class VPartId{
@@ -80,10 +108,13 @@ public:
   }
 };
 
+typedef std::map<DomainPoint, TaskArgument> MyArgumentMap;
+
 class LaunchData{
 public:
   BabelFlow::CallbackId callback;
-  ArgumentMap arg_map;
+  //ArgumentMap arg_map;
+  MyArgumentMap arg_map;
   std::vector<VirtualPartition> vparts;
   uint32_t n_tasks;
 };
@@ -93,7 +124,7 @@ public:
 //   LogicalRegion out_regions[MAX_OUTPUTS];
 // };
 
-struct MetaDataFlow{
+struct MetaBabelFlow{
   TaskInfo info;
   int prepare;
   // MetaRegions regions;
@@ -147,16 +178,20 @@ public:
                         std::vector<VirtualPartition>& vparts, std::map<BabelFlow::TaskId,BabelFlow::Task>& taskmap,
                         std::map<EdgeTaskId,VPartId>& vpart_map, std::vector<LaunchData>& launch_data);
 
-  static void compute_launch_data(std::set<BabelFlow::TaskId>& currEpochTasks, std::set<EdgeTaskId>& current_inputs, std::set<EdgeTaskId>& current_outputs, std::map<BabelFlow::TaskId,BabelFlow::Task>& taskmap,
+  static void compute_launch_data(std::set<BabelFlow::TaskId>& currEpochTasks, std::set<EdgeTaskId>& current_inputs, std::set<EdgeTaskId>& current_outputs, std::map<BabelFlow::TaskId,BabelFlow::Task>& taskmap, 
     std::vector<LaunchData>& launch_data);
-
-
-  static int bufferToRegion(char* buffer, RegionsIndexType size, LegionRuntime::Arrays::Rect<1> rect, const PhysicalRegion& region);
-
-  static void init();
 
   //! Initialize the controller
   int initialize(const BabelFlow::TaskGraph& graph, const BabelFlow::TaskMap* task_map, int argc = 0, char **argv = NULL);
+
+  int initialize(const BabelFlow::TaskGraph* graph, const BabelFlow::TaskMap* task_map, int argc = 0, char **argv = NULL);
+
+  static int regionToBuffer(char*& buffer, RegionsIndexType& size, RegionsIndexType offset,
+                               const PhysicalRegion& region);
+
+  static int bufferToRegion(char* buffer, RegionsIndexType size, Rect<1> rect, const PhysicalRegion& region);
+
+  //int initialize(BabelFlow::SuperTask* st, int argc, char **argv);
 
   //! Register a callback for the given id
   int registerCallback(BabelFlow::CallbackId id, Callback func);
@@ -165,11 +200,11 @@ public:
   int run(std::map<BabelFlow::TaskId,BabelFlow::Payload>& initial_inputs);
 
   //! A list of registered callbacks
-  static std::vector<BabelFlow::Callback> mCallbacks;
+  static std::vector<Callback> mCallbacks;
 
-  static LogicalRegion load_task(const Task *task,
-                   const std::vector<PhysicalRegion> &regions,
-                   Context ctx, HighLevelRuntime *runtime);
+//  static bool load_task(const Task *task,
+//                   const std::vector<PhysicalRegion> &regions,
+//                   Context ctx, HighLevelRuntime *runtime);
 
   static int generic_task(const Task *task,
                   const std::vector<PhysicalRegion> &regions,
