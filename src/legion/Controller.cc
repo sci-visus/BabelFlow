@@ -35,14 +35,6 @@ using namespace LegionRuntime::Accessor;
 
 #define USE_VIRTUAL_MAPPING 1
 
-#define TEMP_PMT_HARDCODED 1
-
-#if TEMP_PMT_HARDCODED
-BabelFlow::Payload make_local_block(FunctionType* data,
-                           GlobalIndexType low[3], GlobalIndexType high[3], 
-                           FunctionType threshold);
-#endif
-
 std::vector<LaunchData> launch_data;
 std::map<BabelFlow::TaskId,BabelFlow::Task> taskmap;
 std::map<EdgeTaskId,VPartId> vpart_map;
@@ -68,40 +60,40 @@ void print_domain(Context ctx, HighLevelRuntime *runtime, LogicalRegion newlr){
 
 class UseDataProjectionFunctor : public ProjectionFunctor {
 public:
-  UseDataProjectionFunctor(void);
+    UseDataProjectionFunctor(void);
 
-  virtual LogicalRegion project(Context ctx, Task *task,
-        unsigned index,
-        LogicalRegion upper_bound,
-        const DomainPoint &point);
+    virtual LogicalRegion project(Context ctx, Task *task,
+                                  unsigned index,
+                                  LogicalRegion upper_bound,
+                                  const DomainPoint &point);
 
-  virtual LogicalRegion project(Context ctx, Task *task, 
-        unsigned index,
-        LogicalPartition upper_bound,
-        const DomainPoint &point);
+    virtual LogicalRegion project(Context ctx, Task *task,
+                                  unsigned index,
+                                  LogicalPartition upper_bound,
+                                  const DomainPoint &point);
 
-  virtual unsigned get_depth(void) const;
+    virtual unsigned get_depth(void) const;
 };
 
 UseDataProjectionFunctor::UseDataProjectionFunctor(void) {}
 
 // region -> region: UNUSED
 LogicalRegion UseDataProjectionFunctor::project(Context ctx, Task *task,
-            unsigned index,
-            LogicalRegion upper_bound,
-            const DomainPoint &point)
+                                                unsigned index,
+                                                LogicalRegion upper_bound,
+                                                const DomainPoint &point)
 {
   assert(0);
   return LogicalRegion::NO_REGION;
 }
 
 // partition -> region path: [index].PID_ALLOCED_DATA.0
-LogicalRegion UseDataProjectionFunctor::project(Context ctx, Task *task, 
-            unsigned index,
-            LogicalPartition upper_bound,
-            const DomainPoint &point)
+LogicalRegion UseDataProjectionFunctor::project(Context ctx, Task *task,
+                                                unsigned index,
+                                                LogicalPartition upper_bound,
+                                                const DomainPoint &point)
 {
-  
+
   int nlaunch = *(int*)task->args;
 
   // IndexSpace lev_is = runtime->get_index_subspace(upper_bound, DomainPoint::from_point<1>(info.source_coloring[index]));
@@ -132,7 +124,6 @@ unsigned UseDataProjectionFunctor::get_depth(void) const
 {
   return 1;
 }
-
 
 // Tasks responsible to make copies of the first region into the others
 int relay_task(const Task *task,
@@ -533,7 +524,7 @@ int Controller::generic_task(const Task *task,
 #ifdef DEBUG_DATAFLOW
     
     Domain dom_out_deb = runtime->get_index_space_domain(ctx, is);
-    Rect<1> rect_all_deb = dom_out_deb.get_rect<1>();
+    auto rect_all_deb = dom_out_deb.get_rect<1>();
     
     if(rect_all_deb.volume()*BYTES_PER_POINT < pay.size()){
       fprintf(stderr,"ERROR: output region too small for the payload\n\t out[%d] volume %d payload %d callback %d\n",i,rect_all_deb.volume(), pay.size(),info.callbackID);
@@ -632,11 +623,7 @@ void Controller::init(){
 
     assert((blocksize+bsize) % BYTES_PER_POINT == 0);
 
-#if TEMP_PMT_HARDCODED
     RegionsIndexType num_elmts = (blocksize+bsize)/BYTES_PER_POINT;
-#else
-    RegionsIndexType num_elmts = (blocksize+sizeof(DomainSelection)+sizeof(float))/BYTES_PER_POINT;
-#endif
 
     if(input_block_size < num_elmts)
       input_block_size = num_elmts;
@@ -882,14 +869,30 @@ int Controller::registerCallback(BabelFlow::CallbackId id, Callback func){
 
 Controller::Controller()
 {
-  HighLevelRuntime::set_top_level_task_id(TOP_LEVEL_TASK_ID);
-  HighLevelRuntime::register_legion_task<top_level_task>(TOP_LEVEL_TASK_ID,
-                      Processor::LOC_PROC, true/*single*/, false/*index*/,
-                      AUTO_GENERATE_ID, TaskConfigOptions(), "top_level");
+//  HighLevelRuntime::set_top_level_task_id(TOP_LEVEL_TASK_ID);
+//  HighLevelRuntime::register_legion_task<top_level_task>(TOP_LEVEL_TASK_ID,
+//                      Processor::LOC_PROC, true/*single*/, false/*index*/,
+//                      AUTO_GENERATE_ID, TaskConfigOptions(), "top_level");
 
-  HighLevelRuntime::register_legion_task<int, generic_task>(GENERIC_TASK_ID,
-                      Processor::LOC_PROC, true/*single*/, false/*index*/,
-                      AUTO_GENERATE_ID, TaskConfigOptions(false/*leaf*/), "generic_task");
+  {
+    TaskVariantRegistrar top_level_registrar(TOP_LEVEL_TASK_ID);
+    top_level_registrar.add_constraint(ProcessorConstraint(Processor::LOC_PROC));
+    top_level_registrar.set_replicable();
+    Runtime::preregister_task_variant<top_level_task>(top_level_registrar,
+                                                      "Top Level Task");
+    Runtime::set_top_level_task_id(TOP_LEVEL_TASK_ID);
+  }
+
+//  HighLevelRuntime::register_legion_task<int, generic_task>(GENERIC_TASK_ID,
+//                      Processor::LOC_PROC, true/*single*/, false/*index*/,
+//                      AUTO_GENERATE_ID, TaskConfigOptions(false/*leaf*/), "generic_task");
+
+  {
+    TaskVariantRegistrar generic_task_registrar(GENERIC_TASK_ID);
+    generic_task_registrar.add_constraint(ProcessorConstraint(Processor::LOC_PROC));
+    Runtime::preregister_task_variant<int, generic_task>(generic_task_registrar,
+                                                      "generic_task");
+  }
 
 #if USE_VIRTUAL_MAPPING
   Runtime::preregister_projection_functor(PFID_USE_DATA_TASK,
