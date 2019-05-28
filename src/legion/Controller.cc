@@ -717,6 +717,8 @@ void Controller::top_level_task(const LegionRuntime::HighLevel::Task *task,
 
   } // End initialization (Data Load)
 
+  std::vector<FutureMap> all_launches;
+
   std::cout << "Init time = " << std::fixed << (Realm::Clock::current_time_in_microseconds()-init_time_start)/1000000.f << std::endl;
 
   std::cout << "Total launches " << launch_data.size() << std::endl;
@@ -808,17 +810,23 @@ void Controller::top_level_task(const LegionRuntime::HighLevel::Task *task,
       curr_launcher.region_requirements[v].add_field(FID_PAYLOAD);
 
     }
-    
-    runtime->execute_index_space(ctx, curr_launcher);//.wait_all_results();
+
+    all_launches.push_back(runtime->execute_index_space(ctx, curr_launcher));//.wait_all_results();
 
   }
 
   ts_end = Realm::Clock::current_time_in_microseconds();
   std::cout << std::fixed << "Dataflow time = " << (ts_end-ts_start)/1000000.f << std::endl;
-  
-  // TODO destroy all the regions
+
   runtime->destroy_field_space(ctx, pay_fs);
- 
+
+  // wait for all the launchers to finish and destroy things that need runtime alive
+  for(auto& launch : all_launches){
+    launch.wait_all_results();
+  }
+
+  launch_data.clear();
+
 }
 
 int Controller::initialize(const BabelFlow::TaskGraph& graph, const BabelFlow::TaskMap* task_map, int argc, char **argv){
