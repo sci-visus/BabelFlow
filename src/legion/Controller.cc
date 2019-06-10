@@ -33,7 +33,7 @@ using namespace LegionRuntime::Accessor;
 # define DEBUG_PRINT(x) do {} while (0)
 #endif
 
-#define USE_VIRTUAL_MAPPING 1
+#define USE_VIRTUAL_MAPPING 0
 
 std::vector<LaunchData> launch_data;
 std::map<BabelFlow::TaskId,BabelFlow::Task> taskmap;
