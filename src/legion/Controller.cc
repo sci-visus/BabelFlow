@@ -33,7 +33,7 @@ using namespace LegionRuntime::Accessor;
 # define DEBUG_PRINT(x) do {} while (0)
 #endif
 
-#define USE_VIRTUAL_MAPPING 1
+#define USE_VIRTUAL_MAPPING 0
 
 std::vector<LaunchData> launch_data;
 std::map<BabelFlow::TaskId,BabelFlow::Task> taskmap;
@@ -130,11 +130,13 @@ int relay_task(const Task *task,
                              const std::vector<PhysicalRegion> &regions,
                              Context ctx, HighLevelRuntime *runtime){
 
-  RegionAccessor<AccessorType::Generic, RegionPointType> acc_in =
-      regions[0].get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
+  //RegionAccessor<AccessorType::Generic, RegionPointType> acc_in =
+  //    regions[0].get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
   
   RegionAccessor<AccessorType::Affine<1>, RegionPointType> aff_in =
-      acc_in.convert<AccessorType::Affine<1> >();
+      regions[0].get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>().convert<AccessorType::Affine<1> >();
+
+  //const FieldAccessor<READ_ONLY,RegionPointType,1> aff_in(regions[0], FID_PAYLOAD);
 
   IndexSpace is = task->regions[0].region.get_index_space();
   auto rect = runtime->get_index_space_domain(ctx, is).get_rect<1>();
@@ -192,10 +194,12 @@ int relay_task(const Task *task,
     PhysicalRegion pr = runtime->map_region(ctx, launcher);
     pr.wait_until_valid();
 
-    RegionAccessor<AccessorType::Generic, RegionPointType> acc_out =
-      pr.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
+    //RegionAccessor<AccessorType::Generic, RegionPointType> acc_out =
+    //  pr.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
     RegionAccessor<AccessorType::Affine<1>, RegionPointType> aff_out =
-      acc_out.convert<AccessorType::Affine<1> >();
+    pr.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>().convert<AccessorType::Affine<1> >();
+
+    //const FieldAccessor<WRITE_DISCARD,RegionPointType,1> aff_out(pr, FID_PAYLOAD);
 
     auto curr_rect = runtime->get_index_space_domain(ctx, alloc_is).get_rect<1>();
    //RegionsIndexType curr_full_size = RegionsIndexType(curr_rect.hi[0]-curr_rect.lo[0]+1);
@@ -205,10 +209,10 @@ int relay_task(const Task *task,
 
 #else
 
-    RegionAccessor<AccessorType::Generic, RegionPointType> acc_out =
-      regions[i+1].get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
+    //RegionAccessor<AccessorType::Generic, RegionPointType> acc_out =
+      //regions[i+1].get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
     RegionAccessor<AccessorType::Affine<1>, RegionPointType> aff_out =
-      acc_out.convert<AccessorType::Affine<1> >();
+      regions[i+1].get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>().convert<AccessorType::Affine<1> >();
 
     IndexSpace curr_is = task->regions[i+1].region.get_index_space();
     auto curr_rect = runtime->get_index_space_domain(ctx, curr_is).get_rect<1>();
@@ -240,8 +244,8 @@ int relay_task(const Task *task,
 int regionToBuffer(char*& buffer, RegionsIndexType& size, RegionsIndexType offset, 
       const PhysicalRegion& region){ 
   
-  RegionAccessor<AccessorType::Generic, RegionPointType> acc_in =
-    region.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
+  //RegionAccessor<AccessorType::Generic, RegionPointType> acc_in =
+    //region.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
   
   //  bool affine = acc_in.can_convert<AccessorType::Affine<1> >();
   //Domain dom_incall = runtime->get_index_space_domain(*ctx, region.get_logical_region().get_index_space());
@@ -252,7 +256,7 @@ int regionToBuffer(char*& buffer, RegionsIndexType& size, RegionsIndexType offse
 
   //if(affine){ // Efficient specific accessor
     RegionAccessor<AccessorType::Affine<1>, RegionPointType> aff_in = 
-      acc_in.convert<AccessorType::Affine<1> >();
+      region.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>().convert<AccessorType::Affine<1> >();
 
 #if USE_VIRTUAL_MAPPING
     buffer = (char*)malloc(sizeof(RegionPointType)*size);
@@ -296,8 +300,8 @@ int regionToBuffer(char*& buffer, RegionsIndexType& size, RegionsIndexType offse
 // Copy the content of a buffer into a Region
 int Controller::bufferToRegion(char* buffer, RegionsIndexType size, LegionRuntime::Arrays::Rect<1> rect, const PhysicalRegion& region){ //, Context* ctx, Legion::HighLevelRuntime* runtime){
     
-  RegionAccessor<AccessorType::Generic, RegionPointType> acc_in =
-    region.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
+  //  RegionAccessor<AccessorType::Generic, RegionPointType> acc_in =
+  //region.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>();
   
   RegionsIndexType offset = RegionsIndexType(rect.lo);
 
@@ -312,7 +316,7 @@ int Controller::bufferToRegion(char* buffer, RegionsIndexType size, LegionRuntim
 
   //if(affine){ // Efficient specific accessor
     RegionAccessor<AccessorType::Affine<1>, RegionPointType> aff_in =
-      acc_in.convert<AccessorType::Affine<1> >();
+      region.get_field_accessor(FID_PAYLOAD).typeify<RegionPointType>().convert<AccessorType::Affine<1> >();
   
 #if USE_VIRTUAL_MAPPING
     memcpy(&aff_in[offset], buffer, size*BYTES_PER_POINT); //dom_rect.lo],buffer, size);
@@ -544,7 +548,7 @@ int Controller::generic_task(const Task *task,
     //runtime->unmap_region(ctx,regions[i+info.lenInput]);
 #endif
 
-    runtime->unmap_region(ctx, pr);
+    //runtime->unmap_region(ctx, pr);
     delete [] pay.buffer();
     
   }
@@ -821,12 +825,12 @@ void Controller::top_level_task(const LegionRuntime::HighLevel::Task *task,
   runtime->destroy_field_space(ctx, pay_fs);
 
   // wait for all the launchers to finish and destroy things that need runtime alive
-  for(auto& launch : all_launches){
+  /*for(auto& launch : all_launches){
     launch.wait_all_results();
   }
 
   launch_data.clear();
-
+  */
 }
 
 int Controller::initialize(const BabelFlow::TaskGraph& graph, const BabelFlow::TaskMap* task_map, int argc, char **argv){
@@ -886,21 +890,22 @@ Controller::Controller()
     TaskVariantRegistrar top_level_registrar(TOP_LEVEL_TASK_ID);
     top_level_registrar.add_constraint(ProcessorConstraint(Processor::LOC_PROC));
     top_level_registrar.set_replicable();
+    top_level_registrar.set_inner();
     Runtime::preregister_task_variant<top_level_task>(top_level_registrar,
                                                       "Top Level Task");
     Runtime::set_top_level_task_id(TOP_LEVEL_TASK_ID);
   }
 
-//  HighLevelRuntime::register_legion_task<int, generic_task>(GENERIC_TASK_ID,
-//                      Processor::LOC_PROC, true/*single*/, false/*index*/,
-//                      AUTO_GENERATE_ID, TaskConfigOptions(false/*leaf*/), "generic_task");
-
+  HighLevelRuntime::register_legion_task<int, generic_task>(GENERIC_TASK_ID,
+                      Processor::LOC_PROC, true/*single*/, false/*index*/,
+                      AUTO_GENERATE_ID, TaskConfigOptions(true/*leaf*/), "generic_task");
+/*
   {
     TaskVariantRegistrar generic_task_registrar(GENERIC_TASK_ID);
     generic_task_registrar.add_constraint(ProcessorConstraint(Processor::LOC_PROC));
     Runtime::preregister_task_variant<int, generic_task>(generic_task_registrar,
                                                       "generic_task");
-  }
+  }*/
 
 #if USE_VIRTUAL_MAPPING
   Runtime::preregister_projection_functor(PFID_USE_DATA_TASK,
