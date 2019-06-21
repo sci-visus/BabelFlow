@@ -11,7 +11,6 @@
 
 #include "legion.h"
 
-#include "Controller.h"
 #include "default_mapper.h"
 //#include "shim_mapper.h"
 
@@ -20,11 +19,6 @@ using namespace Legion::Mapping;
 using namespace LegionRuntime::HighLevel;
 using namespace LegionRuntime::Accessor;
 using namespace LegionRuntime::Arrays;
-
-struct MetaDataFlow{                                                                                                         
-  TaskInfo info;                                                                                                 
-  int prepare;                                                                                                               
-};
 
 class DataFlowMapper : public DefaultMapper {
 public:

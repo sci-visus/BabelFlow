@@ -7,7 +7,7 @@ include_directories(${PROJECT_SOURCE_DIR}/serialization)
 
 SET (LEGION_CONTROLLER_HEADERS
     Controller.h
-    DataFlowMapper.h
+    #DataFlowMapper.h
     datatypes.h
     Utils.h
 #    SuperTask.h
@@ -15,7 +15,7 @@ SET (LEGION_CONTROLLER_HEADERS
 
 SET (LEGION_CONTROLLER_SRC
     Controller.cc
-    DataFlowMapper.cc
+    #DataFlowMapper.cc
     Utils.cc
     cgmapper.cc
 #    SuperTask.cc
