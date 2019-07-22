@@ -38,6 +38,7 @@ namespace BabelFlow {
 class ModuloMap : public BabelFlow::TaskMap
 {
 public:
+  ModuloMap() = default;
 
   //! Default constructor
   ModuloMap(ShardId shard_count, TaskId task_count);
