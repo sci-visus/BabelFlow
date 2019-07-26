@@ -154,6 +154,8 @@ namespace BabelFlow
       Payload p_gids = serializeMap<TaskId, uint64_t>(new_gids);
       Payload p_sids = serializeMap<TaskId, ShardId>(new_sids);
 
+      // TODO serialize new Callback Id
+
       // merge all the payloads
       // header = |header_size|p_tids.offset|p_gids.offset|p_sids.offset|old.offset|
       // buffer = |header|content|
