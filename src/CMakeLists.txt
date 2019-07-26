@@ -1,43 +1,47 @@
 
 include(GNUInstallDirs)
 
-SET (BABELFLOW_HEADERS
-    Definitions.h
-    Payload.h
-    Task.h
-    
-    TaskGraph.h 
-    RelayTask.h
-    
-    ModuloMap.h
+SET(BABELFLOW_HEADERS
+        Definitions.h
+        Payload.h
+        Task.h
 
-    HierarchicalTask.h
-    HierarchicalTaskGraph.h
-)
+        TaskGraph.h
+        RelayTask.h
 
-SET (BABELFLOW_SRC
-    Task.cpp    
-    TaskGraph.cpp
-    ModuloMap.cpp
-    
-    HierarchicalTask.cpp
-    HierarchicalTaskGraph.cpp
-)
+        ModuloMap.h
+
+        HierarchicalTask.h
+        HierarchicalTaskGraph.h
+
+        DownSizeGhostTaskGraph.hpp
+        )
+
+SET(BABELFLOW_SRC
+        Task.cpp
+        TaskGraph.cpp
+        ModuloMap.cpp
+
+        HierarchicalTask.cpp
+        HierarchicalTaskGraph.cpp
+
+        DownSizeGhostTaskGraph.hpp
+        )
 
 add_library(babelflow STATIC ${BABELFLOW_SRC})
 
 if (ENABLE_MPI)
     add_subdirectory(mpi)
     set(BABELFLOW_LIBRARIES ${BABELFLOW_LIBRARIES} babelflow babelflow_mpi PARENT_SCOPE)
-elseif(ENABLE_CHARM)
+elseif (ENABLE_CHARM)
     add_subdirectory(charm)
     set(BABELFLOW_LIBRARIES ${BABELFLOW_LIBRARIES} babelflow babelflow_charm PARENT_SCOPE)
-elseif(ENABLE_LEGION)
+elseif (ENABLE_LEGION)
     add_subdirectory(legion)
     set(BABELFLOW_LIBRARIES ${BABELFLOW_LIBRARIES} babelflow babelflow_legion PARENT_SCOPE)
-else()
+else ()
     message(FATAL_ERROR "Unrecognized runtime")
-endif()
+endif ()
 
 #
 #INSTALL(FILES ${BABELFLOW_HEADERS}

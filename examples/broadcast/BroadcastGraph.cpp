@@ -35,7 +35,7 @@
 using namespace BabelFlow;
 
 BroadcastGraph::BroadcastGraph(uint32_t endpoints, uint32_t valence) : TaskGraph(),
-    mValence(valence)
+                                                                       mValence(valence)
 {
   // Find the number of endpoints that is a power of valence
   mEndpoints = 1;
@@ -76,24 +76,23 @@ BabelFlow::Task BroadcastGraph::task(uint64_t gId) const
   uint32_t i;
 
   // If this is a leaf
-  if (task.id() >= (size() - pow(mValence,mLevels)))
+  if (task.id() >= (size() - pow(mValence, mLevels)))
     task.callback(1);
   else { // If we are not the leaf
     task.callback(0); // We are a relay task
 
     // And we have valence many outputs
-    for (i=0;i<mValence;i++)
-      outgoing[0][i] = task.id()*mValence + i + 1;
+    for (i = 0; i < mValence; i++)
+      outgoing[0][i] = task.id() * mValence + i + 1;
 
     task.outputs() = outgoing;
   }
 
   // If we are not the root we have one incoming
   if (task.id() > 0) {
-    incoming[0] = (task.id()-1) / mValence;
+    incoming[0] = (task.id() - 1) / mValence;
     task.incoming() = incoming;
-  }
-  else { // If we are the root we have one outside input
+  } else { // If we are the root we have one outside input
     incoming[0] = TNULL;
     task.incoming() = incoming;
   }
@@ -107,14 +106,14 @@ BabelFlow::Task BroadcastGraph::task(uint64_t gId) const
 
 }
 
-std::vector<Task> BroadcastGraph::localGraph(ShardId id, const TaskMap* task_map) const
+std::vector<Task> BroadcastGraph::localGraph(ShardId id, const TaskMap *task_map) const
 {
   // First get all the ids we need
   std::vector<TaskId> ids = task_map->tasks(id);
 
   // Create the required number of tasks
   std::vector<BabelFlow::Task> tasks(ids.size());
-  for (int i=0; i< ids.size(); i++) {
+  for (int i = 0; i < ids.size(); i++) {
     tasks[i] = task(ids[i]);
   }
 
@@ -123,19 +122,19 @@ std::vector<Task> BroadcastGraph::localGraph(ShardId id, const TaskMap* task_map
 
 BabelFlow::Payload BroadcastGraph::serialize() const
 {
-  uint32_t* buffer = new uint32_t[3];
+  uint32_t *buffer = new uint32_t[3];
 
   buffer[0] = mEndpoints;
   buffer[1] = mValence;
   buffer[2] = mLevels;
 
-  return Payload(3*sizeof(uint32_t),(char*)buffer);
+  return Payload(3 * sizeof(uint32_t), (char *) buffer);
 }
 
 void BroadcastGraph::deserialize(BabelFlow::Payload buffer)
 {
-  assert (buffer.size() == 3*sizeof(uint32_t));
-  uint32_t *tmp = (uint32_t *)(buffer.buffer());
+  assert (buffer.size() == 3 * sizeof(uint32_t));
+  uint32_t *tmp = (uint32_t *) (buffer.buffer());
 
   mEndpoints = tmp[0];
   mValence = tmp[1];
