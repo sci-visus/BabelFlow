@@ -126,7 +126,40 @@ namespace BabelFlow
       return mGraph->size() + new_tids.size();
     }
 
-    Payload serialize() const override;
+    template<class K, class V>
+    Payload serializeMap(std::map<K, V> m)
+    {
+      int32_t buffer_size = sizeof(size_t) + m.size() * sizeof(K) + m.size() * sizeof(V);
+      char *buffer = new char[buffer_size];
+
+      auto *count_ptr = reinterpret_cast<size_t *>(buffer);
+      count_ptr[0] = m.size();
+
+      auto *key_ptr = reinterpret_cast<K *>(buffer + sizeof(size_t));
+      auto *value_ptr = reinterpret_cast<V *>(buffer + sizeof(size_t) + sizeof(K) * m.size());
+
+      size_t count = 0;
+      for (auto iter = m.begin(); iter != m.end(); ++iter) {
+        key_ptr[count] = iter->first;
+        value_ptr[count] = iter->second;
+        count++;
+      }
+      return Payload(buffer_size, buffer);
+    }
+
+    Payload serialize() const override
+    {
+      Payload old = mGraph->serialize();
+      Payload p_tids = serializeMap<TaskId, TaskId>(new_tids);
+      Payload p_gids = serializeMap<TaskId, uint64_t>(new_gids);
+      Payload p_sids = serializeMap<TaskId, ShardId>(new_sids);
+
+      // merge all the payloads
+      // header = |header_size|p_tids.offset|p_gids.offset|p_sids.offset|old.offset|
+      // buffer = |header|content|
+
+      return Payload();
+    }
 
     void deserialize(Payload buffer) override;
 
