@@ -141,11 +141,11 @@ namespace BabelFlow {
 
     template<class K, class V>
     std::map<K, V> deserializeMap(char *buffer) {
-      std::map<K,V> map_obj;
+      std::map<K, V> map_obj;
       size_t num_element = reinterpret_cast<size_t *>(buffer)[0];
       auto *key_ptr = reinterpret_cast<K *>(buffer + sizeof(size_t));
       auto *value_ptr = reinterpret_cast<V *>(buffer + sizeof(size_t) + sizeof(K) * num_element);
-      for (size_t i = 0; i < num_element; ++i){
+      for (size_t i = 0; i < num_element; ++i) {
         map_obj[key_ptr[i]] = value_ptr[i];
       }
       return map_obj;
@@ -158,16 +158,13 @@ namespace BabelFlow {
       Payload p_sids = serializeMap<TaskId, ShardId>(new_sids);
 
       // merge all the payloads
-      // header = |header_size|CallbackId|maxTid|maxGid|p_tids.offset|p_gids.offset|p_sids.offset|old.offset|
-      int32_t header_size =
-        sizeof(int32_t) + sizeof(CallbackId) + sizeof(TaskId) + sizeof(uint64_t) + sizeof(size_t) * 4;
+      // header = |CallbackId|maxTid|maxGid|p_tids.offset|p_gids.offset|p_sids.offset|old.offset|
+      int32_t header_size = sizeof(CallbackId) + sizeof(TaskId) + sizeof(uint64_t) + sizeof(size_t) * 4;
       int32_t buffer_size = header_size + p_tids.size() + p_gids.size() + p_sids.size() + old.size();
 
       char *buffer = new char[buffer_size];
 
       size_t offset = 0;
-      memcpy(buffer + offset, &header_size, sizeof(int32_t));// copy header size to buffer
-      offset += sizeof(int32_t);
       memcpy(buffer + offset, &newCallBackId, sizeof(CallbackId));
       offset += sizeof(CallbackId);
       memcpy(buffer + offset, &maxTid, sizeof(TaskId));
@@ -207,11 +204,32 @@ namespace BabelFlow {
       return Payload(buffer_size, buffer);
     }
 
-    void deserialize(Payload buffer) override {
+    void deserialize(Payload payload) override {
+      char *buffer = payload.buffer();
       // deserialize header
+      // header = |CallbackId|maxTid|maxGid|p_tids.offset|p_gids.offset|p_sids.offset|old.offset|
+      size_t tid_offset, gid_offset, sid_offset, old_offset;
+      size_t offset = 0;
+      memcpy(&newCallBackId, buffer + offset, sizeof(CallbackId));
+      offset += sizeof(CallbackId);
+      memcpy(&maxTid, buffer + offset, sizeof(TaskId));
+      offset += sizeof(TaskId);
+      memcpy(&maxGid, buffer + offset, sizeof(uint64_t));
+      offset += sizeof(uint64_t);
+      memcpy(&tid_offset, buffer + offset, sizeof(size_t));
+      offset += sizeof(size_t);
+      memcpy(&gid_offset, buffer + offset, sizeof(size_t));
+      offset += sizeof(size_t);
+      memcpy(&sid_offset, buffer + offset, sizeof(size_t));
+      offset += sizeof(size_t);
+      memcpy(&old_offset, buffer + offset, sizeof(size_t));
       // deserialize maps
+      new_tids = deserializeMap(buffer + tid_offset);
+      new_gids = deserializeMap(buffer + gid_offset);
+      new_sids = deserializeMap(buffer + sid_offset);
       // deserialize old - build Payload first
-
+      Payload old(payload.size() - old_offset, buffer + old_offset);
+      mGraph->deserialize(old);
     }
 
   };

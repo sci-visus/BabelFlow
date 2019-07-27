@@ -14,7 +14,7 @@ SET(BABELFLOW_HEADERS
         HierarchicalTask.h
         HierarchicalTaskGraph.h
 
-        DownSizeGhostTaskGraph.hpp
+        PreProcessInputTaskGraph.hpp
         )
 
 SET(BABELFLOW_SRC
@@ -25,7 +25,7 @@ SET(BABELFLOW_SRC
         HierarchicalTask.cpp
         HierarchicalTaskGraph.cpp
 
-        DownSizeGhostTaskGraph.hpp
+        PreProcessInputTaskGraph.hpp
         )
 
 add_library(babelflow STATIC ${BABELFLOW_SRC})
