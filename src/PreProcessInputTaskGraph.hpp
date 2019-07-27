@@ -53,7 +53,7 @@ namespace BabelFlow {
       auto next_gid = maxGid + 1;
       // max ids are all set. prepare to add new tasks
       for (ShardId sid = 0; sid < n_controllers; ++sid) {
-        for (auto &&dtask:data_tasks) {
+        for (auto &&dtask:data_tasks[sid]) {
           new_sids[next_tid] = sid;
           new_tids[dtask] = next_tid++;
           new_gids[dtask] = next_gid++;
@@ -69,7 +69,8 @@ namespace BabelFlow {
       std::vector<Task> myTasks;
       for (auto &&old : olds) {
         if (old.incoming()[0] > maxTid) {
-          auto ngid = new_gids[old.incoming()[0]];
+          auto otid = old.incoming()[0];
+          auto ngid = new_gids.at(otid);
           myTasks.push_back(task(ngid));
         }
       }
@@ -86,10 +87,10 @@ namespace BabelFlow {
       if (gId < maxGid) {
         task = mGraph->task(gId);
         task.incoming().resize(1);
-        task.incoming()[0] = new_tids[task.id()];
+        task.incoming()[0] = new_tids.at(task.id());
       } else {
         TaskId old_tid = gid2otid(gId);
-        task = Task(new_tids[old_tid]);
+        task = Task(new_tids.at(old_tid));
         task.incoming().resize(1);
         task.incoming()[0] = TNULL;
         outgoing[0].push_back(old_tid);
