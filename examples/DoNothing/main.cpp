@@ -44,6 +44,15 @@ int main(int argc, char **argv) {
   ModuloMap taskMap(mpi_size, graph.size());
 
   PreProcessInputTaskGraph<DoNothingTaskGraph> meowTaskGraph(mpi_size, &graph, &taskMap);
+  std::map<TaskId, uint64_t> m = meowTaskGraph.new_gids;
+  if (mpi_rank == 0) {
+    for (auto iter = m.begin(); iter != m.end(); ++iter) {
+      printf("%u %llu\n", iter->first, iter->second);
+    }
+    printf("new callback id %d\n",meowTaskGraph.newCallBackId);
+  }
+  // TODO we need to update TaskMap here. But TaskMap is statically defined
+
 
   Controller master;
   master.initialize(graph, &taskMap, MPI_COMM_WORLD);
