@@ -31,6 +31,7 @@
 #define TASKGRAPH_H
 
 #include <vector>
+#include <map>
 #include <cstdio>
 #include <cassert>
 #include <string>
@@ -87,6 +88,8 @@ public:
 class TaskMap
 {
 public:
+  std::map<TaskId, ShardId> mShards;
+  std::map<ShardId , std::vector<TaskId>> mTasks;
 
   //! Default constructor
   TaskMap() {}
