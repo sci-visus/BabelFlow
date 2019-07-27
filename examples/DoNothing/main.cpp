@@ -10,6 +10,7 @@
 #include <ModuloMap.h>
 #include <PreProcessInputTaskGraph.hpp>
 #include <sstream>
+#include <ModTaskMap.hpp>
 #include "DoNothingTaskGraph.h"
 
 using namespace std;
@@ -43,26 +44,24 @@ int main(int argc, char **argv) {
   DoNothingTaskGraph graph(mpi_size);
   ModuloMap taskMap(mpi_size, graph.size());
 
-  PreProcessInputTaskGraph<DoNothingTaskGraph> meowTaskGraph(mpi_size, &graph, &taskMap);
-  std::map<TaskId, uint64_t> m = meowTaskGraph.new_gids;
-  if (mpi_rank == 0) {
-    for (auto iter = m.begin(); iter != m.end(); ++iter) {
-      printf("%u %llu\n", iter->first, iter->second);
-    }
-    printf("new callback id %d\n",meowTaskGraph.newCallBackId);
-  }
-  // TODO we need to update TaskMap here. But TaskMap is statically defined
+  PreProcessInputTaskGraph<DoNothingTaskGraph> modGraph(mpi_size, &graph, &taskMap);
+  ModTaskMap<ModuloMap> modTaskMap(&taskMap);
+  // update the new taskMap from modGraph
+  // insert all new tasks into the modTaskMap
 
 
   Controller master;
   master.initialize(graph, &taskMap, MPI_COMM_WORLD);
   master.registerCallback(1, print_data);
+
+  // TODO register new Callback function
   Payload payload;
   char *buffer = new char[data.size() * sizeof(int)];
   memcpy(buffer, data.data(), data.size() * sizeof(int));
   payload.initialize(data.size() * sizeof(int), buffer);
 
   std::map<TaskId, Payload> inputs;
+  // TODO change payload assignment
   inputs[mpi_rank] = payload;
 
   master.run(inputs);

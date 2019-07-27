@@ -88,8 +88,6 @@ public:
 class TaskMap
 {
 public:
-  std::map<TaskId, ShardId> mShards;
-  std::map<ShardId , std::vector<TaskId>> mTasks;
 
   //! Default constructor
   TaskMap() {}

@@ -62,20 +62,10 @@ namespace BabelFlow {
     }
 
     std::vector<Task>
-    localGraph(ShardId id, const TaskMap *task_map) const override { //// Let's try this without updated task_map
-      //// may be we should just assume it's updated
-      //// all we need to do is to define the callbacks
-      std::vector<Task> olds = mGraph->localGraph(id, task_map);
-      std::vector<Task> myTasks;
-      for (auto &&old : olds) {
-        if (old.incoming()[0] > maxTid) {
-          auto otid = old.incoming()[0];
-          auto ngid = new_gids.at(otid);
-          myTasks.push_back(task(ngid));
-        }
-      }
-      olds.insert(olds.end(), myTasks.begin(), myTasks.end());
-      return olds;
+    localGraph(ShardId id, const TaskMap *task_map) const override {
+      // here we assume the task_map is updated (using ModTaskMap)
+      // TODO fix this
+      return std::vector<Task>();
     }
 
     Task task(uint64_t gId) const override {
@@ -84,18 +74,7 @@ namespace BabelFlow {
       std::vector<std::vector<TaskId>> outgoing;
       outgoing.resize(1);// only outputs to data task
 
-      if (gId < maxGid) {
-        t = mGraph->task(gId);
-        t.incoming().resize(1);
-        t.incoming()[0] = new_tids.at(t.id());
-      } else {
-        TaskId old_tid = gid2otid(gId);
-        t = Task(new_tids.at(old_tid));
-        t.incoming().resize(1);
-        t.incoming()[0] = TNULL;
-        outgoing[0].push_back(old_tid);
-        t.outputs() = outgoing;
-      }
+      // TODO FIX this
       return t;
     }
 

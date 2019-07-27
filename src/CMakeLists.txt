@@ -15,6 +15,7 @@ SET(BABELFLOW_HEADERS
         HierarchicalTaskGraph.h
 
         PreProcessInputTaskGraph.hpp
+        ModTaskMap.hpp
         )
 
 SET(BABELFLOW_SRC
@@ -26,6 +27,7 @@ SET(BABELFLOW_SRC
         HierarchicalTaskGraph.cpp
 
         PreProcessInputTaskGraph.hpp
+        ModTaskMap.hpp
         )
 
 add_library(babelflow STATIC ${BABELFLOW_SRC})
