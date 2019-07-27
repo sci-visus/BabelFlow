@@ -27,14 +27,14 @@ namespace BabelFlow {
     TaskId maxTid = 0;
     CallbackId newCallBackId = 0;
 
-    PreProcessInputTaskGraph(ShardId count, TaskGraph *g, TaskMap *m) :
+    PreProcessInputTaskGraph(ShardId count, BaseTaskGraph *g, TaskMap *m) :
       n_controllers(count), mGraph(g) {
       data_tasks.resize(n_controllers);
       for (ShardId sid = 0; sid < n_controllers; ++sid) {
-        std::vector<Task> tasks = mGraph->localGraph(sid);
+        std::vector<Task> tasks = mGraph->localGraph(sid, m);
         for (auto &&task : tasks) {
           // update max
-          uint64_t gid = mGraph->gid(task.id());
+          uint64_t gid = mGraph->gId(task.id());
           if (gid > maxGid) maxGid = gid;
           TaskId tid = task.id();
           if (tid > maxTid) maxTid = tid;
@@ -79,27 +79,27 @@ namespace BabelFlow {
     }
 
     Task task(uint64_t gId) const override {
-      Task task;
+      Task t;
       std::vector<TaskId> incoming;
       std::vector<std::vector<TaskId>> outgoing;
       outgoing.resize(1);// only outputs to data task
 
       if (gId < maxGid) {
-        task = mGraph->task(gId);
-        task.incoming().resize(1);
-        task.incoming()[0] = new_tids.at(task.id());
+        t = mGraph->task(gId);
+        t.incoming().resize(1);
+        t.incoming()[0] = new_tids.at(t.id());
       } else {
         TaskId old_tid = gid2otid(gId);
-        task = Task(new_tids.at(old_tid));
-        task.incoming().resize(1);
-        task.incoming()[0] = TNULL;
+        t = Task(new_tids.at(old_tid));
+        t.incoming().resize(1);
+        t.incoming()[0] = TNULL;
         outgoing[0].push_back(old_tid);
-        task.outputs() = outgoing;
+        t.outputs() = outgoing;
       }
-      return task;
+      return t;
     }
 
-    TaskId gid2otid(uint64_t gid) {
+    TaskId gid2otid(const uint64_t &gid) const{
       for (auto iter = new_gids.begin(); iter != new_gids.end(); ++iter) {
         if (iter->second == gid) {
           return iter->first;
@@ -121,7 +121,7 @@ namespace BabelFlow {
     }
 
     template<class K, class V>
-    Payload serializeMap(std::map<K, V> m) {
+    Payload serializeMap(const std::map<K, V>& m)  const{
       int32_t buffer_size = sizeof(size_t) + m.size() * sizeof(K) + m.size() * sizeof(V);
       char *buffer = new char[buffer_size];
 
@@ -225,9 +225,9 @@ namespace BabelFlow {
       offset += sizeof(size_t);
       memcpy(&old_offset, buffer + offset, sizeof(size_t));
       // deserialize maps
-      new_tids = deserializeMap(buffer + tid_offset);
-      new_gids = deserializeMap(buffer + gid_offset);
-      new_sids = deserializeMap(buffer + sid_offset);
+      new_tids = deserializeMap<TaskId, TaskId>(buffer + tid_offset);
+      new_gids = deserializeMap<TaskId, uint64_t>(buffer + gid_offset);
+      new_sids = deserializeMap<TaskId, ShardId>(buffer + sid_offset);
       // deserialize old - build Payload first
       Payload old(payload.size() - old_offset, buffer + old_offset);
       mGraph->deserialize(old);

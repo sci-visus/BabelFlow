@@ -19,13 +19,13 @@ using namespace BabelFlow::mpi;
 int print_data(vector<Payload> &inputs, vector<Payload> &outputs, TaskId task) {
   int32_t size = inputs[0].size();
   int *data = new int[size / sizeof(int)];
-  memcpy(data, inputs[0].buffer(), size );
+  memcpy(data, inputs[0].buffer(), size);
 
   stringstream ss;
-  for (int i = 0; i < size/sizeof(int); ++i){
+  for (int i = 0; i < size / sizeof(int); ++i) {
     ss << data[i] << " ";
   }
-  printf("%s\n",ss.str().c_str());
+  printf("%s\n", ss.str().c_str());
 
   delete[] inputs[0].buffer();
   delete[] data;
@@ -42,6 +42,9 @@ int main(int argc, char **argv) {
   vector<int> data(8, mpi_rank);
   DoNothingTaskGraph graph(mpi_size);
   ModuloMap taskMap(mpi_size, graph.size());
+
+  PreProcessInputTaskGraph<DoNothingTaskGraph> meowTaskGraph(mpi_size, &graph, &taskMap);
+
   Controller master;
   master.initialize(graph, &taskMap, MPI_COMM_WORLD);
   master.registerCallback(1, print_data);
