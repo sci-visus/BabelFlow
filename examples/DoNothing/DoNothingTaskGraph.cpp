@@ -40,9 +40,8 @@ BabelFlow::Task DoNothingTaskGraph::task(uint64_t gId) const {
   } else {
     incoming.resize(1);
     incoming[0] = gId - n_controllers;
-    outgoing[0].resize(0);
     t.incoming() = incoming;
-    t.outputs() = outgoing;
+    t.callback(1);
   }
   return t;
 }
