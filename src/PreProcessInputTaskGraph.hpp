@@ -11,11 +11,9 @@
 #include <type_traits>
 #include <map>
 
-namespace BabelFlow
-{
+namespace BabelFlow {
   template<class BaseTaskGraph>
-  class DownSizeGhostTaskGraph : public TaskGraph
-  {
+  class PreProcessInputTaskGraph : public TaskGraph {
     static_assert(std::is_base_of<TaskGraph, BaseTaskGraph>::value, "BaseTaskGraph must be a TaskGraph");
   public:
     ShardId n_controllers;
@@ -29,9 +27,8 @@ namespace BabelFlow
     TaskId maxTid = 0;
     CallbackId newCallBackId = 0;
 
-    DownSizeGhostTaskGraph(ShardId count, TaskGraph *g, TaskMap *m) :
-        n_controllers(count), mGraph(g)
-    {
+    PreProcessInputTaskGraph(ShardId count, TaskGraph *g, TaskMap *m) :
+      n_controllers(count), mGraph(g) {
       data_tasks.resize(n_controllers);
       for (ShardId sid = 0; sid < n_controllers; ++sid) {
         std::vector<Task> tasks = mGraph->localGraph(sid);
@@ -64,8 +61,8 @@ namespace BabelFlow
       }
     }
 
-    std::vector<Task> localGraph(ShardId id, const TaskMap *task_map) const override
-    { //// Let's try this without updated task_map
+    std::vector<Task>
+    localGraph(ShardId id, const TaskMap *task_map) const override { //// Let's try this without updated task_map
       //// may be we should just assume it's updated
       //// all we need to do is to define the callbacks
       std::vector<Task> olds = mGraph->localGraph(id, task_map);
@@ -80,8 +77,7 @@ namespace BabelFlow
       return olds;
     }
 
-    Task task(uint64_t gId) const override
-    {
+    Task task(uint64_t gId) const override {
       Task task;
       std::vector<TaskId> incoming;
       std::vector<std::vector<TaskId>> outgoing;
@@ -102,8 +98,7 @@ namespace BabelFlow
       return task;
     }
 
-    TaskId gid2otid(uint64_t gid)
-    {
+    TaskId gid2otid(uint64_t gid) {
       for (auto iter = new_gids.begin(); iter != new_gids.end(); ++iter) {
         if (iter->second == gid) {
           return iter->first;
@@ -112,8 +107,7 @@ namespace BabelFlow
       return TNULL;
     }
 
-    uint64_t gId(TaskId tId) const override
-    {
+    uint64_t gId(TaskId tId) const override {
       if (tId < maxTid) {
         return mGraph->gId(tId);
       } else {
@@ -121,14 +115,12 @@ namespace BabelFlow
       }
     }
 
-    TaskId size() const override
-    {
+    TaskId size() const override {
       return mGraph->size() + new_tids.size();
     }
 
     template<class K, class V>
-    Payload serializeMap(std::map<K, V> m)
-    {
+    Payload serializeMap(std::map<K, V> m) {
       int32_t buffer_size = sizeof(size_t) + m.size() * sizeof(K) + m.size() * sizeof(V);
       char *buffer = new char[buffer_size];
 
@@ -147,23 +139,80 @@ namespace BabelFlow
       return Payload(buffer_size, buffer);
     }
 
-    Payload serialize() const override
-    {
+    template<class K, class V>
+    std::map<K, V> deserializeMap(char *buffer) {
+      std::map<K,V> map_obj;
+      size_t num_element = reinterpret_cast<size_t *>(buffer)[0];
+      auto *key_ptr = reinterpret_cast<K *>(buffer + sizeof(size_t));
+      auto *value_ptr = reinterpret_cast<V *>(buffer + sizeof(size_t) + sizeof(K) * num_element);
+      for (size_t i = 0; i < num_element; ++i){
+        map_obj[key_ptr[i]] = value_ptr[i];
+      }
+      return map_obj;
+    }
+
+    Payload serialize() const override {
       Payload old = mGraph->serialize();
       Payload p_tids = serializeMap<TaskId, TaskId>(new_tids);
       Payload p_gids = serializeMap<TaskId, uint64_t>(new_gids);
       Payload p_sids = serializeMap<TaskId, ShardId>(new_sids);
 
-      // TODO serialize new Callback Id
-
       // merge all the payloads
-      // header = |header_size|p_tids.offset|p_gids.offset|p_sids.offset|old.offset|
-      // buffer = |header|content|
+      // header = |header_size|CallbackId|maxTid|maxGid|p_tids.offset|p_gids.offset|p_sids.offset|old.offset|
+      int32_t header_size =
+        sizeof(int32_t) + sizeof(CallbackId) + sizeof(TaskId) + sizeof(uint64_t) + sizeof(size_t) * 4;
+      int32_t buffer_size = header_size + p_tids.size() + p_gids.size() + p_sids.size() + old.size();
 
-      return Payload();
+      char *buffer = new char[buffer_size];
+
+      size_t offset = 0;
+      memcpy(buffer + offset, &header_size, sizeof(int32_t));// copy header size to buffer
+      offset += sizeof(int32_t);
+      memcpy(buffer + offset, &newCallBackId, sizeof(CallbackId));
+      offset += sizeof(CallbackId);
+      memcpy(buffer + offset, &maxTid, sizeof(TaskId));
+      offset += sizeof(TaskId);
+      memcpy(buffer + offset, &maxGid, sizeof(uint64_t));
+      offset += sizeof(uint64_t);
+
+      // compute tid offset;
+      size_t tid_offset = header_size;
+      memcpy(buffer + offset, &tid_offset, sizeof(size_t));
+      offset += sizeof(size_t);
+
+      // compute gid offset;
+      size_t gid_offset = tid_offset + p_tids.size();
+      memcpy(buffer + offset, &gid_offset, sizeof(size_t));
+      offset += sizeof(size_t);
+
+      // compute sid offset;
+      size_t sid_offset = gid_offset + p_gids.size();
+      memcpy(buffer + offset, &sid_offset, sizeof(size_t));
+      offset += sizeof(size_t);
+
+      // compute old offset;
+      size_t old_offset = sid_offset + p_sids.size();
+      memcpy(buffer + offset, &old_offset, sizeof(size_t));
+
+      memcpy(buffer + tid_offset, p_tids.buffer(), p_tids.size());
+      memcpy(buffer + gid_offset, p_gids.buffer(), p_gids.size());
+      memcpy(buffer + sid_offset, p_sids.buffer(), p_sids.size());
+      memcpy(buffer + old_offset, old.buffer(), old.size());
+
+      delete[] p_tids.buffer();
+      delete[] p_gids.buffer();
+      delete[] p_sids.buffer();
+      delete[] old.buffer();
+
+      return Payload(buffer_size, buffer);
     }
 
-    void deserialize(Payload buffer) override;
+    void deserialize(Payload buffer) override {
+      // deserialize header
+      // deserialize maps
+      // deserialize old - build Payload first
+
+    }
 
   };
 }
