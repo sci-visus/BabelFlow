@@ -27,11 +27,19 @@ The default CMake configuration will build the BabelFlow using the MPI
 runtime. 
 
 To change runtime you can modify the field `RUNTIME_TYPE` in the CMake
-configuration to `MPI` or `CHARM`.
+configuration to `MPI`, `CHARM` or `LEGION`.
 
-To build and run your application using the Charm++ runtime you need to provide the Charm++ compiler path setting the field `CHARM_COMPILER` as follow:
+To build and run your application using the *Charm++* runtime you need to provide the Charm++ compiler path setting the field `CHARM_COMPILER` as follow:
 
 `ccmake .. -DRUNTIME_TYPE=CHARM -DCHARM_COMPILER=/path/to/charmc`
+
+To build and run your application using the *Legion* runtime you need to provide the Legion cmake configuration folder as follow:
+
+`ccmake .. -DRUNTIME_TYPE=LEGION -DLegion_DIR=/path/to/legion/install/share/Legion/cmake`
+
+If your Legion build is using GASNet you should also provide the path to it adding the following flag to your ccmake:
+
+`-DGASNet_INCLUDE_DIR=/path/to/gasnet/release/include`
 
 --------------------------------------
 Examples included

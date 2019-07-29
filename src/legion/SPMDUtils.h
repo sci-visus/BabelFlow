@@ -5,10 +5,10 @@
  *      Author: spetruzza
  */
 
-#ifndef __PMT_UTILS_H__
-#define __PMT_UTILS_H__
+#ifndef __LEGION_UTILS_H__
+#define __LEGION_UTILS_H__
 
-#include "datatypes.h"
+//#include "TypeDefinitions.h"
 #include "Controller.h"
 #include "legion.h"
 #include "../Definitions.h"
@@ -33,18 +33,23 @@ namespace Utils {
   void printDomain(const LogicalRegion& region, Context ctx, HighLevelRuntime *runtime);
 
   //// Evaluate the necessary partitions for a given round
-  uint32_t compute_virtual_partitions(uint32_t launch_id, const RegionsIndexType input_block_size, std::set<BabelFlow::TaskId> nextEpochTasks, ArgumentMap& arg_map,
+  uint32_t compute_virtual_partitions(uint32_t launch_id, const RegionsIndexType input_block_size, std::set<BabelFlow::TaskId> nextEpochTasks, MyArgumentMap& arg_map,
                         std::vector<VirtualPartition>& vparts, std::map<BabelFlow::TaskId,BabelFlow::Task>& taskmap,
                         std::map<EdgeTaskId,VPartId>& vpart_map, std::vector<LaunchData>& launch_data);
 
   //// Evaluate all the launches, regions and partitions give the current input launch and tasks
-  void compute_launch_data(const RegionsIndexType input_block_size, std::set<BabelFlow::TaskId>& currEpochTasks, std::set<EdgeTaskId>& current_inputs,
-  	std::set<EdgeTaskId>& current_outputs, std::map<BabelFlow::TaskId,BabelFlow::Task>& taskmap,
+  void compute_launch_data(const RegionsIndexType input_block_size, std::set<BabelFlow::TaskId>& currEpochTasks, std::set<EdgeTaskId>& current_inputs, 
+  	std::set<EdgeTaskId>& current_outputs, std::map<BabelFlow::TaskId,BabelFlow::Task>& taskmap, 
     std::vector<LaunchData>& launch_data, std::map<EdgeTaskId,VPartId>& vpart_map);
   
+  void reorder_tasks(std::vector<BabelFlow::Task>& ordered_tasks, std::set<EdgeTaskId>, std::set<BabelFlow::TaskId>& currEpochTasks, 
+  std::map<BabelFlow::TaskId,BabelFlow::Task>& taskmap, int shard);
+
+  void reorder_tasks(std::vector<BabelFlow::Task>& ordered_tasks, std::map<BabelFlow::TaskId,BabelFlow::Task>& taskmap, std::set<BabelFlow::TaskId>& currRoots);
+
   int fake_computation();
 
 }
 
-#endif // __PMT_UTILS_H__
+#endif // __LEGION_UTILS_H__
 
