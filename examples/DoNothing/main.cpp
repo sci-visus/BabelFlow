@@ -63,14 +63,7 @@ int main(int argc, char **argv)
 
   PreProcessInputTaskGraph<DoNothingTaskGraph> modGraph(mpi_size, &graph, &taskMap);
   ModTaskMap<ModuloMap> modMap(&taskMap);
-  // update the new taskMap from modGraph
-  // insert all new tasks into the modTaskMap
-  for (auto iter = modGraph.new_tids.begin(); iter != modGraph.new_tids.end(); ++iter) {
-    auto new_tid = iter->second;
-    auto new_shard = modGraph.new_sids.at(new_tid);
-    modMap.mShards[new_tid] = new_shard;
-    modMap.mTasks[new_shard].push_back(new_tid);
-  }
+  modMap.update(modGraph);
 
   if (mpi_rank == 0) {
     FILE *meow = fopen("meow.dot", "w");

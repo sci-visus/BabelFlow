@@ -24,6 +24,17 @@ namespace BabelFlow
       baseMap = m;
     }
 
+    template<class ModGraph>
+    void update(const PreProcessInputTaskGraph <ModGraph> &modGraph)
+    {
+      for (auto iter = modGraph.new_tids.begin(); iter != modGraph.new_tids.end(); ++iter) {
+        auto new_tid = iter->second;
+        auto new_shard = modGraph.new_sids.at(new_tid);
+        mShards[new_tid] = new_shard;
+        mTasks[new_shard].push_back(new_tid);
+      }
+    }
+
 
     ShardId shard(TaskId id) const override
     {
