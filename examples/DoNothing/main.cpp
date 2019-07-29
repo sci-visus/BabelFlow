@@ -17,7 +17,8 @@ using namespace std;
 using namespace BabelFlow;
 using namespace BabelFlow::mpi;
 
-int print_data(vector<Payload> &inputs, vector<Payload> &outputs, TaskId task) {
+int print_data(vector<Payload> &inputs, vector<Payload> &outputs, TaskId task)
+{
   int32_t size = inputs[0].size();
   int *data = new int[size / sizeof(int)];
   memcpy(data, inputs[0].buffer(), size);
@@ -33,7 +34,23 @@ int print_data(vector<Payload> &inputs, vector<Payload> &outputs, TaskId task) {
   return 0;
 }
 
-int main(int argc, char **argv) {
+int preprocess_data(vector<Payload> &inputs, vector<Payload> &outputs, TaskId task)
+{
+  int32_t size = inputs[0].size();
+  int *data = new int[size/sizeof(int)];
+  memcpy(data, inputs[0].buffer(), size);
+  for (int i = 0; i < size/sizeof(int); ++i){
+    data[i] = data[i] + i;
+  }
+  Payload msg(size, (char *)data);
+  outputs.resize(1);
+  outputs[0] = msg;
+  delete inputs[0].buffer();
+  return 0;
+}
+
+int main(int argc, char **argv)
+{
   MPI_Init(nullptr, nullptr);
 
 
@@ -45,24 +62,34 @@ int main(int argc, char **argv) {
   ModuloMap taskMap(mpi_size, graph.size());
 
   PreProcessInputTaskGraph<DoNothingTaskGraph> modGraph(mpi_size, &graph, &taskMap);
-  ModTaskMap<ModuloMap> modTaskMap(&taskMap);
+  ModTaskMap<ModuloMap> modMap(&taskMap);
   // update the new taskMap from modGraph
   // insert all new tasks into the modTaskMap
+  for (auto iter = modGraph.new_tids.begin(); iter != modGraph.new_tids.end(); ++iter) {
+    auto new_tid = iter->second;
+    auto new_shard = modGraph.new_sids.at(new_tid);
+    modMap.mShards[new_tid] = new_shard;
+    modMap.mTasks[new_shard].push_back(new_tid);
+  }
 
+  if (mpi_rank == 0) {
+    FILE *meow = fopen("meow.dot", "w");
+    modGraph.output_graph(mpi_size, &modMap, meow);
+    fclose(meow);
+  }
 
   Controller master;
-  master.initialize(graph, &taskMap, MPI_COMM_WORLD);
+  master.initialize(modGraph, &modMap, MPI_COMM_WORLD);
   master.registerCallback(1, print_data);
+  master.registerCallback(modGraph.newCallBackId, preprocess_data);
 
-  // TODO register new Callback function
   Payload payload;
   char *buffer = new char[data.size() * sizeof(int)];
   memcpy(buffer, data.data(), data.size() * sizeof(int));
   payload.initialize(data.size() * sizeof(int), buffer);
 
   std::map<TaskId, Payload> inputs;
-  // TODO change payload assignment
-  inputs[mpi_rank] = payload;
+  inputs[modGraph.new_tids[mpi_rank]] = payload;
 
   master.run(inputs);
 

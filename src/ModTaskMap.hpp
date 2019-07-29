@@ -7,25 +7,33 @@
 
 #include <TaskGraph.h>
 
-namespace BabelFlow {
+namespace BabelFlow
+{
   template<class BaseTaskMap>
-  class ModTaskMap : public TaskMap {
+  class ModTaskMap : public TaskMap
+  {
+
+  public:
     BaseTaskMap *baseMap;
+
     std::map<TaskId, ShardId> mShards;
     std::map<ShardId, std::vector<TaskId>> mTasks;
-  public:
-    explicit ModTaskMap(BaseTaskMap *m) {
+
+    explicit ModTaskMap(BaseTaskMap *m)
+    {
       baseMap = m;
     }
 
 
-    ShardId shard(TaskId id) const override {
+    ShardId shard(TaskId id) const override
+    {
       auto iter = mShards.find(id);
       if (iter != mShards.end()) return iter->second;
       else return baseMap->shard(id);
     }
 
-    std::vector<TaskId> tasks(ShardId id) const override {
+    std::vector<TaskId> tasks(ShardId id) const override
+    {
       auto iter = mTasks.find(id);
       std::vector<TaskId> modedTasks;
       if (iter != mTasks.end()) {
