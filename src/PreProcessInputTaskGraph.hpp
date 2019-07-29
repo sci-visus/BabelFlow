@@ -107,7 +107,6 @@ namespace BabelFlow
     TaskId gid2otid(const uint64_t &gid) const
     {
       for (auto iter = new_gids.begin(); iter != new_gids.end(); ++iter) {
-        printf("new_gids[%d] = %d\n",iter->first, iter->second);
         if (iter->second == gid) {
           return iter->first;
         }
