@@ -5,7 +5,7 @@
 #ifndef BABELFLOW_MODTASKMAP_H
 #define BABELFLOW_MODTASKMAP_H
 
-#include <TaskGraph.h>
+#include "TaskGraph.h"
 
 namespace BabelFlow
 {
@@ -14,6 +14,8 @@ namespace BabelFlow
   {
 
   public:
+    ModTaskMap() = default;
+
     BaseTaskMap *baseMap;
 
     std::map<TaskId, ShardId> mShards;
@@ -27,6 +29,7 @@ namespace BabelFlow
     template<class ModGraph>
     void update(const PreProcessInputTaskGraph <ModGraph> &modGraph)
     {
+      // TODO make the input more generic than PreprocTaskGraph
       for (auto iter = modGraph.new_tids.begin(); iter != modGraph.new_tids.end(); ++iter) {
         auto new_tid = iter->second;
         auto new_shard = modGraph.new_sids.at(new_tid);

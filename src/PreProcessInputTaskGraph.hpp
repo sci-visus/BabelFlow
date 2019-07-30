@@ -7,8 +7,7 @@
 #ifndef BABELFLOW_DOWNSIZEGHOSTTASKGRAPH_HPP
 #define BABELFLOW_DOWNSIZEGHOSTTASKGRAPH_HPP
 
-#include <TaskGraph.h>
-#include <type_traits>
+#include "TaskGraph.h"
 #include <map>
 
 namespace BabelFlow
@@ -16,7 +15,6 @@ namespace BabelFlow
   template<class BaseTaskGraph>
   class PreProcessInputTaskGraph : public TaskGraph
   {
-    static_assert(std::is_base_of<TaskGraph, BaseTaskGraph>::value, "BaseTaskGraph must be a TaskGraph");
   public:
     ShardId n_controllers;
     BaseTaskGraph *mGraph;
@@ -29,6 +27,8 @@ namespace BabelFlow
     uint64_t maxGid = 0;
     TaskId maxTid = 0;
     CallbackId newCallBackId = 0;
+
+    PreProcessInputTaskGraph() = default;
 
     PreProcessInputTaskGraph(ShardId count, BaseTaskGraph *g, TaskMap *m) :
         n_controllers(count), mGraph(g)

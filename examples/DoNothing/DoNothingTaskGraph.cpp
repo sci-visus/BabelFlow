@@ -17,9 +17,6 @@ DoNothingTaskGraph::localGraph(BabelFlow::ShardId id, const BabelFlow::TaskMap *
   vector<Task> local_tasks;
   for (auto &&tid:local_tids) {
     auto t = task(gId(tid));
-    if (tid > n_controllers) {
-      t.callback(1);
-    }
     local_tasks.push_back(t);
   }
   return local_tasks;
