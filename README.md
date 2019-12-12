@@ -83,3 +83,13 @@ To execute the application using the MPI runtime you can run (using for example 
 To execute the application using the Charm++ runtime you can run (8-way SMP):
 
 `examples/broadcast/charm/broadcast +p8 16 2`
+
+
+--------------------------------------
+Install via spack
+--------------------------------------
+
+```
+spack add repo spack/
+spack install babelflow
+```
