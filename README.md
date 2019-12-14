@@ -89,7 +89,9 @@ To execute the application using the Charm++ runtime you can run (8-way SMP):
 Install via spack
 --------------------------------------
 
+We are using (uberenv)[https://github.com/LLNL/uberenv] to build with spack.
+You can simply run the *uberenv* script as follow:
+
 ```
-spack add repo spack/
-spack install babelflow
+./scripts/uberenv/uberenv.py
 ```

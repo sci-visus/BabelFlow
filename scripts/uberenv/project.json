@@ -1,0 +1,6 @@
+{
+"package_name" : "babelflow",
+"uberenv_package_name" : "uberenv-babelflow",
+"spack_url": "https://github.com/alpine-DAV/spack",
+"spack_branch": "task/2019_10_update_conduit"
+}

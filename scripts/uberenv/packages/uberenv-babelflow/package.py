@@ -23,7 +23,7 @@
 from spack import *
 
 
-class Babelflow(CMakePackage):
+class UberenvBabelflow(CMakePackage):
     """FIXME: Put a proper description of your package here."""
 
     homepage = "https://github.com/sci-visus/BabelFlow"
@@ -31,11 +31,20 @@ class Babelflow(CMakePackage):
 
     maintainers = ['spetruzza']
 
-    version('0.0.0', sha256='a91a9aa8c866b0a2a06b6415402130f9b4141cbbec5306db2471015f588792da')
+    version('0.0.0', sha256='538042f5b71874395af165cb9ef71a3b6c4b5bc3832412296b03e1477934b9a5')
 
     depends_on('mpi')
 
+    def cmake_args(self):
+      args = []
+
+      #args.append('-DMPI_C_COMPILER='+self.spec['mpi'].mpicc)
+      #args.append('-DMPI_CXX_COMPILER='+self.spec['mpi'].mpicxx)
+
+      return args
+  
     def cmake_install(self, spec, prefix):
+        #print(cmake_cache_entry("MPI_C_COMPILER",spec['mpi'].mpicc))
         # FIXME: Unknown build system
         make()
         make('install')
