@@ -41,13 +41,14 @@ elseif(ENABLE_MPI)
       set(APPLE_CXX_COMPILER mpicxx)
     endif()
 
+    find_package(Threads REQUIRED)
     find_package(MPI REQUIRED)
     include_directories(${MPI_C_INCLUDE_PATH})
     set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
     set(CMAKE_C_COMPILER ${MPI_C_COMPILER})
     
     set(BABELFLOW_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH})
-    set(BABELFLOW_LIBRARIES ${MPI_CXX_LIBRARIES})
+    set(BABELFLOW_LIBRARIES ${MPI_CXX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 elseif(ENABLE_LEGION)
 
