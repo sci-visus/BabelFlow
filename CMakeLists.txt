@@ -41,7 +41,10 @@ elseif(ENABLE_MPI)
       set(APPLE_CXX_COMPILER mpicxx)
     endif()
 
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
+    add_compile_options(-pthread)
+
     find_package(MPI REQUIRED)
     include_directories(${MPI_C_INCLUDE_PATH})
     set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
