@@ -30,7 +30,11 @@ SET(BABELFLOW_SRC
         ModTaskMap.hpp
         )
 
-add_library(babelflow STATIC ${BABELFLOW_SRC})
+if(ENABLE_SHARED)
+  add_library(babelflow SHARED ${BABELFLOW_SRC})
+else ()
+  add_library(babelflow STATIC ${BABELFLOW_SRC})
+endif()
 
 if (ENABLE_MPI)
     add_subdirectory(mpi)
