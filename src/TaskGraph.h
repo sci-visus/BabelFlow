@@ -80,6 +80,12 @@ public:
 
   //! Output the entire graph as dot file
   virtual int output_graph(ShardId count, const TaskMap* task_map, FILE* output);
+
+  //! Output the entire graph as dot file embedded in HTML
+  virtual int output_graph_html(ShardId count, const TaskMap* task_map, FILE* output);
+
+protected:
+  virtual int output_graph_dot(ShardId count, const TaskMap* task_map, FILE* output, const std::string &eol);
 };
 
 /*! The task map defines an abstract baseclass to define the global

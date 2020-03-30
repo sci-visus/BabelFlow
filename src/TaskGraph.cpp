@@ -32,7 +32,45 @@ using namespace BabelFlow;
 
 int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output)
 {
-  fprintf(output,"digraph G {\n");
+  output_graph_dot(count,task_map,output,"\n");
+}
+
+
+int TaskGraph::output_graph_html(ShardId count, const TaskMap* task_map, FILE* output)
+{
+  // The following code is taken from Ascent:
+
+  fprintf(output,
+    "<!DOCTYPE html>\n"
+    "<meta charset=\"utf-8\">\n"
+    "<body>\n"
+    "<script src=\"https://d3js.org/d3.v4.min.js\"></script>\n"
+    "<script src=\"https://unpkg.com/viz.js@1.8.0/viz.js\" type=\"javascript/worker\"></script>\n"
+    "<script src=\"https://unpkg.com/d3-graphviz@1.3.1/build/d3-graphviz.min.js\"></script>\n"
+    "<div id=\"graph\" style=\"text-align: center;\"></div>\n"
+    "<script>\n"
+    "\n"
+    "d3.select(\"#graph\")\n"
+    "  .graphviz()\n"
+    "    .renderDot('");
+
+  // gen dot def, with proper js escaping
+  // we are injected as inline js literal -- new lines need to be escaped.
+  // Add \ to the end of each line in our dot output.
+  output_graph_dot(count,task_map,output," \\\n");
+
+  fprintf(output,
+    "');\n"
+    "\n"
+    "</script>\n"
+    "</body>\n"
+    "</html>\n");
+}
+
+
+int TaskGraph::output_graph_dot(ShardId count, const TaskMap* task_map, FILE* output, const std::string &eol)
+{
+  fprintf(output,"digraph G {%s",eol.c_str());
 
   std::vector<Task> tasks;
   std::vector<Task>::iterator tIt;
@@ -42,16 +80,14 @@ int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output
     tasks = localGraph(i,task_map);
 
     for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
+      fprintf(output,"%d [label=\"%d,%d\"]%s",tIt->id(),tIt->id(),tIt->callback(),eol.c_str());
       for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
         if (*it != TNULL)
-          fprintf(output,"%d -> %d\n",*it,tIt->id());
+          fprintf(output,"%d -> %d%s",*it,tIt->id(),eol.c_str());
       }
     }
   }
 
-  fprintf(output,"}\n");
+  fprintf(output,"}%s",eol.c_str());
   return 1;
 }
-
-

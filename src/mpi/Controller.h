@@ -59,7 +59,7 @@ public:
   Controller();
 
   //! Default  destructor
-  ~Controller() {}
+  ~Controller();
 
   //! Initialize the controller
   int initialize(const BabelFlow::TaskGraph& graph, const BabelFlow::TaskMap* task_map, MPI_Comm comm = MPI_COMM_WORLD,
@@ -70,6 +70,12 @@ public:
 
   //! Start the computation
   int run(std::map<TaskId,Payload>& initial_inputs);
+
+  //! Get outputs
+  std::map<TaskId,std::vector<Payload> >& getAllOutputs();
+
+  //! Get output for specific task
+  std::vector<Payload>& getOutputsForTask(TaskId tid);
 
 //private:
 
@@ -194,6 +200,12 @@ private:
   
   //! A list of MPI request handles for sends and recvs
   std::vector<MPI_Request> mMPIreq;
+
+  //! Maps tasks to their stored output data
+  std::map<TaskId,std::vector<Payload> > mOutputs;
+
+  //! Signals whether outputs were extracted from this Controller
+  bool mOutputExtracted;
 
   //! Send all outstanding messages
   char* packMessage(std::map<uint32_t,std::vector<TaskId> >::iterator pIt,
