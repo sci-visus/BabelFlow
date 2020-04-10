@@ -131,6 +131,20 @@ Controller::Controller() : mRecvBufferSize(1024*1024*128)
   mRank = TNULL;
 }
 
+
+Controller::~Controller()
+{
+  // Free the memory of stored outputs -- this is probably the only place to
+  // conveniently release it
+  for (std::map<TaskId,std::vector<Payload> >::iterator outIter = mOutputs.begin();
+       outIter != mOutputs.end();
+       ++outIter)
+  {
+    for (int i = 0; i < outIter->second.size(); ++i)
+      (outIter->second)[i].reset();
+  }
+}
+
 int Controller::initialize(const TaskGraph& graph, const BabelFlow::TaskMap* task_map,
                            MPI_Comm comm, const ControllerMap* controller_map)
 {
@@ -184,6 +198,16 @@ int Controller::initialize(const TaskGraph& graph, const BabelFlow::TaskMap* tas
   } // end-for all local tasks
 
   return 1;
+}
+
+std::map<TaskId,std::vector<Payload> >& Controller::getAllOutputs()
+{
+  return mOutputs;
+}
+
+std::vector<Payload>& Controller::getOutputsForTask(TaskId tid)
+{
+  return mOutputs[tid];
 }
 
 int Controller::registerCallback(CallbackId id, Callback func)
@@ -371,11 +395,17 @@ int Controller::initiateSend(TaskId source,
   std::map<uint32_t,std::vector<TaskId> > packets;
   std::map<uint32_t,std::vector<TaskId> >::iterator pIt;
   int rank;
+  bool releaseData = true;
 
   for (it=destinations.begin();it!=destinations.end();it++) {
     
+    // TNULL destination means the data should be stored as output; but 'destinations'
+    // vector can have mulptiple destinations so the data can both be stored as output
+    // and send to other tasks
     if (*it == TNULL) {
       //assert (false);
+      mOutputs[source].push_back(data);
+      releaseData = false;
       continue;
       // return 1;
     }
@@ -420,7 +450,8 @@ int Controller::initiateSend(TaskId source,
   }
   
   //TODO: enable the delete after full parallelMT code has been ported
-  data.reset();
+  if (releaseData)
+    data.reset();
   return 1;
 }
 
