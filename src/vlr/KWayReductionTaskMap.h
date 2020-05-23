@@ -9,7 +9,7 @@
 #define KWAYREDCUTIONTASKMAP_H_
 
 //#include "TypeDefinitions.h"
-#include "TaskGraph.h"
+#include "../TaskGraph.h"
 #include "KWayReduction.h"
 
 
@@ -21,6 +21,8 @@ class KWayReductionTaskMap : public TaskMap
 public:
 
   //! Default constructor
+  KWayReductionTaskMap()=default; // added to accommodate ascent interface
+  
   KWayReductionTaskMap(ShardId controller_count, const KWayReduction* task_graph);
 
   //! Destructor

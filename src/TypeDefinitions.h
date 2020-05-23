@@ -1,6 +1,6 @@
 
-#ifndef TYPEDEFINITIONS_H_
-#define TYPEDEFINITIONS_H_
+#ifndef BABELFLOW_TYPEDEFINITIONS_H_
+#define BABELFLOW_TYPEDEFINITIONS_H_
 
 #include <stdint.h>
 
@@ -30,4 +30,4 @@ typedef double FunctionType;
 }   // namespace BabelFlow
 
 
-#endif /* TYPEDEFINITIONS_H_ */
+#endif /* BABELFLOW_TYPEDEFINITIONS_H_ */

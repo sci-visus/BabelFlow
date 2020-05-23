@@ -1,34 +1,51 @@
 
-include(GNUInstallDirs)
+set(VLR_HEADERS
+    vlr/KWayReduction.h
+    vlr/KWayReductionTaskMap.h
+)
+
+set(VLR_SRC
+    vlr/KWayReduction.cpp
+    vlr/KWayReductionTaskMap.cpp
+)
+
+set(BASE_BFLOW_HEADERS
+    Definitions.h
+    TypeDefinitions.h
+    Payload.h
+    Task.h
+
+    TaskGraph.h
+    RelayTask.h
+
+    ModuloMap.h
+
+    HierarchicalTask.h
+    HierarchicalTaskGraph.h
+
+    PreProcessInputTaskGraph.hpp
+    ModTaskMap.hpp
+)
+
+set(BASE_BFLOW_SRC
+    Task.cpp
+    TaskGraph.cpp
+    ModuloMap.cpp
+
+    HierarchicalTask.cpp
+    HierarchicalTaskGraph.cpp
+)
 
 SET(BABELFLOW_HEADERS
-        Definitions.h
-        Payload.h
-        Task.h
-
-        TaskGraph.h
-        RelayTask.h
-
-        ModuloMap.h
-
-        HierarchicalTask.h
-        HierarchicalTaskGraph.h
-
-        PreProcessInputTaskGraph.hpp
-        ModTaskMap.hpp
-        )
+    ${BASE_BFLOW_HEADERS}
+    ${VLR_HEADERS}
+)
 
 SET(BABELFLOW_SRC
-        Task.cpp
-        TaskGraph.cpp
-        ModuloMap.cpp
+    ${BASE_BFLOW_SRC}
+    ${VLR_SRC}
+)
 
-        HierarchicalTask.cpp
-        HierarchicalTaskGraph.cpp
-
-        PreProcessInputTaskGraph.hpp
-        ModTaskMap.hpp
-        )
 
 if(ENABLE_SHARED)
   add_library(babelflow SHARED ${BABELFLOW_SRC})
@@ -49,6 +66,7 @@ else ()
     message(FATAL_ERROR "Unrecognized runtime")
 endif ()
 
+
 #
 #INSTALL(FILES ${BABELFLOW_HEADERS}
 #        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/BabelFlow
@@ -67,9 +85,16 @@ target_include_directories(babelflow
         ${CMAKE_CURRENT_SOURCE_DIR})
 
 install(TARGETS babelflow EXPORT BabelFlowConfig
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})  # This is for Windows
-install(DIRECTORY ./ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/BabelFlow)
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin)  # This is for Windows
 
-install(EXPORT BabelFlowConfig FILE BabelFlowConfig.cmake NAMESPACE BabelFlow:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/BabelFlow)
+install(FILES ${BASE_BFLOW_HEADERS}
+        DESTINATION include/BabelFlow
+)
+
+install(FILES ${VLR_HEADERS}
+        DESTINATION include/BabelFlow/vlr
+)
+
+install(EXPORT BabelFlowConfig FILE BabelFlowConfig.cmake NAMESPACE BabelFlow:: DESTINATION lib/cmake/BabelFlow)

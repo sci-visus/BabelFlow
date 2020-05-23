@@ -13,6 +13,7 @@
 
 using namespace BabelFlow;
 
+uint32_t KWayReduction::sDATASET_DIMS[3];
 
 KWayReduction::KWayReduction(const std::string& config)
 {
