@@ -1,12 +1,20 @@
 
 set(VLR_HEADERS
+    vlr/BinarySwap.h
+    vlr/BinarySwapTaskMap.h
     vlr/KWayReduction.h
     vlr/KWayReductionTaskMap.h
+    vlr/RadixKExchange.h
+    vlr/RadixKExchangeTaskMap.h
 )
 
 set(VLR_SRC
+    vlr/BinarySwap.cpp
+    vlr/BinarySwapTaskMap.cpp
     vlr/KWayReduction.cpp
     vlr/KWayReductionTaskMap.cpp
+    vlr/RadixKExchange.cpp
+    vlr/RadixKExchangeTaskMap.cpp
 )
 
 set(BASE_BFLOW_HEADERS
