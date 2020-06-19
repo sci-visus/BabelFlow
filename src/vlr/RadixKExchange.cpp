@@ -123,7 +123,7 @@ Task RadixKExchange::task(uint64_t gId) const
       it->callback(2);      // middle node
   
     // Neighbors from previous level are inputs to current level
-    getRadixNeighbors( it->id(), lvl - 1, incoming );
+    getRadixNeighbors( it->id(), lvl - 1, false, incoming );
   }
   
   it->incoming(incoming);
@@ -132,7 +132,7 @@ Task RadixKExchange::task(uint64_t gId) const
   if( lvl < totalLevels() )
   {
     std::vector<TaskId> out_neighbors;
-    getRadixNeighbors( it->id(), lvl, out_neighbors );
+    getRadixNeighbors( it->id(), lvl, true, out_neighbors );
     
     outgoing.resize( out_neighbors.size() );
     
@@ -214,7 +214,8 @@ int RadixKExchange::output_graph_dot(ShardId count,
   return 1;
 }
 
-void RadixKExchange::getRadixNeighbors(TaskId id, uint32_t level, std::vector<TaskId>& neighbors) const
+void RadixKExchange::getRadixNeighbors(TaskId id, uint32_t level, bool isOutgoing, 
+                                       std::vector<TaskId>& neighbors) const
 {
   //TaskId base_id = baseId(id);
   TaskId blk_id = baseId(id) % m_Nblocks;   // base_id % m_Nblocks;
@@ -243,6 +244,6 @@ void RadixKExchange::getRadixNeighbors(TaskId id, uint32_t level, std::vector<Ta
     for( uint32_t j = 0; j < lattice_coords.size(); ++j )
       nid += lattice_coords[j] * m_RadicesPrefixProd[j];
       
-    neighbors[i] = nid + m_Nblocks * level;
+    neighbors[i] = nid + m_Nblocks * (level + (isOutgoing ? 1 : 0));
   }
 }

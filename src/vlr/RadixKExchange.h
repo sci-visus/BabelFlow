@@ -102,13 +102,13 @@ private:
   const std::vector<uint32_t>& lvlOffset() const { return m_LvlOffset; }
 
   //! Return the level of a RadixK exchange task
-  uint32_t level(TaskId id) const { baseId(id) / m_Nblocks; }
+  uint32_t level(TaskId id) const { return (baseId(id) / m_Nblocks); }
 
   //! Compute the id of a task at a certain level
   TaskId idAtLevel(TaskId id, uint32_t level) const { return (baseId(id)%m_Nblocks + m_Nblocks*level); }
   
   //! Compute radix group members (task id's group) for given level
-  void getRadixNeighbors(TaskId id, uint32_t level, std::vector<TaskId>& neighbors) const;
+  void getRadixNeighbors(TaskId id, uint32_t level, bool isOutgoing, std::vector<TaskId>& neighbors) const;
 
   //! Return the base id (in the reduction)
   TaskId baseId(TaskId id) const { return id; }//&= ~sPrefixMask;}
