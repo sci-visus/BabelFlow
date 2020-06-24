@@ -138,7 +138,7 @@ Task RadixKExchange::task(uint64_t gId) const
     
     for( uint32_t i = 0; i < outgoing.size(); ++i )
     {
-      outgoing[i].resize( 1 );  // only one data item per output message
+      outgoing[i].resize( 1 );  // only one destination for each outgoing message
       outgoing[i][0] = out_neighbors[i];
     }
   }
