@@ -33,6 +33,9 @@ set(BASE_BFLOW_HEADERS
 
     PreProcessInputTaskGraph.hpp
     ModTaskMap.hpp
+    
+    ComposableTaskGraph.h
+    ComposableTaskMap.h
 )
 
 set(BASE_BFLOW_SRC
@@ -42,6 +45,11 @@ set(BASE_BFLOW_SRC
 
     HierarchicalTask.cpp
     HierarchicalTaskGraph.cpp
+    
+    PreProcessInputTaskGraph.cpp
+    
+    ComposableTaskGraph.cpp
+    ComposableTaskMap.cpp
 )
 
 SET(BABELFLOW_HEADERS

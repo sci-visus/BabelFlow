@@ -61,8 +61,8 @@ int main(int argc, char **argv)
   DoNothingTaskGraph graph(mpi_size);
   ModuloMap taskMap(mpi_size, graph.size());
 
-  PreProcessInputTaskGraph<DoNothingTaskGraph> modGraph(mpi_size, &graph, &taskMap);
-  ModTaskMap<ModuloMap> modMap(&taskMap);
+  PreProcessInputTaskGraph modGraph(mpi_size, &graph, &taskMap);
+  ModTaskMap modMap(&taskMap);
   modMap.update(modGraph);
 
   if (mpi_rank == 0) {

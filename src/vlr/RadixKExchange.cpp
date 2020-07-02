@@ -10,8 +10,6 @@ using namespace BabelFlow;
 uint32_t RadixKExchange::sDATASET_DIMS[3];
 uint32_t RadixKExchange::sDATA_DECOMP[3];
 
-
-
 RadixKExchange::RadixKExchange( uint32_t block_dim[3], const std::vector<uint32_t>& radix_v )
 {
   init(block_dim, radix_v);
@@ -191,16 +189,17 @@ int RadixKExchange::output_graph_dot(ShardId count,
     tasks = localGraph(i,task_map);
 
     for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      if (level(tIt->id()) == 0)
+      TaskId::InnerTaskId tid = tIt->id();
+      if (level(tid) == 0)
         fprintf(output, "%d [label=\"(%d ,%d)\",color=red]%s",
-                tIt->id(), baseId(tIt->id()), tIt->callback(), eol.c_str());
+                tid, tid, tIt->callback(), eol.c_str());
       else
         fprintf(output,"%d [label=\"(%d ,%d)\",color=black]%s",
-                tIt->id(), baseId(tIt->id()), tIt->callback(), eol.c_str());
+                tid, tid, tIt->callback(), eol.c_str());
 
       for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
         if (*it != TNULL)
-          fprintf(output, "%d -> %d%s", *it, tIt->id(), eol.c_str());
+          fprintf(output, "%d -> %d%s", TaskId::InnerTaskId(*it), tid, eol.c_str());
       }
     }
 

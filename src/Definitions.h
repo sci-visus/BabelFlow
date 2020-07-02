@@ -32,14 +32,76 @@
 
 #include <stdint.h>
 #include <cstdlib>
+#include <iostream>
 
 namespace BabelFlow {
 
 //! Index type used to identify tasks
-typedef uint32_t TaskId;
+class TaskId
+{
+public:
+  typedef uint32_t InnerTaskId;
+
+  TaskId() : m_tid( 0 ), m_gr( 0 ) {}
+  TaskId( uint32_t tid ) : m_tid( tid ), m_gr( 0 ) {}
+  TaskId( uint32_t tid, uint32_t gr ) : m_tid( tid ), m_gr( gr ) {}
+  TaskId( const TaskId& other ) : m_tid( other.tid() ), m_gr( other.graphId() ) {}
+
+  uint32_t  tid() const     { return m_tid; }
+  uint32_t& tid()           { return m_tid; }
+  uint32_t  graphId() const { return m_gr; }
+  uint32_t& graphId()       { return m_gr; }
+  
+  operator uint32_t() const { return m_tid; }
+  
+  TaskId& operator=( uint32_t tid )        { m_tid = tid; return *this; }
+  TaskId& operator=( const TaskId& other ) { m_tid = other.tid(); m_gr = other.graphId(); return *this; }
+  
+  TaskId& operator>>=( uint32_t d ) { m_tid >>= d; return *this; }
+  TaskId& operator>>=( int d )      { return *this >>= uint32_t(d); }
+  TaskId operator>>( uint32_t d )   { TaskId shifted_id(*this); shifted_id >>= d; return shifted_id; }
+  TaskId operator>>( int d )        { return *this >> uint32_t(d); }
+  
+  TaskId& operator<<=( uint32_t d ) { m_tid <<= d; return *this; }
+  TaskId& operator<<=( int d )      { return *this <<= uint32_t(d); }
+  TaskId operator<<( uint32_t d )   { TaskId shifted_id(*this); shifted_id <<= d; return shifted_id; }
+  TaskId operator<<( int d )        { return *this << uint32_t(d); }
+  
+  TaskId& operator&=( uint32_t d ) { m_tid &= d; return *this; }
+  TaskId operator&( uint32_t d )   { TaskId task_id(*this); task_id &= d; return task_id; }
+  
+  TaskId& operator|=( uint32_t d ) { m_tid |= d; return *this; }
+  TaskId operator|( uint32_t d )   { TaskId task_id(*this); task_id |= d; return task_id; }
+  
+  TaskId& operator+=( uint32_t d ) { m_tid += d; return *this; }
+  TaskId& operator-=( uint32_t d ) { m_tid -= d; return *this; }
+  
+  bool operator==( const TaskId& other ) { return m_tid == other.tid() && m_gr == other.graphId(); }
+  bool operator==( int d ) { return m_tid == d; }
+  
+  // Prefix increment operator
+  TaskId operator++() { TaskId task_id( ++m_tid, m_gr ); return task_id; }
+  // Postfix increment operator
+  TaskId operator++(int) { TaskId task_id( m_tid++, m_gr ); return task_id; }
+  // Prefix decrement operator
+  TaskId operator--() { TaskId task_id( --m_tid, m_gr ); return task_id; }
+  // Postfix decrement operator
+  TaskId operator--(int) { TaskId task_id( m_tid--, m_gr ); return task_id; }
+  
+  friend std::ostream& operator<<( std::ostream& out, const TaskId& task_id )
+  {
+    out << "TaskId(" << task_id.tid() << "," << task_id.graphId() << ")";
+    return out;
+  }
+
+private:
+  InnerTaskId m_tid;   // Inner task id
+  InnerTaskId m_gr;    // Graph id
+};
+
 
 //! The NULL element indicating an outside input
-const TaskId TNULL = (TaskId)-1;
+const TaskId TNULL( (uint32_t)-1 );
 
 //! Index type used to identify a controller
 typedef uint32_t ShardId;

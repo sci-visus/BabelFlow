@@ -58,10 +58,10 @@ public:
   static const uint8_t sPrefixSize = 4;
 
   //! The number of non-prefix bits
-  static const uint8_t sPostfixSize = sizeof(TaskId)*8 - sPrefixSize;
+  static const uint8_t sPostfixSize = sizeof(TaskId::InnerTaskId)*8 - sPrefixSize;
 
   //! Bit mask for scatter tasks
-  static const TaskId sPrefixMask = ((1 << sPrefixSize) - 1) << sPostfixSize;
+  static const TaskId::InnerTaskId sPrefixMask = ((1 << sPrefixSize) - 1) << sPostfixSize;
 
   //! Dataset dimensions
   static uint32_t sDATASET_DIMS[3];
@@ -96,7 +96,7 @@ public:
    *
    * @return The total number of tasks
    */
-  virtual TaskId size() const;
+  virtual uint32_t size() const { return mLvlOffset[mRounds]; }
 
   //! Return the total number of rounds needed to merge
   uint8_t rounds() const { return mRounds; }

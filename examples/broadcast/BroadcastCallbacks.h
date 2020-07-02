@@ -30,7 +30,8 @@
 #ifndef BROADCAST_CALLBACKS_H_
 #define BROADCAST_CALLBACKS_H_
 
-#include <cstdio>
+#include <iostream>
+
 
 int arr_length = 100;
 
@@ -46,7 +47,7 @@ int print_message(std::vector<BabelFlow::Payload>& inputs, std::vector<BabelFlow
   }
 
   if (sum != arr[0])
-    printf("Sum Incorrect: %d %d TASK: %d FAILED\n", sum, arr[0], task);
+    std::cout << "Sum Incorrect: " << sum << " " << arr[0] << " TASK: " << task << " FAILED" << std::endl;
   int r = rand() % 3000000;
   usleep(r);
 

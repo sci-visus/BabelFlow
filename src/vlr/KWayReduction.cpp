@@ -13,6 +13,7 @@
 
 using namespace BabelFlow;
 
+
 uint32_t KWayReduction::sDATASET_DIMS[3];
 
 KWayReduction::KWayReduction(const std::string& config)
@@ -146,11 +147,6 @@ void KWayReduction::deserialize(Payload buffer)
   delete[] buffer.buffer();
 }
 
-TaskId KWayReduction::size() const
-{
-  return mLvlOffset[mRounds];
-}
-
 Task KWayReduction::task(uint64_t gId) const { 
   Task t(gId);
   Task* it = &t;
@@ -251,22 +247,23 @@ int KWayReduction::output_graph(ShardId count,
 
 
     for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      if (round(tIt->id()) == 0)
+      TaskId::InnerTaskId tid = tIt->id();
+      if (round(tid) == 0)
         fprintf(output,"%d [label=\"(%d, %d) ,%d)\",color=red]\n",
-                tIt->id(),baseId(tIt->id()),round(tIt->id()),tIt->callback());
+                tid, TaskId::InnerTaskId(baseId(tid)), TaskId::InnerTaskId(round(tid)), tIt->callback());
       else
         fprintf(output,"%d [label=\"(%d, %d) ,%d)\",color=black]\n",
-                tIt->id(),baseId(tIt->id()),round(tIt->id()),tIt->callback());
+                tid, TaskId::InnerTaskId(baseId(tid)), TaskId::InnerTaskId(round(tid)), tIt->callback());
 
       for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
         if (*it != TNULL)
-          fprintf(output,"%d -> %d\n",*it,tIt->id());
+          fprintf(output,"%d -> %d\n", TaskId::InnerTaskId(*it), tid);
       }
     }
 
     for (tIt=tasks.begin();tIt!=tasks.end();tIt++)
       fprintf(output,"{rank = same; f%d; %d}\n",
-              level(baseId(tIt->id())),tIt->id());
+              level(baseId(tIt->id())), TaskId::InnerTaskId(tIt->id()));
 
   }
 

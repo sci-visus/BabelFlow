@@ -35,9 +35,16 @@
 #include <cstdio>
 #include <cassert>
 #include <string>
+#include <typeinfo>
 
 #include "Task.h"
 #include "Payload.h"
+
+
+//#define REG_TGRAPH( cls ) \
+//static bool cls ## _creator_registered = \
+//TaskGraphFactory::registerCreator( std::string( typeid( cls ).name() ), &TaskGraphFactory::createT< cls > );
+
 
 namespace BabelFlow {
 
@@ -70,7 +77,7 @@ public:
   //virtual uint64_t leaf(uint64_t lId) const = 0;
 
   //! Return the total number of tasks (or some reasonable upper bound)
-  virtual TaskId size() const = 0;
+  virtual uint32_t size() const = 0;
 
   //! Serialize a task graph
   virtual Payload serialize() const {assert(false);return Payload();}
@@ -87,6 +94,32 @@ public:
 protected:
   virtual int output_graph_dot(ShardId count, const TaskMap* task_map, FILE* output, const std::string &eol);
 };
+
+
+/*! The TaskGraphFactory class is used to construct instances of TaskGraph only be class type name.
+ *  This reflection-like capability is necessary for some advanced serialization used by ComposableTaskGraph.
+ *  Since ComposableTaskGraph composes general TaskGraph's it has to have the capability to construct
+ *  an instance from TaskGraph's runtime type.
+ * 
+ *  For this mechanism to work properly, each class derived from TaskGraph has to include the line
+ *  REG_TGRAPH( cls ), cls is class name, somewhere in the first part of the file. 
+ */
+//class TaskGraphFactory
+//{
+//public:
+//  typedef TaskGraph* (*CreatorFunc)();
+//  typedef std::map<std::string, CreatorFunc> MapType;
+//
+//  static bool registerCreator(const std::string& name, CreatorFunc func);
+//  static TaskGraph* createInstance(const std::string& name) { return m_map[name](); }
+//  
+//  template<typename T> 
+//  static TaskGraph* createT() { return new T; }
+//
+//private:
+//  static MapType m_map;
+//};
+
 
 /*! The task map defines an abstract baseclass to define the global
  *  Task-to-Controller map as well as the reverse
@@ -107,6 +140,7 @@ public:
   //! Return the set of task assigned to the given controller
   virtual std::vector<TaskId> tasks(ShardId id) const = 0;
 };
+
 
 /*! The controller map defines a baseclass to define the controller
  *   to MPI_RANK map and its reverse. The default map is identity.

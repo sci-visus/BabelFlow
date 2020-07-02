@@ -17,8 +17,8 @@ uint32_t BinarySwap::sDATASET_DIMS[3];
 uint32_t BinarySwap::sDATA_DECOMP[3];
 
 
-
-BinarySwap::BinarySwap(uint32_t block_dim[3]){
+BinarySwap::BinarySwap(uint32_t block_dim[3])
+{
   init(block_dim);
 }
 
@@ -101,11 +101,6 @@ void BinarySwap::deserialize(Payload buffer)
   init(decomp);
 
   delete[] buffer.buffer();
-}
-
-TaskId BinarySwap::size() const
-{
-  return (mRounds+1)*n_blocks;
 }
 
 Task BinarySwap::task(uint64_t gId) const{
@@ -224,16 +219,15 @@ int BinarySwap::output_graph(ShardId count,
     tasks = localGraph(i,task_map);
 
     for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
+      TaskId::InnerTaskId tid = tIt->id();
       if (level(tIt->id()) == 0)
-        fprintf(output,"%d [label=\"(%d ,%d)\",color=red]\n",
-                tIt->id(),baseId(tIt->id()),tIt->callback());
+        fprintf(output, "%d [label=\"(%d ,%d)\",color=red]\n", tid, tid, tIt->callback());
       else
-        fprintf(output,"%d [label=\"(%d ,%d)\",color=black]\n",
-                tIt->id(),baseId(tIt->id()),tIt->callback());
+        fprintf(output, "%d [label=\"(%d ,%d)\",color=black]\n", tid, tid, tIt->callback());
 
       for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
         if (*it != TNULL)
-          fprintf(output,"%d -> %d\n",*it,tIt->id());
+          fprintf(output, "%d -> %d\n", TaskId::InnerTaskId(*it), tid);
       }
     }
 
@@ -246,22 +240,3 @@ int BinarySwap::output_graph(ShardId count,
   fprintf(output,"}\n");
   return 1;
 }
-
-
-
-uint8_t BinarySwap::level(TaskId id) const
-{
-  TaskId base_id = id;//baseId(id);
-  return base_id / n_blocks;
-}
-
-TaskId BinarySwap::roundId(TaskId id, uint8_t round) const
-{
-  TaskId base_id = baseId(id);
-  //return (base_id%n_blocks + n_blocks*round | (round << sPostfixSize));
-  return (base_id%n_blocks + n_blocks*round) ;
-}
-
-
-
-

@@ -20,15 +20,6 @@ public:
 
   friend class RadixKExchangeTaskMap;
   
-  //! The number of bits used for prefixing scatter tasks
-  static const uint8_t sPrefixSize = 4;
-
-  //! The number of non-prefix bits
-  static const uint8_t sPostfixSize = sizeof(TaskId)*8 - sPrefixSize;
-
-  //! Bit mask for scatter tasks
-  static const TaskId sPrefixMask = ((1 << sPrefixSize) - 1) << sPostfixSize;
-  
   //! Dataset dimensions
   static uint32_t sDATASET_DIMS[3];
   
@@ -60,7 +51,7 @@ public:
    *
    * @return The total number of tasks
    */
-  virtual TaskId size() const { return (totalLevels() + 1) * m_Nblocks; }
+  virtual uint32_t size() const { return (totalLevels() + 1) * m_Nblocks; }
 
   //! Return the total number of levels in the radix-k exchange
   uint32_t totalLevels() const { return m_Radices.size(); }

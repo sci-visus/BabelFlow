@@ -27,15 +27,6 @@ public:
 
   friend class BinarySwapTaskMap;
   
-  //! The number of bits used for prefixing scatter tasks
-  static const uint8_t sPrefixSize = 4;
-
-  //! The number of non-prefix bits
-  static const uint8_t sPostfixSize = sizeof(TaskId)*8 - sPrefixSize;
-
-  //! Bit mask for scatter tasks
-  static const TaskId sPrefixMask = ((1 << sPrefixSize) - 1) << sPostfixSize;
-  
   //! Dataset dimensions
   static uint32_t sDATASET_DIMS[3];
   
@@ -67,7 +58,7 @@ public:
    *
    * @return The total number of tasks
    */
-  TaskId size() const;
+  uint32_t size() const { return (mRounds+1)*n_blocks; }
 
   //! Return the total number of rounds needed to merge
   uint8_t rounds() const {return mRounds;}
@@ -77,9 +68,9 @@ public:
 
   virtual Task task(uint64_t gId) const;
 
-  virtual uint64_t gId(TaskId tId) const { return tId; }    //return baseId(tId); };
+  virtual uint64_t gId(TaskId tId) const { return tId; }
 
-  virtual uint64_t toTId(TaskId gId) const { return gId; }  //|= sPrefixMask; };
+  virtual uint64_t toTId(TaskId gId) const { return gId; }
 
   //! Serialize a task graph
   virtual Payload serialize() const;
@@ -106,17 +97,10 @@ private:
   const std::vector<uint32_t>& lvlOffset() const {return mLvlOffset;}
 
   //! Return the level of a reduction task
-  uint8_t level(TaskId id) const;
+  uint8_t level(TaskId id) const { return id / n_blocks; }
 
   //! Compute the id of a task in a certain round
-  TaskId roundId(TaskId id, uint8_t round) const;
-
-  //! Return the base id (in the reduction)
-  TaskId baseId(TaskId id) const {return id; }//&= ~sPrefixMask;}
-
-  //! Return thecomputation round this task is part of
-  //BabelFlow::TaskId round(BabelFlow::TaskId id) const {return id >> sPostfixSize;}
-
+  TaskId roundId(TaskId id, uint8_t round) const { return (id%n_blocks + n_blocks*round); }
 };
 
 

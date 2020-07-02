@@ -18,8 +18,7 @@ mControllerCount(controller_count), mTaskGraph(task_graph)
 
 ShardId BinarySwapTaskMap::shard(TaskId id) const
 {
-  TaskId base_id = mTaskGraph->baseId(id);
-  ShardId cId = base_id % mControllerCount;
+  ShardId cId = id % mControllerCount;
   //printf("base id: %d con count : %d cid : %d\n", base_id, mControllerCount, cId);
   return cId;
 }

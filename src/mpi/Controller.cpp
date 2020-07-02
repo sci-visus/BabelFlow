@@ -114,7 +114,7 @@ bool Controller::TaskWrapper::addInput(TaskId source, Payload data)
   mTaskReadyMutex.unlock();
 
   if (!input_added) {
-    fprintf(stderr,"Unknown sender %d in TaskWrapper::addInput for task %d\n",source,mTask.id());
+    std::cerr << "Unknown sender " << source << " in TaskWrapper::addInput for task " << mTask.id() << std::endl;
     assert (false);
   }
 
@@ -251,8 +251,8 @@ int Controller::run(std::map<TaskId,Payload>& initial_inputs)
       tIt = initial_inputs.find(wIt->second.task().id());
 
       if (tIt == initial_inputs.end()) { // If you can't find one
-        fprintf(stderr,"Error. Found leaf task without input. Controller %d Rank %d Task %d\n",
-                mId,mRank,wIt->second.task().id());
+        std::cerr << "Error. Found leaf task without input. Controller " << mId << " Rank "
+                  << mRank << " Task " << wIt->second.task().id() << std::endl;
         assert (false);
       }
 
@@ -492,7 +492,7 @@ int Controller::testMPI()
                        &mpi_status);
 
   if (status != MPI_SUCCESS) {
-    fprintf(stderr, "Error in Test any!!\n");
+    std::cerr << "Error in Test any!!" << std::endl;
     assert(status != MPI_SUCCESS);
   }
 
