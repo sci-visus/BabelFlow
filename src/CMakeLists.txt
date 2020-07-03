@@ -1,20 +1,20 @@
 
-set(VLR_HEADERS
-    vlr/BinarySwap.h
-    vlr/BinarySwapTaskMap.h
-    vlr/KWayReduction.h
-    vlr/KWayReductionTaskMap.h
-    vlr/RadixKExchange.h
-    vlr/RadixKExchangeTaskMap.h
+set(RED_HEADERS
+    reduce/BinarySwap.h
+    reduce/BinarySwapTaskMap.h
+    reduce/KWayReduction.h
+    reduce/KWayReductionTaskMap.h
+    reduce/RadixKExchange.h
+    reduce/RadixKExchangeTaskMap.h
 )
 
-set(VLR_SRC
-    vlr/BinarySwap.cpp
-    vlr/BinarySwapTaskMap.cpp
-    vlr/KWayReduction.cpp
-    vlr/KWayReductionTaskMap.cpp
-    vlr/RadixKExchange.cpp
-    vlr/RadixKExchangeTaskMap.cpp
+set(RED_SRC
+    reduce/BinarySwap.cpp
+    reduce/BinarySwapTaskMap.cpp
+    reduce/KWayReduction.cpp
+    reduce/KWayReductionTaskMap.cpp
+    reduce/RadixKExchange.cpp
+    reduce/RadixKExchangeTaskMap.cpp
 )
 
 set(BASE_BFLOW_HEADERS
@@ -54,12 +54,12 @@ set(BASE_BFLOW_SRC
 
 SET(BABELFLOW_HEADERS
     ${BASE_BFLOW_HEADERS}
-    ${VLR_HEADERS}
+    ${RED_HEADERS}
 )
 
 SET(BABELFLOW_SRC
     ${BASE_BFLOW_SRC}
-    ${VLR_SRC}
+    ${RED_SRC}
 )
 
 
@@ -109,8 +109,8 @@ install(FILES ${BASE_BFLOW_HEADERS}
         DESTINATION include/BabelFlow
 )
 
-install(FILES ${VLR_HEADERS}
-        DESTINATION include/BabelFlow/vlr
+install(FILES ${RED_HEADERS}
+        DESTINATION include/BabelFlow/reduce
 )
 
 install(EXPORT BabelFlowConfig FILE BabelFlowConfig.cmake NAMESPACE BabelFlow:: DESTINATION lib/cmake/BabelFlow)
