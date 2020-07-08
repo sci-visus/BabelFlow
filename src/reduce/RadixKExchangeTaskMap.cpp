@@ -32,6 +32,13 @@ std::vector<TaskId> RadixKExchangeTaskMap::tasks(ShardId id) const
       tasks.push_back(mTaskGraph->idAtLevel(leaf,k));
   } // end-for all leafs
 
+  // Last task is for gathering all the composited image fragments
+  // will probably be removed when we have composable graphs functionality
+  if (id == 0)
+  {
+    tasks.push_back(mTaskGraph->size() - 1);
+  }
+  
   // printf("Controller id: %d Tasks: ", id);
   // for (int i=0; i<tasks.size(); i++)
   //   printf(" %d ", tasks[i]);

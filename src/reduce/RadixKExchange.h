@@ -51,7 +51,7 @@ public:
    *
    * @return The total number of tasks
    */
-  virtual uint32_t size() const { return (totalLevels() + 1) * m_Nblocks; }
+  virtual uint32_t size() const { return (totalLevels() + 1) * m_Nblocks + 1; }
 
   //! Return the total number of levels in the radix-k exchange
   uint32_t totalLevels() const { return m_Radices.size(); }

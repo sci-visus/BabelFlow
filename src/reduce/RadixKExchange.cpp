@@ -35,7 +35,7 @@ void RadixKExchange::init( uint32_t nblks, const std::vector<uint32_t>& radix_v 
   // Sanity check -- total product of radices should be equal to num of blocks
   if( m_RadicesPrefixProd.back() * m_Radices.back() != m_Nblocks )
   {
-    fprintf( stderr, "Num blocks not equal to product of radices!" );
+    fprintf( stderr, "Num blocks not equal to product of radices!\n" );
     assert( false );
   }  
 
@@ -45,6 +45,8 @@ void RadixKExchange::init( uint32_t nblks, const std::vector<uint32_t>& radix_v 
   {
     m_LvlOffset.push_back( m_LvlOffset.back() + m_Nblocks );
   }
+  // For the last gather task
+  m_LvlOffset.push_back( m_LvlOffset.back() + 1 );
 }
 
 Payload RadixKExchange::serialize() const
@@ -114,13 +116,20 @@ Task RadixKExchange::task(uint64_t gId) const
   } 
   else 
   {
-    if( lvl == totalLevels() )    // root node -- no outputs
+    if( lvl == totalLevels() + 1 )    // root node (gather task) -- no outputs
+    {
+      // Inputs are all the neighbors at the previous level
       it->callback(3);
+      incoming.resize(m_Nblocks);
+      for( uint32_t i = 0; i < m_Nblocks; ++i )
+        incoming[i] = i + m_Nblocks * totalLevels();
+    }
     else
+    {
       it->callback(2);      // middle node
-  
-    // Neighbors from previous level are inputs to current level
-    getRadixNeighbors( it->id(), lvl - 1, false, incoming );
+      // Neighbors from previous level are inputs to current level
+      getRadixNeighbors( it->id(), lvl - 1, false, incoming );
+    }
   }
   
   it->incoming(incoming);
@@ -138,6 +147,12 @@ Task RadixKExchange::task(uint64_t gId) const
       outgoing[i].resize( 1 );  // only one destination for each outgoing message
       outgoing[i][0] = out_neighbors[i];
     }
+  }
+  else if( lvl == totalLevels() )
+  {
+    outgoing.resize( 1 );     // destination is the gather task
+    outgoing[0].resize( 1 );  // only one destination for each outgoing message
+    outgoing[0][0] = size() - 1;
   }
 
   it->outputs(outgoing);
