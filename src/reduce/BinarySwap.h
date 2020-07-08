@@ -3,6 +3,9 @@
  *
  *  Created on: Sep 3, 2016
  *      Author: spetruzza
+ * 
+ *  Updated on: Jul 7, 2020
+ *      Author: sshudler
  */
 
 #ifndef BFLOW_VLR_BINARYSWAP_H_
@@ -30,18 +33,15 @@ public:
   //! Dataset dimensions
   static uint32_t sDATASET_DIMS[3];
   
-  //! Dataset decomposition
-  static uint32_t sDATA_DECOMP[3];
-  
   static inline uint32_t fastPow2(uint32_t exp) { return uint32_t(1) << exp; }
   
   static inline bool fastIsPow2(uint32_t x) { return x && !(x & (x - 1)); }
   
   BinarySwap(){}
   
-  BinarySwap(uint32_t dim[3]);
+  BinarySwap(uint32_t nblks);
   
-  void init(uint32_t block_dim[3]);
+  void init(uint32_t nblks);
 
   //! Destructor
   virtual ~BinarySwap() {}
@@ -81,7 +81,6 @@ public:
 private:
 
   uint32_t n_blocks;
-  uint32_t b_decomp[3];
 
   //! How many rounds of merging
   uint32_t mRounds;

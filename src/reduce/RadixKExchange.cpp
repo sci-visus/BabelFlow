@@ -1,4 +1,10 @@
-
+/*
+ * RadixKExchange.cpp
+ *
+ *  Created on: Jul 7, 2020
+ *      Author: sshudler
+ */
+ 
 #include <cassert>
 #include <cmath>
 
@@ -8,19 +14,16 @@ using namespace BabelFlow;
 
 
 uint32_t RadixKExchange::sDATASET_DIMS[3];
-uint32_t RadixKExchange::sDATA_DECOMP[3];
 
-RadixKExchange::RadixKExchange( uint32_t block_dim[3], const std::vector<uint32_t>& radix_v )
+
+RadixKExchange::RadixKExchange( uint32_t nblks, const std::vector<uint32_t>& radix_v )
 {
-  init(block_dim, radix_v);
+  init(nblks, radix_v);
 }
 
-void RadixKExchange::init( uint32_t block_dim[3], const std::vector<uint32_t>& radix_v )
+void RadixKExchange::init( uint32_t nblks, const std::vector<uint32_t>& radix_v )
 {
-  m_BlkDecomp[0] = block_dim[0];
-  m_BlkDecomp[1] = block_dim[1];
-  m_BlkDecomp[2] = block_dim[2];
-  m_Nblocks = m_BlkDecomp[0]*m_BlkDecomp[1]*m_BlkDecomp[2];
+  m_Nblocks = nblks;
 
   m_Radices = radix_v;
   
@@ -47,51 +50,47 @@ void RadixKExchange::init( uint32_t block_dim[3], const std::vector<uint32_t>& r
 Payload RadixKExchange::serialize() const
 {
   // What's serialized:
-  // - m_blkDecomp (n = 3)
+  // - m_Nblocks (n = 1)
   // - sDATASET_DIMS (n = 3)
   // - num radices (n = 1)
   // - all the radices (n = m_Radices.size())
-  uint32_t nelems_in_buffer = 6 + 1 + m_Radices.size();
+  uint32_t rad_offset = 5;
+  uint32_t nelems_in_buffer = rad_offset + m_Radices.size();
   uint32_t* buffer = new uint32_t[nelems_in_buffer];
 
-  buffer[0] = m_BlkDecomp[0];
-  buffer[1] = m_BlkDecomp[1];
-  buffer[2] = m_BlkDecomp[2];
+  buffer[0] = m_Nblocks;
 
-  buffer[3] = RadixKExchange::sDATASET_DIMS[0];
-  buffer[4] = RadixKExchange::sDATASET_DIMS[1];
-  buffer[5] = RadixKExchange::sDATASET_DIMS[2];
+  buffer[1] = RadixKExchange::sDATASET_DIMS[0];
+  buffer[2] = RadixKExchange::sDATASET_DIMS[1];
+  buffer[3] = RadixKExchange::sDATASET_DIMS[2];
 
-  buffer[6] = m_Radices.size();
+  buffer[4] = m_Radices.size();
 
-  for( uint32_t i=0; i < m_Radices.size(); ++i ) buffer[7 + i] = m_Radices[i];
+  for( uint32_t i=0; i < m_Radices.size(); ++i ) buffer[rad_offset + i] = m_Radices[i];
 
   return Payload( nelems_in_buffer*sizeof(uint32_t), (char*)buffer );
 }
 
 void RadixKExchange::deserialize(Payload buffer)
 {
-  // Even if the radices vector is empty, there should be at least 7 elements in the buffer
-  assert( buffer.size() >= 7*sizeof(uint32_t) );
+  // Even if the radices vector is empty, there should be at least 'rad_offset' elements in the buffer
+  uint32_t rad_offset = 5;
+  assert( buffer.size() >= rad_offset*sizeof(uint32_t) );
   uint32_t* buff_ptr = (uint32_t *)(buffer.buffer());
   
   //printf("DEserializing %d %d %d , f %d\n", tmp[0], tmp[1], tmp[2], tmp[3]);
-
-  RadixKExchange::sDATA_DECOMP[0] = buff_ptr[0];
-  RadixKExchange::sDATA_DECOMP[1] = buff_ptr[1];
-  RadixKExchange::sDATA_DECOMP[2] = buff_ptr[2];
   
-  RadixKExchange::sDATASET_DIMS[0] = buff_ptr[3];
-  RadixKExchange::sDATASET_DIMS[1] = buff_ptr[4];
-  RadixKExchange::sDATASET_DIMS[2] = buff_ptr[5];
+  RadixKExchange::sDATASET_DIMS[0] = buff_ptr[1];
+  RadixKExchange::sDATASET_DIMS[1] = buff_ptr[2];
+  RadixKExchange::sDATASET_DIMS[2] = buff_ptr[3];
   
-  std::vector<uint32_t> radix_v(buff_ptr[6]);
+  std::vector<uint32_t> radix_v(buff_ptr[4]);
   
-  for( uint32_t i=0; i < radix_v.size(); ++i ) radix_v[i] = buff_ptr[7 + i];
+  for( uint32_t i=0; i < radix_v.size(); ++i ) radix_v[i] = buff_ptr[rad_offset + i];
   
   // memcpy(dim, buffer.buffer(), sizeof(uint32_t)*3);
 
-  init( buff_ptr, radix_v );
+  init( buff_ptr[0], radix_v );
 
   delete[] buffer.buffer();
 }

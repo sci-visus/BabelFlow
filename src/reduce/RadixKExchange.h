@@ -1,3 +1,10 @@
+/*
+ * RadixKExchange.h
+ *
+ *  Created on: Jul 7, 2020
+ *      Author: sshudler
+ */
+ 
 #ifndef BFLOW_VLR_RADIXKEXCHANGE_H_
 #define BFLOW_VLR_RADIXKEXCHANGE_H_
 
@@ -22,22 +29,15 @@ public:
   
   //! Dataset dimensions
   static uint32_t sDATASET_DIMS[3];
-  
-  //! Dataset decomposition
-  static uint32_t sDATA_DECOMP[3];
-  
-  static inline uint32_t fastPow2(uint32_t exp) { return uint32_t(1) << exp; }
-  
-  static inline bool fastIsPow2(uint32_t x) { return x && !(x & (x - 1)); }
-  
+ 
   RadixKExchange() {}
   
-  RadixKExchange(uint32_t dim[3], const std::vector<uint32_t>& radix_v);
+  RadixKExchange(uint32_t nblks, const std::vector<uint32_t>& radix_v);
 
   //! Destructor
   virtual ~RadixKExchange() {}
 
-  void init(uint32_t block_dim[3], const std::vector<uint32_t>& radix_v);
+  void init(uint32_t nblks, const std::vector<uint32_t>& radix_v);
   
   //! Compute the fully specified tasks for the
   //! given controller id and task map
@@ -74,7 +74,6 @@ public:
 private:
 
   uint32_t m_Nblocks;
-  uint32_t m_BlkDecomp[3];
   
   //! A vector of radices 
   std::vector<uint32_t> m_Radices;

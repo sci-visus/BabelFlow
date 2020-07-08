@@ -3,6 +3,9 @@
  *
  *  Created on: Sep 3, 2016
  *      Author: spetruzza
+ * 
+ *  Updated on: Jul 7, 2020
+ *      Author: sshudler
  */
 
 #include <cassert>
@@ -14,25 +17,18 @@ using namespace BabelFlow;
 
 
 uint32_t BinarySwap::sDATASET_DIMS[3];
-uint32_t BinarySwap::sDATA_DECOMP[3];
 
 
-BinarySwap::BinarySwap(uint32_t block_dim[3])
+BinarySwap::BinarySwap(uint32_t nblks)
 {
-  init(block_dim);
+  init(nblks);
 }
 
-void BinarySwap::init(uint32_t block_dim[3])
+void BinarySwap::init(uint32_t nblks)
 {
-  uint32_t f;
-  
-  b_decomp[0] = block_dim[0];
-  b_decomp[1] = block_dim[1];
-  b_decomp[2] = block_dim[2];
-
   mLvlOffset.push_back(0);
 
-  n_blocks = b_decomp[0]*b_decomp[1]*b_decomp[2];
+  n_blocks = nblks;
 
   if(!fastIsPow2(n_blocks))
   {
@@ -57,48 +53,37 @@ void BinarySwap::init(uint32_t block_dim[3])
 
 Payload BinarySwap::serialize() const
 {
-  uint32_t* buffer = new uint32_t[6];
+  uint32_t num_elems_in_buff = 4;
+  uint32_t* buffer = new uint32_t[num_elems_in_buff];
 
-  buffer[0] = b_decomp[0];
-  buffer[1] = b_decomp[1];
-  buffer[2] = b_decomp[2];
+  buffer[0] = n_blocks;
 
-  buffer[3] = BinarySwap::sDATASET_DIMS[0];
-  buffer[4] = BinarySwap::sDATASET_DIMS[1];
-  buffer[5] = BinarySwap::sDATASET_DIMS[2];
+  buffer[1] = BinarySwap::sDATASET_DIMS[0];
+  buffer[2] = BinarySwap::sDATASET_DIMS[1];
+  buffer[3] = BinarySwap::sDATASET_DIMS[2];
 
   // TODO threshold
 
   //printf("serializing %d %d %d , f %d\n", buffer[0], buffer[1], buffer[2], buffer[3]);
 
-  return Payload(6*sizeof(uint32_t),(char*)buffer);
+  return Payload(num_elems_in_buff*sizeof(uint32_t),(char*)buffer);
 }
 
 void BinarySwap::deserialize(Payload buffer)
 {
-  assert (buffer.size() == 6*sizeof(uint32_t));
+  uint32_t num_elems_in_buff = 4;
+  assert (buffer.size() == num_elems_in_buff*sizeof(uint32_t));
   uint32_t *tmp = (uint32_t *)(buffer.buffer());
-
-  b_decomp[0] = tmp[0];
-  b_decomp[1] = tmp[1];
-  b_decomp[2] = tmp[2];
 
   //printf("DEserializing %d %d %d , f %d\n", tmp[0], tmp[1], tmp[2], tmp[3]);
 
-  uint32_t* decomp = tmp;
-  uint32_t* dim = tmp+3;
-
-  BinarySwap::sDATASET_DIMS[0] = dim[0];
-  BinarySwap::sDATASET_DIMS[1] = dim[1];
-  BinarySwap::sDATASET_DIMS[2] = dim[2];
-  
-  BinarySwap::sDATA_DECOMP[0] = decomp[0];
-  BinarySwap::sDATA_DECOMP[1] = decomp[1];
-  BinarySwap::sDATA_DECOMP[2] = decomp[2];
+  BinarySwap::sDATASET_DIMS[0] = tmp[1];
+  BinarySwap::sDATASET_DIMS[1] = tmp[2];
+  BinarySwap::sDATASET_DIMS[2] = tmp[3];
   
   // memcpy(dim, buffer.buffer(), sizeof(uint32_t)*3);
 
-  init(decomp);
+  init(tmp[0]);
 
   delete[] buffer.buffer();
 }
