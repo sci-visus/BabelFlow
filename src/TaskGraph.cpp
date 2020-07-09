@@ -30,6 +30,9 @@
 
 using namespace BabelFlow;
 
+
+//TaskGraphFactory::MapType TaskGraphFactory::m_map;
+
 int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output)
 {
   output_graph_dot(count,task_map,output,"\n");
@@ -80,10 +83,11 @@ int TaskGraph::output_graph_dot(ShardId count, const TaskMap* task_map, FILE* ou
     tasks = localGraph(i,task_map);
 
     for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      fprintf(output,"%d [label=\"%d,%d\"]%s",tIt->id(),tIt->id(),tIt->callback(),eol.c_str());
+      TaskId::InnerTaskId tid = tIt->id();
+      fprintf(output, "%d [label=\"%d,%d\"]%s", tid , tid, tIt->callback(), eol.c_str());
       for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
         if (*it != TNULL)
-          fprintf(output,"%d -> %d%s",*it,tIt->id(),eol.c_str());
+          fprintf(output, "%d -> %d%s", TaskId::InnerTaskId(*it), tid, eol.c_str());
       }
     }
   }
@@ -91,3 +95,13 @@ int TaskGraph::output_graph_dot(ShardId count, const TaskMap* task_map, FILE* ou
   fprintf(output,"}%s",eol.c_str());
   return 1;
 }
+
+
+//bool TaskGraphFactory::registerCreator(const std::string& name, TaskGraphFactory::CreatorFunc func)
+//{
+//  if( m_map.find( name ) != m_map.end() )
+//    return false;
+//
+//  m_map[name] = func;
+//  return true;
+//}

@@ -73,10 +73,10 @@ public:
   void callback(CallbackId cb) {mCallback = cb;}
 
   //! Return the number of incoming messages
-  const uint32_t fanin() const {return mIncoming.size();}
+  uint32_t fanin() const {return mIncoming.size();}
 
   //! Return the number of outgoing messages
-  const uint32_t fanout() const {return mOutgoing.size();}
+  uint32_t fanout() const {return mOutgoing.size();}
 
   //! Return the list of tasks expected to produce an input
   const std::vector<TaskId>& incoming() const {return mIncoming;}

@@ -68,7 +68,7 @@ public:
   virtual std::vector<BabelFlow::Task> localGraph(BabelFlow::ShardId id, const BabelFlow::TaskMap* task_map) const;
 
   //! Return the total number of tasks
-  BabelFlow::TaskId size() const {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
+  uint32_t size() const {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
 
   //! Serialize a task graph
   virtual BabelFlow::Payload serialize() const;

@@ -30,7 +30,8 @@
 #ifndef REDUCE_ALL_CALLBACKS_H_
 #define REDUCE_ALL_CALLBACKS_H_
 
-#include <cstdio>
+#include <iostream>
+
 
 int add_int(std::vector<BabelFlow::Payload> &inputs, std::vector<BabelFlow::Payload> &output,
             BabelFlow::TaskId task) {
@@ -70,7 +71,7 @@ int add_int_broadcast(std::vector<BabelFlow::Payload> &inputs, std::vector<Babel
   }
 //  printf(" = %d\n", *(uint32_t *)buffer);
 
-  fprintf(stderr, "task %d: Total sum is %d\n", task, *result);
+  std::cerr << "task " << task << ": Total sum is " << *result << std::endl;
 
   output[0].initialize(size, buffer);
 
@@ -84,7 +85,7 @@ int print_result(std::vector<BabelFlow::Payload> &inputs, std::vector<BabelFlow:
                  BabelFlow::TaskId task) {
   uint32_t *result = (uint32_t *) inputs[0].buffer();
 
-  fprintf(stderr, "task %d: Broadcast result %d\n", task, *result);
+  std::cerr << "task " << task << ": Broadcast result " << *result << std::endl;
 
   int r = rand() % 3000000;
   usleep(r);

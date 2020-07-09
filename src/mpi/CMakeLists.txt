@@ -18,13 +18,13 @@ endif()
 
 target_link_libraries(babelflow_mpi babelflow)
 
-INSTALL(FILES ${MPI_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/BabelFlow/mpi
+install(FILES ${MPI_HEADERS}
+        DESTINATION include/BabelFlow/mpi
 )
 
 install(TARGETS babelflow_mpi
         EXPORT BabelFlowConfig
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+        LIBRARY DESTINATION lib
 )
 
 export(TARGETS babelflow_mpi babelflow NAMESPACE BabelFlow::

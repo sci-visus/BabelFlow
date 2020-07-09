@@ -68,10 +68,10 @@ public:
   virtual uint64_t gId(BabelFlow::TaskId tId) const {return tId;}
 
   //! Return the total number of tasks
-  BabelFlow::TaskId size() const {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
+  uint32_t size() const {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
 
   //! Return the number of leafs
-  BabelFlow::TaskId leafCount() const {return pow(mValence,mLevels);}
+  uint32_t leafCount() const {return pow(mValence,mLevels);}
 
   //! Serialize a task graph
   virtual BabelFlow::Payload serialize() const;

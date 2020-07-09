@@ -7,6 +7,7 @@
 using namespace BabelFlow;
 using namespace std;
 
+
 DoNothingTaskGraph::DoNothingTaskGraph(BabelFlow::ShardId count) : n_controllers(count) {
 
 }
@@ -41,14 +42,6 @@ BabelFlow::Task DoNothingTaskGraph::task(uint64_t gId) const {
     t.callback(1);
   }
   return t;
-}
-
-uint64_t DoNothingTaskGraph::gId(BabelFlow::TaskId tId) const {
-  return tId;
-}
-
-BabelFlow::TaskId DoNothingTaskGraph::size() const {
-  return 2 * n_controllers;
 }
 
 BabelFlow::Payload DoNothingTaskGraph::serialize() const {

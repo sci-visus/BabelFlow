@@ -31,8 +31,7 @@ public:
   uint64_t gId(BabelFlow::TaskId tid) const override
   { return tid; }
 
-  BabelFlow::TaskId size() const override
-  { return n_worker + 3; };
+  uint32_t size() const override { return n_worker + 3; };
 
   BabelFlow::Payload serialize() const override;
 

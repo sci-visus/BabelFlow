@@ -9,25 +9,15 @@
 
 namespace BabelFlow
 {
-  template<class BaseTaskMap>
   class ModTaskMap : public TaskMap
   {
 
   public:
     ModTaskMap() = default;
 
-    BaseTaskMap *baseMap;
-
-    std::map<TaskId, ShardId> mShards;
-    std::map<ShardId, std::vector<TaskId>> mTasks;
-
-    explicit ModTaskMap(BaseTaskMap *m)
-    {
-      baseMap = m;
-    }
-
-    template<class ModGraph>
-    void update(const PreProcessInputTaskGraph <ModGraph> &modGraph)
+    explicit ModTaskMap(TaskMap* m) : mBaseMap(m) {}
+    
+    void update(const PreProcessInputTaskGraph& modGraph)
     {
       // TODO make the input more generic than PreprocTaskGraph
       for (auto iter = modGraph.new_tids.begin(); iter != modGraph.new_tids.end(); ++iter) {
@@ -38,12 +28,11 @@ namespace BabelFlow
       }
     }
 
-
     ShardId shard(TaskId id) const override
     {
       auto iter = mShards.find(id);
       if (iter != mShards.end()) return iter->second;
-      else return baseMap->shard(id);
+      else return mBaseMap->shard(id);
     }
 
     std::vector<TaskId> tasks(ShardId id) const override
@@ -53,10 +42,17 @@ namespace BabelFlow
       if (iter != mTasks.end()) {
         modedTasks = iter->second;
       }
-      std::vector<TaskId> oldTasks = baseMap->tasks(id);
+      std::vector<TaskId> oldTasks = mBaseMap->tasks(id);
       oldTasks.insert(oldTasks.end(), modedTasks.begin(), modedTasks.end());
       return oldTasks;
     }
+
+  private:
+    // TODO: Create appropriate getter / setter methods
+    TaskMap* mBaseMap;
+
+    std::map<TaskId, ShardId> mShards;
+    std::map<ShardId, std::vector<TaskId>> mTasks;
   };
 }
 

@@ -57,10 +57,11 @@ int HierarchicalTaskGraph::output_hierarchical_graph(FILE* output) const{
   std::vector<TaskId>::const_iterator it;
   
   for (tIt=mSubtasks.begin();tIt!=mSubtasks.end();tIt++) {
-    fprintf(output,"%d [label=\"%d,%d\"]\n",tIt->id(),tIt->id(),tIt->callback());
+    TaskId::InnerTaskId tid = tIt->id();
+    fprintf(output, "%d [label=\"%d,%d\"]\n", tid, tid, tIt->callback());
     for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
       if (*it != TNULL)
-        fprintf(output,"%d -> %d\n",*it,tIt->id());
+        fprintf(output, "%d -> %d\n", TaskId::InnerTaskId(*it), tid);
     }
   }
   
