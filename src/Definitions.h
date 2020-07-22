@@ -68,16 +68,21 @@ public:
   TaskId operator<<( int d )        { return *this << uint32_t(d); }
   
   TaskId& operator&=( uint32_t d ) { m_tid &= d; return *this; }
+  TaskId& operator&=( int d )      { return *this &= uint32_t(d); }
   TaskId operator&( uint32_t d )   { TaskId task_id(*this); task_id &= d; return task_id; }
+  TaskId operator&( int d )        { return *this & uint32_t(d); }
   
   TaskId& operator|=( uint32_t d ) { m_tid |= d; return *this; }
+  TaskId& operator|=( int d )      { return *this |= uint32_t(d); }
   TaskId operator|( uint32_t d )   { TaskId task_id(*this); task_id |= d; return task_id; }
+  TaskId operator|( int d )        { return *this | uint32_t(d); }
   
   TaskId& operator+=( uint32_t d ) { m_tid += d; return *this; }
   TaskId& operator-=( uint32_t d ) { m_tid -= d; return *this; }
   
   bool operator==( const TaskId& other ) { return m_tid == other.tid() && m_gr == other.graphId(); }
   bool operator==( int d ) { return m_tid == d; }
+  bool operator==( uint32_t d ) { return m_tid == d; }
   
   // Prefix increment operator
   TaskId operator++() { TaskId task_id( ++m_tid, m_gr ); return task_id; }

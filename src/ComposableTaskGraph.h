@@ -1,7 +1,16 @@
+/*
+ * ComposableTaskGraph.h
+ *
+ *  Created on: Jul 7, 2020
+ *      Author: sshudler
+ */
+ 
 #ifndef COMPOSABLE_TASK_GRAPH_H__
 #define COMPOSABLE_TASK_GRAPH_H__
 
+#include <vector>
 #include "TaskGraph.h"
+#include "TaskGraphConnector.h"
 
 
 namespace BabelFlow
@@ -11,7 +20,7 @@ namespace BabelFlow
 class ComposableTaskGraph : public TaskGraph
 {
 public:
-  ComposableTaskGraph( TaskGraph* graph1, TaskGraph* graph2 );
+  ComposableTaskGraph( std::vector<TaskGraph*>& gr_vec, std::vector<TaskGraphConnector*>& gr_connectors );
   
   virtual ~ComposableTaskGraph() {}
   
@@ -38,8 +47,8 @@ public:
 private:
   Task task(const TaskId& tid) const;
   
-  TaskGraph* m_graph1;
-  TaskGraph* m_graph2;
+  std::vector<TaskGraph*>           m_graphs;
+  std::vector<TaskGraphConnector*>  m_connectors;
 
 };  // class ComposableTaskGraph
 

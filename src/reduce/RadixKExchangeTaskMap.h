@@ -1,5 +1,5 @@
-#ifndef BFLOW_VLR_RADIXKEXCHANGETASKMAP_H_
-#define BFLOW_VLR_RADIXKEXCHANGETASKMAP_H_
+#ifndef BFLOW_RED_RADIXKEXCHANGETASKMAP_H_
+#define BFLOW_RED_RADIXKEXCHANGETASKMAP_H_
 
 
 #include "../TaskGraph.h"
@@ -24,10 +24,10 @@ public:
   ~RadixKExchangeTaskMap() {}
 
   //! Return which controller is assigned to the given task
-  virtual ShardId shard(TaskId id) const;
+  virtual ShardId shard(TaskId id) const override;
 
   //! Return the set of task assigned to the given controller
-  virtual std::vector<TaskId> tasks(ShardId id) const;
+  virtual std::vector<TaskId> tasks(ShardId id) const override;
 
 private:
 
@@ -40,4 +40,4 @@ private:
 
 }   // end namespace BabelFlow
 
-#endif /* BFLOW_VLR_RADIXKEXCHANGETASKMAP_H_ */
+#endif /* BFLOW_RED_RADIXKEXCHANGETASKMAP_H_ */

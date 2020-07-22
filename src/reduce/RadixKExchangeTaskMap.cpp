@@ -5,10 +5,14 @@
 
 using namespace BabelFlow;
 
+//-----------------------------------------------------------------------------
+
 RadixKExchangeTaskMap::RadixKExchangeTaskMap(ShardId controller_count, const RadixKExchange* task_graph) 
  : mControllerCount(controller_count), mTaskGraph(task_graph)
 {
 }
+
+//-----------------------------------------------------------------------------
 
 ShardId RadixKExchangeTaskMap::shard(TaskId id) const
 {
@@ -17,6 +21,8 @@ ShardId RadixKExchangeTaskMap::shard(TaskId id) const
   //printf("base id: %d con count : %d cid : %d\n", base_id, mControllerCount, cId);
   return cId;
 }
+
+//-----------------------------------------------------------------------------
 
 std::vector<TaskId> RadixKExchangeTaskMap::tasks(ShardId id) const
 {
@@ -32,12 +38,12 @@ std::vector<TaskId> RadixKExchangeTaskMap::tasks(ShardId id) const
       tasks.push_back(mTaskGraph->idAtLevel(leaf,k));
   } // end-for all leafs
 
-  // Last task is for gathering all the composited image fragments
-  // will probably be removed when we have composable graphs functionality
-  if (id == 0)
-  {
-    tasks.push_back(mTaskGraph->size() - 1);
-  }
+  // // Last task is for gathering all the composited image fragments
+  // // will probably be removed when we have composable graphs functionality
+  // if (id == 0)
+  // {
+  //   tasks.push_back(mTaskGraph->size() - 1);
+  // }
   
   // printf("Controller id: %d Tasks: ", id);
   // for (int i=0; i<tasks.size(); i++)
