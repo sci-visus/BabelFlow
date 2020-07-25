@@ -10,8 +10,6 @@
 
 #include <vector>
 
-#include "Definitions.h"
-#include "Task.h"
 #include "../TaskGraph.h"
 
 

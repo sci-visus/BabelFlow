@@ -8,13 +8,16 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
+#include <sstream>
 
 #include "ComposableTaskGraph.h"
 
 
+// #define COMPOSABLE_TGRAPH_DEBUG
+
+
 namespace BabelFlow
 {
-
 
 //-----------------------------------------------------------------------------
 
@@ -28,58 +31,62 @@ ComposableTaskGraph::ComposableTaskGraph( std::vector<TaskGraph*>& gr_vec, std::
 
 void ComposableTaskGraph::init()
 {
+  // Place holder, at the moment performs just a sanity check
+
   uint32_t num_graphs = m_graphs.size();
   uint32_t num_connectors = m_connectors.size();
   assert( num_graphs = num_connectors + 1 );
-  // Run localGraph for graph1 and graph2
-  // When terminal (root) nodes in graph1 are found save their tids
-  // Do the same for leaf nodes in graph2
-
-  //for( uint32_t i = 0; i < m_graphs.size(); ++i )
-  //{
-  //  std::vector<Task> gr_tasks = m_graphs[i]->localGraph( shard_id, );
-  //}
 }
 
 //-----------------------------------------------------------------------------
 
-std::vector<Task> ComposableTaskGraph::localGraph(ShardId id, const TaskMap* task_map) const
+std::vector<Task> ComposableTaskGraph::localGraph( ShardId id, const TaskMap* task_map ) const
 {
   std::vector<TaskId> tids = task_map->tasks(id);
   std::vector<Task> tasks( tids.size() );
   for( uint32_t i = 0; i < tids.size(); ++i )
     tasks[i] = task( tids[i] );         // Do not use gId() since it will collapse TaskId into just a uint32_t, but we
                                         // need to know the graph id in the task() function
-    //tasks[i] = task( gId( tids[i] ) );
   
+#ifdef COMPOSABLE_TGRAPH_DEBUG
+  {
+    std::stringstream ss;
+    ss << "comp_gr_tasks_" << id << ".html";
+    output_tasks_html( tasks, ss.str() );
+  }
+#endif
+
   return tasks;
 }
 
 //-----------------------------------------------------------------------------
 
-// gid problematic!! How to get graph id?
-Task ComposableTaskGraph::task(const TaskId& task_id) const
+Task ComposableTaskGraph::task( const TaskId& task_id ) const
 {
   uint32_t graph_id = task_id.graphId();
   assert( graph_id < m_graphs.size() );
   TaskGraph* gr = m_graphs[graph_id];
-  Task t = gr->task( gr->gId( task_id ) );
-  TaskId orig_task_id = t.id();
+  Task tsk = gr->task( gr->gId( task_id ) );
+  TaskId orig_task_id = tsk.id();
+
   // The next line ensures that the id in the task itself contains the graph_id;
   // in the lines below same thing is repeated for all incoming and outgoing tasks
-  t.id( TaskId( t.id().tid(), graph_id ) );
+  tsk.id( TaskId( tsk.id().tid(), graph_id ) );
   
   // Convert task ids of incoming tasks
-  std::for_each( t.incoming().begin(), t.incoming().end(), [&](TaskId& tid) { tid.graphId() = graph_id; } );
+  for( TaskId& tid : tsk.incoming() ) 
+    tid.graphId() = graph_id;
   
   // Convert task ids of outgoing tasks
-  std::for_each( t.outputs().begin(), t.outputs().end(), 
-  [&](std::vector<TaskId>& outg)
-  { 
-    std::for_each( outg.begin(), outg.end(), [&](TaskId& tid) { tid.graphId() = graph_id; } ); 
+  for( uint32_t i = 0; i < tsk.fanout(); ++i )
+  {  
+    for( TaskId& tid : tsk.outgoing(i) )
+      tid.graphId() = graph_id;
   }
-  );
   
+  // TODO: fix the situation where task ids might be the same in different graphs. Make DefGraphConnector
+  // use graph_id's
+
   // If task t has zero outputs (root task), or a TNULL output, connect it to a leaf task in graph_id + 1,
   // use m_connector[graph_id] for that:
   if( graph_id < m_connectors.size() )
@@ -87,31 +94,47 @@ Task ComposableTaskGraph::task(const TaskId& task_id) const
     std::vector<TaskId> connected_tsk = m_connectors[graph_id]->getOutgoingConnectedTasks( orig_task_id );
     if( connected_tsk.size() > 0 )
     {
+      /////
+      // std::cout << "ComposableTaskGraph - graph_id = " << graph_id 
+      //           << ", found outgoing connection: " << orig_task_id << " --> " 
+      //           << connected_tsk[0] << std::endl;
+      /////
+
       // Each output data has to be sent to connected tasks in the next graph
-      std::for_each( connected_tsk.begin(), connected_tsk.end(), [&](TaskId& tid) { tid.graphId() = graph_id + 1; } );
-      std::for_each( t.outputs().begin(), t.outputs().end(), 
-      [&](std::vector<TaskId>& outg)
-      { 
-        outg.insert( outg.end(), connected_tsk.begin(), connected_tsk.end() );
+      for( TaskId& tid : connected_tsk ) 
+      {
+        tid.graphId() = graph_id + 1;
+
+        std::vector<TaskId> outg( 1, tid );
+        tsk.outputs().push_back( outg );
       }
-      );
     }
   }
 
-  // If task t has TNULL input (leaf task in graph_id) connect it to the root task in graph_id - 1.
+  // If task tsk has TNULL input (leaf task in graph_id) connect it to the root task in graph_id - 1.
   // Use m_connector[graph_id - 1] for that.
   if( graph_id > 0 )
   {
     std::vector<TaskId> connected_tsk = m_connectors[graph_id - 1]->getIncomingConnectedTasks( orig_task_id );
     if( connected_tsk.size() > 0 )
     {
-      std::for_each( connected_tsk.begin(), connected_tsk.end(), [&](TaskId& tid) { tid.graphId() = graph_id - 1; } );
-      t.incoming().insert( t.incoming().end(), connected_tsk.begin(), connected_tsk.end() );
+      /////
+      // std::cout << "ComposableTaskGraph - graph_id = " << graph_id 
+      //           << ", found incoming connection: " << orig_task_id << " <-- " 
+      //           << connected_tsk[0] << std::endl;
+      /////
+
+      for( TaskId& tid : connected_tsk ) 
+        tid.graphId() = graph_id - 1;
+
+      // Right now the assumption is that if a task is a leaf task in graph_id, then it only has TNULL inputs,
+      // which means we should replace all these inputs with connected_tsk
+      tsk.incoming( connected_tsk );
     }
   }
   
   
-  return t;
+  return tsk;
 }
 
 //-----------------------------------------------------------------------------
@@ -173,7 +196,7 @@ Payload ComposableTaskGraph::serialize() const
 
 //-----------------------------------------------------------------------------
 
-void ComposableTaskGraph::deserialize(Payload pl)
+void ComposableTaskGraph::deserialize( Payload pl )
 {
   // Deserialization order:
   // - Num graphs

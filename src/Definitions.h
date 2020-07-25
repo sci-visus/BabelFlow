@@ -33,8 +33,10 @@
 #include <stdint.h>
 #include <cstdlib>
 #include <iostream>
+#include <functional>
 
-namespace BabelFlow {
+namespace BabelFlow 
+{
 
 //! Index type used to identify tasks
 class TaskId
@@ -52,38 +54,54 @@ public:
   uint32_t  graphId() const { return m_gr; }
   uint32_t& graphId()       { return m_gr; }
   
-  operator uint32_t() const { return m_tid; }
+  /*explicit*/ operator uint32_t() const       { return m_tid; }
   
   TaskId& operator=( uint32_t tid )        { m_tid = tid; return *this; }
   TaskId& operator=( const TaskId& other ) { m_tid = other.tid(); m_gr = other.graphId(); return *this; }
   
-  TaskId& operator>>=( uint32_t d ) { m_tid >>= d; return *this; }
-  TaskId& operator>>=( int d )      { return *this >>= uint32_t(d); }
-  TaskId operator>>( uint32_t d )   { TaskId shifted_id(*this); shifted_id >>= d; return shifted_id; }
-  TaskId operator>>( int d )        { return *this >> uint32_t(d); }
+  TaskId& operator>>=( uint32_t d )        { m_tid >>= d; return *this; }
+  TaskId& operator>>=( int d )             { return *this >>= uint32_t(d); }
+  TaskId operator>>( uint32_t d ) const    { TaskId shifted_id(*this); shifted_id >>= d; return shifted_id; }
+  TaskId operator>>( int d ) const         { return *this >> uint32_t(d); }
   
-  TaskId& operator<<=( uint32_t d ) { m_tid <<= d; return *this; }
-  TaskId& operator<<=( int d )      { return *this <<= uint32_t(d); }
-  TaskId operator<<( uint32_t d )   { TaskId shifted_id(*this); shifted_id <<= d; return shifted_id; }
-  TaskId operator<<( int d )        { return *this << uint32_t(d); }
+  TaskId& operator<<=( uint32_t d )        { m_tid <<= d; return *this; }
+  TaskId& operator<<=( int d )             { return *this <<= uint32_t(d); }
+  TaskId operator<<( uint32_t d ) const    { TaskId shifted_id(*this); shifted_id <<= d; return shifted_id; }
+  TaskId operator<<( int d ) const         { return *this << uint32_t(d); }
   
-  TaskId& operator&=( uint32_t d ) { m_tid &= d; return *this; }
-  TaskId& operator&=( int d )      { return *this &= uint32_t(d); }
-  TaskId operator&( uint32_t d )   { TaskId task_id(*this); task_id &= d; return task_id; }
-  TaskId operator&( int d )        { return *this & uint32_t(d); }
+  TaskId& operator&=( uint32_t d )         { m_tid &= d; return *this; }
+  TaskId& operator&=( int d )              { return *this &= uint32_t(d); }
+  TaskId operator&( uint32_t d ) const     { TaskId task_id(*this); task_id &= d; return task_id; }
+  TaskId operator&( int d ) const          { return *this & uint32_t(d); }
   
-  TaskId& operator|=( uint32_t d ) { m_tid |= d; return *this; }
-  TaskId& operator|=( int d )      { return *this |= uint32_t(d); }
-  TaskId operator|( uint32_t d )   { TaskId task_id(*this); task_id |= d; return task_id; }
-  TaskId operator|( int d )        { return *this | uint32_t(d); }
+  TaskId& operator|=( uint32_t d )         { m_tid |= d; return *this; }
+  TaskId& operator|=( int d )              { return *this |= uint32_t(d); }
+  TaskId operator|( uint32_t d ) const     { TaskId task_id(*this); task_id |= d; return task_id; }
+  TaskId operator|( int d ) const          { return *this | uint32_t(d); }
   
-  TaskId& operator+=( uint32_t d ) { m_tid += d; return *this; }
-  TaskId& operator-=( uint32_t d ) { m_tid -= d; return *this; }
+  TaskId& operator+=( uint32_t d )         { m_tid += d; return *this; }
+  TaskId& operator-=( uint32_t d )         { m_tid -= d; return *this; }
   
-  bool operator==( const TaskId& other ) { return m_tid == other.tid() && m_gr == other.graphId(); }
-  bool operator==( int d ) { return m_tid == d; }
-  bool operator==( uint32_t d ) { return m_tid == d; }
-  
+  bool operator==( const TaskId& other ) const { return m_tid == other.tid() && m_gr == other.graphId(); }
+  bool operator==( int d ) const               { return m_tid == d; }
+  bool operator==( uint32_t d ) const          { return m_tid == d; }
+
+  bool operator!=( const TaskId& other ) const { return !( *this == other ); }
+  bool operator!=( int d ) const               { return !( *this == d ); }
+  bool operator!=( uint32_t d ) const          { return !( *this == d ); }
+
+  bool operator<( const TaskId& other ) const { return m_gr < other.graphId() || (m_gr == other.graphId() && m_tid < other.tid()); }
+  bool operator<( int d ) const               { return m_tid < d; }
+  bool operator<( uint32_t d ) const          { return m_tid < d; }
+
+  bool operator<=( const TaskId& other ) const { return ( *this < other || *this == other ); }
+  bool operator<=( int d ) const               { return m_tid <= d; }
+  bool operator<=( uint32_t d ) const          { return m_tid <= d; }
+
+  bool operator>( const TaskId& other ) const { return !( *this <= other ); }
+  bool operator>( int d ) const               { return m_tid > d; }
+  bool operator>( uint32_t d ) const          { return m_tid > d; }
+
   // Prefix increment operator
   TaskId operator++() { TaskId task_id( ++m_tid, m_gr ); return task_id; }
   // Postfix increment operator
@@ -95,7 +113,7 @@ public:
   
   friend std::ostream& operator<<( std::ostream& out, const TaskId& task_id )
   {
-    out << "TaskId(" << task_id.tid() << "," << task_id.graphId() << ")";
+    out << "T_" << task_id.tid() << "_" << task_id.graphId() << "_";
     return out;
   }
 
@@ -116,6 +134,7 @@ const ShardId CNULL = (ShardId)-1;
 
 //! Index type used to register callbacks
 typedef uint8_t CallbackId;
+
 
 
 /*
@@ -142,5 +161,24 @@ public:
 */
 
 }
+
+
+// Hasher functor so we could use TaskId as a key in unordered_map
+template<>
+struct std::hash<BabelFlow::TaskId>
+{
+  std::size_t operator()( const BabelFlow::TaskId& t ) const 
+  {
+    std::size_t hash_a = m_uintHash( t.tid() );
+    std::size_t hash_b = m_uintHash( t.graphId() );
+    // Use boost::hash_combine:
+    hash_a ^= hash_b + 0x9e3779b9 + (hash_a << 6) + (hash_a >> 2);
+    return hash_a;
+  }
+
+  std::hash<unsigned int> m_uintHash;
+};
+
+
 
 #endif /* DEFINITIONS_H_ */

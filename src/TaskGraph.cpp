@@ -26,6 +26,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <fstream>
+
 #include "TaskGraph.h"
 
 using namespace BabelFlow;
@@ -83,7 +85,7 @@ int TaskGraph::output_graph_dot(ShardId count, const TaskMap* task_map, FILE* ou
     tasks = localGraph(i,task_map);
 
     for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      TaskId::InnerTaskId tid = tIt->id();
+      TaskId::InnerTaskId tid = TaskId::InnerTaskId( tIt->id() );
       fprintf(output, "%d [label=\"%d,%d\"]%s", tid , tid, tIt->callback(), eol.c_str());
       for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
         if (*it != TNULL)
@@ -96,6 +98,117 @@ int TaskGraph::output_graph_dot(ShardId count, const TaskMap* task_map, FILE* ou
   return 1;
 }
 
+
+void TaskGraph::output_graph( ShardId shard_count, const TaskMap* task_map, const std::string& filename ) const
+{
+  std::ofstream ofs( filename );
+
+  std::vector< std::vector<Task> > tasks( shard_count );
+  for( uint32_t i = 0; i < shard_count; ++i )
+    tasks[i] = localGraph( i, task_map );
+
+  output_helper( tasks, ofs, false );
+
+  ofs.close();
+}
+
+
+void TaskGraph::output_graph_html( ShardId shard_count, const TaskMap* task_map, const std::string& filename ) const
+{
+  std::ofstream ofs( filename );
+
+  std::vector< std::vector<Task> > tasks( shard_count );
+  for( uint32_t i = 0; i < shard_count; ++i )
+    tasks[i] = localGraph( i, task_map );
+  
+  output_helper( tasks, ofs, true );
+
+  ofs.close();
+}
+
+
+void TaskGraph::output_tasks_html( const std::vector<Task>& task_vec, const std::string& filename ) const
+{
+  std::ofstream ofs( filename );
+
+  std::vector< std::vector<Task> > tasks( 1 );
+  tasks[0] = task_vec;
+
+  output_helper( tasks, ofs, true );
+
+  ofs.close();
+}
+
+
+void TaskGraph::output_helper( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, bool incl_html ) const
+{
+  std::string eol;
+
+  if( incl_html )
+  {
+    eol = " \\";
+
+    outs << "<!DOCTYPE html>" << std::endl;
+    outs << "<meta charset=\"utf-8\">" << std::endl;
+    outs << "<body>" << std::endl;
+    outs << "<script src=\"https://d3js.org/d3.v4.min.js\"></script>" << std::endl;
+    outs << "<script src=\"https://unpkg.com/viz.js@1.8.0/viz.js\" type=\"javascript/worker\"></script>" << std::endl;
+    outs << "<script src=\"https://unpkg.com/d3-graphviz@1.3.1/build/d3-graphviz.min.js\"></script>" << std::endl;
+    outs << "<div id=\"graph\" style=\"text-align: center;\"></div>" << std::endl;
+    outs << "<script>" << std::endl;
+    outs << std::endl;
+    outs << "d3.select(\"#graph\")" << std::endl;
+    outs << "  .graphviz()" << std::endl;
+    outs << "    .renderDot('";
+  }
+
+  outs << "strict digraph G {" << eol << std::endl;
+  outs << "  ordering=out;" << eol << std::endl;
+  outs << "  rankdir=TB;" << eol << std::endl;
+  outs << "  ranksep=0.8;" << eol << std::endl;
+
+  output_dot( tasks_v, outs, eol );
+  
+  outs << "}" << eol << std::endl;
+
+  if( incl_html )
+  {
+    outs << "');" << std::endl;
+    outs << std::endl;
+    outs << "</script>" << std::endl;
+    outs << "</body>" << std::endl;
+    outs << "</html>" << std::endl;
+  }
+}
+
+
+void TaskGraph::output_dot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const
+{
+  for( uint32_t i = 0; i < tasks_v.size(); ++i )
+  {
+    for( const Task& tsk : tasks_v[i] )
+    {
+      outs << tsk.id() << " [label=\"" << tsk.id() << "," << uint32_t(tsk.callback()) << "\"]" << eol << std::endl;
+
+      // Print incoming edges
+      for( const TaskId& tid : tsk.incoming() )
+      {
+        if( tid != TNULL )
+          outs << tid << " -> " << tsk.id() << eol << std::endl;
+      }
+
+      // Print outgoing edges
+      for( uint32_t i = 0; i < tsk.fanout(); ++i )
+      {
+        for( const TaskId& tid : tsk.outgoing(i) )
+        {
+          if( tid != TNULL )
+            outs << tsk.id() << " -> " << tid << eol << std::endl;
+        }
+      }
+    }
+  }
+}
 
 //bool TaskGraphFactory::registerCreator(const std::string& name, TaskGraphFactory::CreatorFunc func)
 //{

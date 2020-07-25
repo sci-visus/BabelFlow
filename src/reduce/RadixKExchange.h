@@ -68,11 +68,8 @@ public:
 
   virtual uint64_t toTId(TaskId gId) const { return gId; }  //|= sPrefixMask; };
 
-
 protected:
-  //! Output the entire graph as dot file
-  virtual int output_graph_dot(ShardId count, const TaskMap* task_map, FILE* output, const std::string &eol) override;
-
+  virtual void output_dot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const override;
 
 private:
 

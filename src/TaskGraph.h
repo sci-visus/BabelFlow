@@ -36,6 +36,7 @@
 #include <cassert>
 #include <string>
 #include <typeinfo>
+#include <ostream>
 
 #include "Task.h"
 #include "Payload.h"
@@ -91,8 +92,19 @@ public:
   //! Output the entire graph as dot file embedded in HTML
   virtual int output_graph_html(ShardId count, const TaskMap* task_map, FILE* output);
 
+
+  virtual void output_graph(ShardId count, const TaskMap* task_map, const std::string& filename) const;
+
+  virtual void output_graph_html(ShardId count, const TaskMap* task_map, const std::string& filename) const;
+
+  virtual void output_tasks_html( const std::vector<Task>& tasks_v, const std::string& filename ) const;
+
 protected:
-  virtual int output_graph_dot(ShardId count, const TaskMap* task_map, FILE* output, const std::string &eol);
+  virtual int output_graph_dot(ShardId count, const TaskMap* task_map, FILE* output, const std::string& eol);
+
+  void output_helper( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, bool incl_html ) const;
+
+  virtual void output_dot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const;
 };
 
 

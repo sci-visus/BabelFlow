@@ -49,9 +49,6 @@ void RadixKExchange::init( uint32_t nblks, const std::vector<uint32_t>& radix_v 
   {
     m_LvlOffset.push_back( m_LvlOffset.back() + m_Nblocks );
   }
-
-  // // For the last gather task
-  // m_LvlOffset.push_back( m_LvlOffset.back() + 1 );
 }
 
 //-----------------------------------------------------------------------------
@@ -98,8 +95,6 @@ void RadixKExchange::deserialize(Payload buffer)
   std::vector<uint32_t> radix_v(buff_ptr[4]);
   
   for( uint32_t i=0; i < radix_v.size(); ++i ) radix_v[i] = buff_ptr[rad_offset + i];
-  
-  // memcpy(dim, buffer.buffer(), sizeof(uint32_t)*3);
 
   init( buff_ptr[0], radix_v );
 
@@ -126,17 +121,12 @@ Task RadixKExchange::task(uint64_t gId) const
   else 
   {
     if( lvl == totalLevels() )    // root node -- no outputs
-    // if( lvl == totalLevels() + 1 )    // root node (gather task) -- no outputs
     {
-      // Inputs are all the neighbors at the previous level
       it->callback(3);
-      // incoming.resize(m_Nblocks);
-      // for( uint32_t i = 0; i < m_Nblocks; ++i )
-      //   incoming[i] = i + m_Nblocks * totalLevels();
     }
     else
     {
-      it->callback(2);      // middle node
+      it->callback(2);            // middle node
     }
     // Neighbors from previous level are inputs to current level
     getRadixNeighbors( it->id(), lvl - 1, false, incoming );
@@ -158,12 +148,6 @@ Task RadixKExchange::task(uint64_t gId) const
       outgoing[i][0] = out_neighbors[i];
     }
   }
-  // else if( lvl == totalLevels() )
-  // {
-  //   outgoing.resize( 1 );     // destination is the gather task
-  //   outgoing[0].resize( 1 );  // only one destination for each outgoing message
-  //   outgoing[0][0] = size() - 1;
-  // }
 
   it->outputs(outgoing);
 
@@ -175,70 +159,61 @@ Task RadixKExchange::task(uint64_t gId) const
 std::vector<Task> RadixKExchange::localGraph(ShardId id,
                                              const TaskMap* task_map) const
 {
-  TaskId i;
-
-  // First get all the ids we need
-  std::vector<TaskId> ids = task_map->tasks(id);
-
-  // The create the required number of tasks
-  std::vector<Task> tasks;
-
-  //! Now assign all the task ids
-  for( TaskId i = 0; i < ids.size(); i++ )
-    tasks.push_back( task( ids[i] ) );
+  // Get all the ids we need from the TaskMap
+  std::vector<TaskId> tids = task_map->tasks( id );
+  std::vector<Task> tasks( tids.size() );
+  // Assign all the task ids
+  for( uint32_t i = 0; i < tids.size(); ++i )
+    tasks[i] = task( gId( tids[i] ) );
 
   return tasks;
 }
 
 //-----------------------------------------------------------------------------
 
-int RadixKExchange::output_graph_dot(ShardId count, 
-                                     const TaskMap* task_map, 
-                                     FILE* output,
-                                     const std::string &eol)
+void RadixKExchange::output_dot( const std::vector< std::vector<Task> >& tasks_v, 
+                                 std::ostream& outs, 
+                                 const std::string& eol ) const
 {
-  fprintf(output, "digraph G {%s", eol.c_str());
-  fprintf(output, "\tordering=out;%s\trankdir=TB;ranksep=0.8;%s", eol.c_str(), eol.c_str());
+  uint32_t num_total_levels = totalLevels();
 
-  for (uint32_t i = 0; i <= totalLevels(); ++i)
-    fprintf(output, "f%d [label=\"level %d\"]", i, i);
-
-
-  fprintf(output,"f0 ");
-  for (uint32_t i = 0; i <= totalLevels(); ++i)
-    fprintf(output, " -> f%d", i);
-  fprintf(output, "%s%s", eol.c_str(), eol.c_str());
-
-  std::vector<Task> tasks;
-  std::vector<Task>::iterator tIt;
-  std::vector<TaskId>::iterator it;
-
-  for (uint32_t i=0;i<count;i++) {
-    tasks = localGraph(i,task_map);
-
-    for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      TaskId::InnerTaskId tid = tIt->id();
-      if (level(tid) == 0)
-        fprintf(output, "%d [label=\"(%d ,%d)\",color=red]%s",
-                tid, tid, tIt->callback(), eol.c_str());
-      else
-        fprintf(output,"%d [label=\"(%d ,%d)\",color=black]%s",
-                tid, tid, tIt->callback(), eol.c_str());
-
-      for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
-        if (*it != TNULL)
-          fprintf(output, "%d -> %d%s", TaskId::InnerTaskId(*it), tid, eol.c_str());
-      }
-    }
-
-    // for (tIt=tasks.begin();tIt!=tasks.end();tIt++)
-    //   fprintf(output,"{rank = same; f%d; %d}\n",
-    //           level(tIt->id()),tIt->id());
-
+  for( uint32_t i = 0; i <= num_total_levels; ++i )
+    outs << "f" << i << " [label=\"level " << i << "\"]" << eol <<std::endl;
+  
+  if( num_total_levels > 0 )
+  {
+    outs << "f0 ";
+    for( uint32_t i = 1; i <= num_total_levels; ++i )
+      outs << " -> f" << i;
+    outs << eol << std::endl;
+    outs << eol << std::endl;
   }
 
-  fprintf(output, "}%s", eol.c_str());
-  return 1;
+  for( uint32_t i = 0; i < tasks_v.size(); ++i )
+  {
+    for( const Task& tsk : tasks_v[i] )
+    {
+      outs << tsk.id() << " [label=\"" << tsk.id() << "," << uint32_t(tsk.callback()) 
+           << "\",color=" << (level(tsk.id()) == 0 ? "red" : "black") << "]" << eol << std::endl;
+
+      // Print incoming edges
+      for( const TaskId& tid : tsk.incoming() )
+      {
+        if( tid != TNULL )
+          outs << tid << " -> " << tsk.id() << eol << std::endl;
+      }
+
+      // Print outgoing edges
+      for( uint32_t i = 0; i < tsk.fanout(); ++i )
+      {
+        for( const TaskId& tid : tsk.outgoing(i) )
+        {
+          if( tid != TNULL )
+            outs << tsk.id() << " -> " << tid << eol << std::endl;
+        }
+      }
+    }
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -276,3 +251,5 @@ void RadixKExchange::getRadixNeighbors(TaskId id, uint32_t level, bool isOutgoin
     neighbors[i] = nid + m_Nblocks * (level + (isOutgoing ? 1 : 0));
   }
 }
+
+//-----------------------------------------------------------------------------

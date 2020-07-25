@@ -48,7 +48,7 @@ public:
 
   //! Compute the fully specified tasks for the
   //! given controller id and task map
-  virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const;
+  virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const override;
 
   //! Return the total number of tasks
   /*! This function computes the total number of tasks in the graph.
@@ -58,25 +58,25 @@ public:
    *
    * @return The total number of tasks
    */
-  uint32_t size() const { return (mRounds+1)*n_blocks; }
+  virtual uint32_t size() const override { return (mRounds+1)*n_blocks; }
 
   //! Return the total number of rounds needed to merge
   uint8_t rounds() const {return mRounds;}
 
-  //! Output the entire graph as dot file
-  virtual int output_graph(ShardId count, const TaskMap* task_map, FILE* output);
+  virtual Task task(uint64_t gId) const override;
 
-  virtual Task task(uint64_t gId) const;
+  virtual uint64_t gId(TaskId tId) const override { return tId; }
 
-  virtual uint64_t gId(TaskId tId) const { return tId; }
+  //! Serialize a task graph
+  virtual Payload serialize() const override;
+
+  //! Deserialize a task graph. This will consume the payload
+  virtual void deserialize(Payload buffer) override;
 
   virtual uint64_t toTId(TaskId gId) const { return gId; }
 
-  //! Serialize a task graph
-  virtual Payload serialize() const;
-
-  //! Deserialize a task graph. This will consume the payload
-  virtual void deserialize(Payload buffer);
+protected:
+  virtual void output_dot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const override;
 
 private:
 

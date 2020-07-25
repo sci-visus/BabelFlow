@@ -31,7 +31,9 @@ std::vector<TaskId> SingleTaskMap::tasks(ShardId id) const
 {
   std::vector<TaskId> tasks;
 
-  tasks.push_back( TaskId( 1 ) );    // Only one task
+  // Only a single controller will have the gather task
+  if( id == 0 )
+    tasks.push_back( TaskId( 1 ) );    // Only one task
   
   return tasks;
 }
