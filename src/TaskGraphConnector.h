@@ -22,8 +22,20 @@ namespace BabelFlow
 class TaskGraphConnector
 {
 public:
-  TaskGraphConnector( ShardId controller_cnt, TaskGraph* src_gr, TaskGraph* dst_gr, TaskMap* src_map, TaskMap* dst_map )
-  : m_controllerCount( controller_cnt ), m_srcGraph( src_gr ), m_dstGraph( dst_gr ), m_srcMap( src_map ), m_dstMap( dst_map ) {}
+  TaskGraphConnector( ShardId controller_cnt, 
+                      TaskGraph* src_gr, 
+                      uint32_t src_gr_id, 
+                      TaskGraph* dst_gr,
+                      uint32_t dst_gr_id, 
+                      TaskMap* src_map, 
+                      TaskMap* dst_map  )
+  : m_controllerCount( controller_cnt ), 
+    m_srcGraph( src_gr ),
+    m_srcGraphId( src_gr_id ), 
+    m_dstGraph( dst_gr ), 
+    m_dstGraphId( dst_gr_id ),
+    m_srcMap( src_map ), 
+    m_dstMap( dst_map ) {}
 
   virtual ~TaskGraphConnector() {}
 
@@ -34,7 +46,9 @@ public:
 protected:
   ShardId     m_controllerCount;
   TaskGraph*  m_srcGraph;
+  uint32_t    m_srcGraphId;
   TaskGraph*  m_dstGraph;
+  uint32_t    m_dstGraphId;
   TaskMap*    m_srcMap;
   TaskMap*    m_dstMap;
 

@@ -67,7 +67,6 @@ Task ComposableTaskGraph::task( const TaskId& task_id ) const
   assert( graph_id < m_graphs.size() );
   TaskGraph* gr = m_graphs[graph_id];
   Task tsk = gr->task( gr->gId( task_id ) );
-  TaskId orig_task_id = tsk.id();
 
   // The next line ensures that the id in the task itself contains the graph_id;
   // in the lines below same thing is repeated for all incoming and outgoing tasks
@@ -83,22 +82,22 @@ Task ComposableTaskGraph::task( const TaskId& task_id ) const
     for( TaskId& tid : tsk.outgoing(i) )
       tid.graphId() = graph_id;
   }
-  
-  // TODO: fix the situation where task ids might be the same in different graphs. Make DefGraphConnector
-  // use graph_id's
 
   // If task t has zero outputs (root task), or a TNULL output, connect it to a leaf task in graph_id + 1,
   // use m_connector[graph_id] for that:
   if( graph_id < m_connectors.size() )
   {
-    std::vector<TaskId> connected_tsk = m_connectors[graph_id]->getOutgoingConnectedTasks( orig_task_id );
+    std::vector<TaskId> connected_tsk = m_connectors[graph_id]->getOutgoingConnectedTasks( tsk.id() );
     if( connected_tsk.size() > 0 )
     {
-      /////
-      // std::cout << "ComposableTaskGraph - graph_id = " << graph_id 
-      //           << ", found outgoing connection: " << orig_task_id << " --> " 
-      //           << connected_tsk[0] << std::endl;
-      /////
+#ifdef COMPOSABLE_TGRAPH_DEBUG
+      {
+        std::cout << "ComposableTaskGraph - graph_id = " << graph_id 
+                  << ", found outgoing connection: " << tsk.id() << " --> ";
+        for( TaskId& tid : connected_tsk ) std::cout << tid << "  ";
+        std::cout << std::endl;
+      }
+#endif
 
       // Each output data has to be sent to connected tasks in the next graph
       for( TaskId& tid : connected_tsk ) 
@@ -115,14 +114,17 @@ Task ComposableTaskGraph::task( const TaskId& task_id ) const
   // Use m_connector[graph_id - 1] for that.
   if( graph_id > 0 )
   {
-    std::vector<TaskId> connected_tsk = m_connectors[graph_id - 1]->getIncomingConnectedTasks( orig_task_id );
+    std::vector<TaskId> connected_tsk = m_connectors[graph_id - 1]->getIncomingConnectedTasks( tsk.id() );
     if( connected_tsk.size() > 0 )
     {
-      /////
-      // std::cout << "ComposableTaskGraph - graph_id = " << graph_id 
-      //           << ", found incoming connection: " << orig_task_id << " <-- " 
-      //           << connected_tsk[0] << std::endl;
-      /////
+#ifdef COMPOSABLE_TGRAPH_DEBUG
+      {
+        std::cout << "ComposableTaskGraph - graph_id = " << graph_id 
+                  << ", found incoming connection: " << tsk.id() << " <-- ";
+        for( TaskId& tid : connected_tsk ) std::cout << tid << "  ";
+        std::cout << std::endl;
+      }
+#endif
 
       for( TaskId& tid : connected_tsk ) 
         tid.graphId() = graph_id - 1;

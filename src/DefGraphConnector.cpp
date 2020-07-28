@@ -15,8 +15,14 @@ namespace BabelFlow
 
 //-----------------------------------------------------------------------------
 
-DefGraphConnector::DefGraphConnector( ShardId controller_cnt, TaskGraph* src_gr, TaskGraph* dst_gr, TaskMap* src_map, TaskMap* dst_map )
- : TaskGraphConnector( controller_cnt, src_gr, dst_gr, src_map, dst_map )
+DefGraphConnector::DefGraphConnector( ShardId controller_cnt, 
+                                      TaskGraph* src_gr, 
+                                      uint32_t src_gr_id, 
+                                      TaskGraph* dst_gr,
+                                      uint32_t dst_gr_id, 
+                                      TaskMap* src_map, 
+                                      TaskMap* dst_map )
+ : TaskGraphConnector( controller_cnt, src_gr, src_gr_id, dst_gr, dst_gr_id, src_map, dst_map )
 {
   init();
 }
@@ -101,6 +107,10 @@ void DefGraphConnector::init()
   {
     TaskId& out_tid = output_ts[i];
     TaskId& in_tid = input_ts[ i % input_ts.size() ];
+
+    // Set the graph ids
+    out_tid.graphId() = m_srcGraphId;
+    in_tid.graphId() = m_dstGraphId;
 
     m_outConnectorMap[ out_tid ] = in_tid;
     m_inConnectorMap[ in_tid ].push_back( out_tid );

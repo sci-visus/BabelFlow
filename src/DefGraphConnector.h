@@ -22,7 +22,13 @@ class DefGraphConnector : public TaskGraphConnector
 public:
   DefGraphConnector();
   
-  DefGraphConnector( ShardId controller_cnt, TaskGraph* src_gr, TaskGraph* dst_gr, TaskMap* src_map, TaskMap* dst_map );
+  DefGraphConnector( ShardId controller_cnt, 
+                     TaskGraph* src_gr, 
+                     uint32_t src_gr_id, 
+                     TaskGraph* dst_gr,
+                     uint32_t dst_gr_id, 
+                     TaskMap* src_map, 
+                     TaskMap* dst_map );
 
   virtual ~DefGraphConnector() {}
 
