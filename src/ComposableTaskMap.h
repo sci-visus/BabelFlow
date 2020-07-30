@@ -18,6 +18,8 @@ namespace BabelFlow
 class ComposableTaskMap : public TaskMap
 {
 public:
+  //! Default constructor
+  ComposableTaskMap() = default; // added to accommodate ascent interface
 
   ComposableTaskMap( const std::vector<TaskMap*>& task_maps );
   

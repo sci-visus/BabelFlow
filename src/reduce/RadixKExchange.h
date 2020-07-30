@@ -24,6 +24,7 @@ class RadixKExchangeTaskMap;
 class RadixKExchange : public TaskGraph
 {
 public:
+  enum TaskCB { LEAF_TASK_CB = 1, MID_TASK_CB = 2, ROOT_TASK_CB = 3 };
 
   friend class RadixKExchangeTaskMap;
   
@@ -69,7 +70,7 @@ public:
   virtual uint64_t toTId(TaskId gId) const { return gId; }  //|= sPrefixMask; };
 
 protected:
-  virtual void output_dot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const override;
+  virtual void outputDot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const override;
 
 private:
 

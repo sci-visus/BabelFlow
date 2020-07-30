@@ -18,7 +18,6 @@ PreProcessInputTaskGraph::PreProcessInputTaskGraph( ShardId count, TaskGraph *g,
       if (gid > maxGid) maxGid = gid;
       TaskId tid = task.id();
       if (tid > maxTid) maxTid = tid;
-      if (task.callback() >= newCallBackId) newCallBackId = task.callback() + 1;
 
       // record input tasks
       if (task.incoming().size() == 1 && task.incoming()[0] == TNULL) 
@@ -82,7 +81,7 @@ Task PreProcessInputTaskGraph::task(uint64_t gId) const
     t.outputs().resize(1);
     t.outputs()[0].resize(1);
     t.outputs()[0][0] = old_tid;
-    t.callback(newCallBackId);
+    t.callback( TaskCB::PRE_PROC_TASK_CB, queryCallback( TaskCB::PRE_PROC_TASK_CB ) );
     return t;
   }
 }
@@ -141,14 +140,12 @@ Payload PreProcessInputTaskGraph::serialize() const
 
   // merge all the payloads
   // header = |CallbackId|maxTid|maxGid|p_tids.offset|p_gids.offset|p_sids.offset|p_og2t.offset|old.offset|
-  int32_t header_size = sizeof(CallbackId) + sizeof(TaskId) + sizeof(uint64_t) + sizeof(size_t) * 5;
+  int32_t header_size = sizeof(TaskId) + sizeof(uint64_t) + sizeof(size_t) * 5;
   int32_t buffer_size = header_size + p_tids.size() + p_gids.size() + p_sids.size() + old.size();
 
   char *buffer = new char[buffer_size];
 
   size_t offset = 0;
-  memcpy(buffer + offset, &newCallBackId, sizeof(CallbackId));
-  offset += sizeof(CallbackId);
   memcpy(buffer + offset, &maxTid, sizeof(TaskId));
   offset += sizeof(TaskId);
   memcpy(buffer + offset, &maxGid, sizeof(uint64_t));
@@ -200,8 +197,6 @@ void PreProcessInputTaskGraph::deserialize(Payload payload)
   // header = |CallbackId|maxTid|maxGid|p_tids.offset|p_gids.offset|p_sids.offset|p_og2t.offset|old.offset|
   size_t tid_offset, gid_offset, sid_offset, og2t_offset, old_offset;
   size_t offset = 0;
-  memcpy(&newCallBackId, buffer + offset, sizeof(CallbackId));
-  offset += sizeof(CallbackId);
   memcpy(&maxTid, buffer + offset, sizeof(TaskId));
   offset += sizeof(TaskId);
   memcpy(&maxGid, buffer + offset, sizeof(uint64_t));

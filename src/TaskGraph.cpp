@@ -27,79 +27,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <fstream>
+#include <cassert>
 
 #include "TaskGraph.h"
-
-using namespace BabelFlow;
 
 
 //TaskGraphFactory::MapType TaskGraphFactory::m_map;
 
-int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output)
+namespace BabelFlow 
 {
-  output_graph_dot(count,task_map,output,"\n");
+
+//-----------------------------------------------------------------------------
+
+void TaskGraph::registerCallback( CallbackId id, Callback func )
+{
+  if( m_callbackVec.size() <= id )
+    m_callbackVec.resize( id + 1, nullptr );
+
+  m_callbackVec[id] = func;
 }
 
+//-----------------------------------------------------------------------------
 
-int TaskGraph::output_graph_html(ShardId count, const TaskMap* task_map, FILE* output)
+Callback TaskGraph::queryCallback( CallbackId id ) const
 {
-  // The following code is taken from Ascent:
+  assert( id < m_callbackVec.size() );
 
-  fprintf(output,
-    "<!DOCTYPE html>\n"
-    "<meta charset=\"utf-8\">\n"
-    "<body>\n"
-    "<script src=\"https://d3js.org/d3.v4.min.js\"></script>\n"
-    "<script src=\"https://unpkg.com/viz.js@1.8.0/viz.js\" type=\"javascript/worker\"></script>\n"
-    "<script src=\"https://unpkg.com/d3-graphviz@1.3.1/build/d3-graphviz.min.js\"></script>\n"
-    "<div id=\"graph\" style=\"text-align: center;\"></div>\n"
-    "<script>\n"
-    "\n"
-    "d3.select(\"#graph\")\n"
-    "  .graphviz()\n"
-    "    .renderDot('");
-
-  // gen dot def, with proper js escaping
-  // we are injected as inline js literal -- new lines need to be escaped.
-  // Add \ to the end of each line in our dot output.
-  output_graph_dot(count,task_map,output," \\\n");
-
-  fprintf(output,
-    "');\n"
-    "\n"
-    "</script>\n"
-    "</body>\n"
-    "</html>\n");
+  return m_callbackVec[ id ];
 }
 
+//-----------------------------------------------------------------------------
 
-int TaskGraph::output_graph_dot(ShardId count, const TaskMap* task_map, FILE* output, const std::string &eol)
-{
-  fprintf(output,"digraph G {%s",eol.c_str());
-
-  std::vector<Task> tasks;
-  std::vector<Task>::iterator tIt;
-  std::vector<TaskId>::iterator it;
-
-  for (uint32_t i=0;i<count;i++) {
-    tasks = localGraph(i,task_map);
-
-    for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      TaskId::InnerTaskId tid = TaskId::InnerTaskId( tIt->id() );
-      fprintf(output, "%d [label=\"%d,%d\"]%s", tid , tid, tIt->callback(), eol.c_str());
-      for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
-        if (*it != TNULL)
-          fprintf(output, "%d -> %d%s", TaskId::InnerTaskId(*it), tid, eol.c_str());
-      }
-    }
-  }
-
-  fprintf(output,"}%s",eol.c_str());
-  return 1;
-}
-
-
-void TaskGraph::output_graph( ShardId shard_count, const TaskMap* task_map, const std::string& filename ) const
+void TaskGraph::outputGraph( ShardId shard_count, const TaskMap* task_map, const std::string& filename ) const
 {
   std::ofstream ofs( filename );
 
@@ -107,13 +66,14 @@ void TaskGraph::output_graph( ShardId shard_count, const TaskMap* task_map, cons
   for( uint32_t i = 0; i < shard_count; ++i )
     tasks[i] = localGraph( i, task_map );
 
-  output_helper( tasks, ofs, false );
+  outputHelper( tasks, ofs, false );
 
   ofs.close();
 }
 
+//-----------------------------------------------------------------------------
 
-void TaskGraph::output_graph_html( ShardId shard_count, const TaskMap* task_map, const std::string& filename ) const
+void TaskGraph::outputGraphHtml( ShardId shard_count, const TaskMap* task_map, const std::string& filename ) const
 {
   std::ofstream ofs( filename );
 
@@ -121,26 +81,28 @@ void TaskGraph::output_graph_html( ShardId shard_count, const TaskMap* task_map,
   for( uint32_t i = 0; i < shard_count; ++i )
     tasks[i] = localGraph( i, task_map );
   
-  output_helper( tasks, ofs, true );
+  outputHelper( tasks, ofs, true );
 
   ofs.close();
 }
 
+//-----------------------------------------------------------------------------
 
-void TaskGraph::output_tasks_html( const std::vector<Task>& task_vec, const std::string& filename ) const
+void TaskGraph::outputTasksHtml( const std::vector<Task>& task_vec, const std::string& filename ) const
 {
   std::ofstream ofs( filename );
 
   std::vector< std::vector<Task> > tasks( 1 );
   tasks[0] = task_vec;
 
-  output_helper( tasks, ofs, true );
+  outputHelper( tasks, ofs, true );
 
   ofs.close();
 }
 
+//-----------------------------------------------------------------------------
 
-void TaskGraph::output_helper( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, bool incl_html ) const
+void TaskGraph::outputHelper( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, bool incl_html ) const
 {
   std::string eol;
 
@@ -167,7 +129,7 @@ void TaskGraph::output_helper( const std::vector< std::vector<Task> >& tasks_v, 
   outs << "  rankdir=TB;" << eol << std::endl;
   outs << "  ranksep=0.8;" << eol << std::endl;
 
-  output_dot( tasks_v, outs, eol );
+  outputDot( tasks_v, outs, eol );
   
   outs << "}" << eol << std::endl;
 
@@ -181,14 +143,15 @@ void TaskGraph::output_helper( const std::vector< std::vector<Task> >& tasks_v, 
   }
 }
 
+//-----------------------------------------------------------------------------
 
-void TaskGraph::output_dot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const
+void TaskGraph::outputDot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const
 {
   for( uint32_t i = 0; i < tasks_v.size(); ++i )
   {
     for( const Task& tsk : tasks_v[i] )
     {
-      outs << tsk.id() << " [label=\"" << tsk.id() << "," << uint32_t(tsk.callback()) << "\"]" << eol << std::endl;
+      outs << tsk.id() << " [label=\"" << tsk.id() << "," << uint32_t(tsk.callbackId()) << "\"]" << eol << std::endl;
 
       // Print incoming edges
       for( const TaskId& tid : tsk.incoming() )
@@ -210,6 +173,8 @@ void TaskGraph::output_dot( const std::vector< std::vector<Task> >& tasks_v, std
   }
 }
 
+//-----------------------------------------------------------------------------
+
 //bool TaskGraphFactory::registerCreator(const std::string& name, TaskGraphFactory::CreatorFunc func)
 //{
 //  if( m_map.find( name ) != m_map.end() )
@@ -218,3 +183,5 @@ void TaskGraph::output_dot( const std::vector< std::vector<Task> >& tasks_v, std
 //  m_map[name] = func;
 //  return true;
 //}
+
+}   // end namespace BabelFlow

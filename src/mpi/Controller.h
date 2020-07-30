@@ -65,9 +65,6 @@ public:
   int initialize(const BabelFlow::TaskGraph& graph, const BabelFlow::TaskMap* task_map, MPI_Comm comm = MPI_COMM_WORLD,
                  const BabelFlow::ControllerMap* controller_map = new BabelFlow::ControllerMap());
 
-  //! Register a callback for the given id
-  int registerCallback(CallbackId id, Callback func);
-
   //! Start the computation
   int run(std::map<TaskId,Payload>& initial_inputs);
 
@@ -118,9 +115,6 @@ public:
     //! The output buffers
     std::vector<Payload> mOutputs;
   };
-
-  //! A list of registered callbacks
-  std::vector<Callback> mCallbacks;
    
   //! Post a send of the given data to all destinations
   int initiateSend(TaskId source,const std::vector<TaskId>& destinations, 

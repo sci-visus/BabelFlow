@@ -33,19 +33,6 @@
 using namespace LegionRuntime::HighLevel;
 using namespace LegionRuntime::Accessor;
 
-//! The typedef for the accepted callbacks
-/*! A Callback is the only accepted function signature for a task.
- *  It takes n>=0  DataBlocks as input and produces m>=0 DataBlocks
- *  as output. The callback will assume ownership of the input buffers
- *  as is responsible for deleting any associated memory. Similarly,
- *  the callback will give up ownership of all output buffers to the
- *  caller
- *
- * @param inputs A set of DataBlocks that are the inputs
- * @param outputs A set of DataBlocks storing the outputs
- * @return 1 if successful and 0 otherwise
- */
-typedef int (*Callback)(std::vector<BabelFlow::Payload>& inputs, std::vector<BabelFlow::Payload>& outputs, BabelFlow::TaskId task);
 
 typedef std::pair<BabelFlow::TaskId,BabelFlow::TaskId> EdgeTaskId;
 typedef LegionRuntime::Arrays::coord_t RegionsIndexType;
@@ -58,6 +45,7 @@ typedef uint32_t RegionPointType;
 struct TaskInfo{
   BabelFlow::TaskId id;
   BabelFlow::CallbackId callbackID;
+  BabelFlow::Callback callbackFunc;
   size_t lenInput;
   size_t lenOutput;
 };
@@ -65,6 +53,7 @@ struct TaskInfo{
 struct TaskInfoExt{
   BabelFlow::TaskId id;
   BabelFlow::CallbackId callbackID;
+  BabelFlow::Callback callbackFunc;
   size_t lenInput;
   size_t lenOutput;
   int n_pbs;
@@ -112,7 +101,8 @@ typedef std::map<DomainPoint, TaskArgument> MyArgumentMap;
 
 class LaunchData{
 public:
-  BabelFlow::CallbackId callback;
+  BabelFlow::CallbackId callbackID;
+  BabelFlow::Callback callbackFunc;
   //ArgumentMap arg_map;
   MyArgumentMap arg_map;
   std::vector<VirtualPartition> vparts;
@@ -193,14 +183,8 @@ public:
 
   //int initialize(BabelFlow::SuperTask* st, int argc, char **argv);
 
-  //! Register a callback for the given id
-  int registerCallback(BabelFlow::CallbackId id, Callback func);
-
   //! Start the computation
   int run(std::map<BabelFlow::TaskId,BabelFlow::Payload>& initial_inputs);
-
-  //! A list of registered callbacks
-  static std::vector<Callback> mCallbacks;
 
 //  static bool load_task(const Task *task,
 //                   const std::vector<PhysicalRegion> &regions,

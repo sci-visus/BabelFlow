@@ -19,6 +19,8 @@ namespace BabelFlow
 class ComposableTaskGraph : public TaskGraph
 {
 public:
+  ComposableTaskGraph() = default;
+  
   ComposableTaskGraph( std::vector<TaskGraph*>& gr_vec, std::vector<TaskGraphConnector*>& gr_connectors );
   
   virtual ~ComposableTaskGraph() {}

@@ -79,10 +79,6 @@ void DefGraphConnector::init()
   std::for_each( src_ts.begin(), src_ts.end(), [&output_ts](Task& t) { if( isRootTask(t) ) output_ts.push_back( t.id() ); } );
   std::for_each( dst_ts.begin(), dst_ts.end(), [&input_ts](Task& t) { if( isLeafTask(t) ) input_ts.push_back( t.id() ); } );
 
-  // Sanity check -- source graph should have at least one root and destination graph - at least one leaf task
-  assert( output_ts.size() > 0 );
-  assert( input_ts.size() > 0 );
-
   // We assume the task ids of both the roots and the leafs are monotonically increasing
   std::sort( output_ts.begin(), output_ts.end() );
   std::sort( input_ts.begin(), input_ts.end() );

@@ -20,6 +20,7 @@ namespace BabelFlow
 class SingleTaskGraph : public TaskGraph
 {
 public:
+  enum TaskCB { SINGLE_TASK_CB = 11 };
 
   SingleTaskGraph() {}
 

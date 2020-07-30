@@ -127,7 +127,6 @@ Controller::Controller() : mRecvBufferSize(1024*1024*128)
   mId = CNULL;
   mTaskMap = NULL;
   mControllerMap = NULL;
-  mCallbacks.push_back(&relay_message);
   mRank = TNULL;
 }
 
@@ -208,18 +207,6 @@ std::map<TaskId,std::vector<Payload> >& Controller::getAllOutputs()
 std::vector<Payload>& Controller::getOutputsForTask(TaskId tid)
 {
   return mOutputs[tid];
-}
-
-int Controller::registerCallback(CallbackId id, Callback func)
-{
-  assert (id > 0); // Callback 0 is reserved for relays
-
-  if (mCallbacks.size() <= id)
-    mCallbacks.resize(id+1);
-
-  mCallbacks[id] = func;
-
-  return 1;
 }
 
 //! Start the computation
@@ -608,10 +595,8 @@ int Controller::processQueuedTasks()
 
 int execute(Controller *c,Controller::TaskWrapper task)
 {
-  assert (task.task().callback() < c->mCallbacks.size());
-
   // Call the appropriate callback
-  c->mCallbacks[task.task().callback()](task.mInputs,task.mOutputs,task.task().id());
+  task.task().callbackFunc()( task.mInputs, task.mOutputs, task.task().id() );
 
   // Now we "own" all the BlockData for the outputs and we must send
   // them onward. So for all outputs we start a send

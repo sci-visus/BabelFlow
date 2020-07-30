@@ -30,7 +30,7 @@
 #include "Task.h"
 using namespace BabelFlow;
 
-Task::Task(const Task& t) : mId(t.mId), mCallback(t.mCallback)
+Task::Task(const Task& t) : mId(t.mId), mCallbackId(t.mCallbackId), mCallbackFunc(t.mCallbackFunc)
 {
   mIncoming = t.mIncoming;
   mOutgoing = t.mOutgoing;
@@ -39,7 +39,8 @@ Task::Task(const Task& t) : mId(t.mId), mCallback(t.mCallback)
 Task& Task::operator=(const Task& t)
 {
   mId = t.mId;
-  mCallback = t.mCallback;
+  mCallbackId = t.mCallbackId;
+  mCallbackFunc = t.mCallbackFunc;
   mIncoming = t.mIncoming;
   mOutgoing = t.mOutgoing;
 

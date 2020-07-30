@@ -7,7 +7,6 @@ set(RED_HEADERS
     reduce/RadixKExchange.h
     reduce/RadixKExchangeTaskMap.h
     reduce/SingleTaskGraph.h
-    reduce/SingleTaskMap.h
 )
 
 set(RED_SRC
@@ -18,7 +17,6 @@ set(RED_SRC
     reduce/RadixKExchange.cpp
     reduce/RadixKExchangeTaskMap.cpp
     reduce/SingleTaskGraph.cpp
-    reduce/SingleTaskMap.cpp
 )
 
 set(BASE_BFLOW_HEADERS

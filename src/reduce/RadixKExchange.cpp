@@ -113,7 +113,7 @@ Task RadixKExchange::task(uint64_t gId) const
   
   if( lvl == 0 )        // Leaf node
   {
-    it->callback(1); 
+    it->callback( TaskCB::LEAF_TASK_CB, queryCallback( TaskCB::LEAF_TASK_CB ) ); 
 
     incoming.resize(1); // One dummy input from controller
     incoming[0] = TNULL;
@@ -122,11 +122,11 @@ Task RadixKExchange::task(uint64_t gId) const
   {
     if( lvl == totalLevels() )    // root node -- no outputs
     {
-      it->callback(3);
+      it->callback( TaskCB::ROOT_TASK_CB, queryCallback( TaskCB::ROOT_TASK_CB ) );
     }
     else
     {
-      it->callback(2);            // middle node
+      it->callback( TaskCB::MID_TASK_CB, queryCallback( TaskCB::MID_TASK_CB ) );            // middle node
     }
     // Neighbors from previous level are inputs to current level
     getRadixNeighbors( it->id(), lvl - 1, false, incoming );
@@ -171,9 +171,9 @@ std::vector<Task> RadixKExchange::localGraph(ShardId id,
 
 //-----------------------------------------------------------------------------
 
-void RadixKExchange::output_dot( const std::vector< std::vector<Task> >& tasks_v, 
-                                 std::ostream& outs, 
-                                 const std::string& eol ) const
+void RadixKExchange::outputDot( const std::vector< std::vector<Task> >& tasks_v, 
+                                std::ostream& outs, 
+                                const std::string& eol ) const
 {
   uint32_t num_total_levels = totalLevels();
 
@@ -193,7 +193,7 @@ void RadixKExchange::output_dot( const std::vector< std::vector<Task> >& tasks_v
   {
     for( const Task& tsk : tasks_v[i] )
     {
-      outs << tsk.id() << " [label=\"" << tsk.id() << "," << uint32_t(tsk.callback()) 
+      outs << tsk.id() << " [label=\"" << tsk.id() << "," << uint32_t(tsk.callbackId()) 
            << "\",color=" << (level(tsk.id()) == 0 ? "red" : "black") << "]" << eol << std::endl;
 
       // Print incoming edges

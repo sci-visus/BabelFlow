@@ -37,6 +37,7 @@
 #include "ReduceAllGraph.h"
 #include "ReduceAllCallbacks.h"
 #include "ModuloMap.h"
+#include "RelayTask.h"
 #include "mpi/Controller.h"
 
 
@@ -72,6 +73,11 @@ int main(int argc, char *argv[]) {
 
   start = clock();
   ReduceAllGraph graph(leafs, valence);
+  graph.registerCallback( ReduceAllGraph::LOCAL_COMPUTE_TASK, add_int);
+  graph.registerCallback( ReduceAllGraph::REDUCTION_TASK, add_int);
+  graph.registerCallback( ReduceAllGraph::COMPLETE_REDUCTION_TASK, add_int_broadcast);
+  graph.registerCallback( ReduceAllGraph::RESULT_REPORT_TASK, print_result);
+  graph.registerCallback( ReduceAllGraph::RESULT_BROADCAST_TASK, relay_message );
 
   if (rank == 0)
     printf("Graph size %d reduction size %d leaf tasks %d\n", graph.size(), graph.reductionSize(), graph.leafCount());
@@ -81,20 +87,15 @@ int main(int argc, char *argv[]) {
   Controller master;
 
 #if OUTPUT_GRAPH
-  if (rank == 0) {
+  if (rank == 0) 
+  {
     std::stringstream graph_name;
     graph_name << "task_graph_" << rank << ".dot";
-    FILE *output = fopen(graph_name.str().c_str(), "w");
-    graph.output_graph(mpi_width, &task_map, output);
-    fclose(output);
+    graph.outputGraph( mpi_width, &task_map, graph_name.str()) ;
   }
 #endif
 
   master.initialize(graph,&task_map);
-  master.registerCallback(LOCAL_COMPUTE_TASK, add_int);
-  master.registerCallback(REDUCTION_TASK, add_int);
-  master.registerCallback(COMPLETE_REDUCTION_TASK, add_int_broadcast);
-  master.registerCallback(RESULT_REPORT_TASK, print_result);
 
   std::map<TaskId,Payload> inputs;
 

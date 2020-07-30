@@ -66,17 +66,15 @@ int main(int argc, char* argv[])
   uint32_t valence = atoi(argv[2]);
 
   ReductionGraph graph(leafs,valence);
+  graph.registerCallback( ReductionGraph::RED_TASK_CB, add_int );
+  graph.registerCallback( ReductionGraph::ROOT_TASK_CB, report_sum );
   ModuloMap task_map(mpi_width,graph.size());
 
   Controller master;
 
-  FILE* output = fopen("task_graph.dot","w");
-  graph.output_graph(mpi_width,&task_map,output);
-  fclose(output);
+  graph.outputGraph( mpi_width, &task_map, "task_graph.dot" );
 
   master.initialize(graph,&task_map);
-  master.registerCallback(1,add_int);
-  master.registerCallback(2,report_sum);
 
   std::map<TaskId,Payload> inputs;
 

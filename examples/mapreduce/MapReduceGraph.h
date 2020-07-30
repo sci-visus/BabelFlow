@@ -8,17 +8,19 @@
 
 #include <TaskGraph.h>
 
-enum CallBackTypes
-{
-  SPLIT_LOAD=1,
-  MAP_FUNC=2,
-  RED_FUNC=3,
-  PRINT_FUNC=4
-};
+
 
 class MapReduceGraph : public BabelFlow::TaskGraph
 {
 public:
+  enum CallBackTypes
+  {
+    SPLIT_LOAD=1,
+    MAP_FUNC=2,
+    RED_FUNC=3,
+    PRINT_FUNC=4
+  };
+
   explicit MapReduceGraph(int n_worker) : n_worker(n_worker)
   {}
 

@@ -100,20 +100,21 @@ struct ExternalInfo{
 
 struct SerTask{
   BabelFlow::TaskId id;
-  BabelFlow::CallbackId callback;
+  BabelFlow::CallbackId callbackID;
+  BabelFlow::Callback callbackFunc;
   std::vector<BabelFlow::TaskId> incoming;
   std::vector<std::vector<BabelFlow::TaskId> > outgoing;
 
   template <class Archive>
   void save( Archive & ar ) const
   {
-    ar(id, callback, incoming, outgoing);
+    ar(id, callbackID, callbackFunc, incoming, outgoing);
   }
 
   template <class Archive>
   void load( Archive & ar ) 
   {
-    ar(id, callback, incoming, outgoing);
+    ar(id, callbackID, callbackFunc, incoming, outgoing);
   }
 };
 
@@ -131,7 +132,8 @@ private:
         shard_ordered_ser[i].incoming = shard_ordered[i].incoming();
         shard_ordered_ser[i].outgoing = shard_ordered[i].outputs();
         shard_ordered_ser[i].id = shard_ordered[i].id();
-        shard_ordered_ser[i].callback = shard_ordered[i].callback();
+        shard_ordered_ser[i].callbackID = shard_ordered[i].callbackId();
+        shard_ordered_ser[i].callbackFunc = shard_ordered[i].callbackFunc();
       }
       ar( sargs, CEREAL_NVP(externals_map), CEREAL_NVP(shard_ordered_ser), CEREAL_NVP(shared_edges));
       
@@ -157,7 +159,7 @@ public:
         shard_ordered[i].incoming() = shard_ordered_ser[i].incoming;
         shard_ordered[i].outputs() = shard_ordered_ser[i].outgoing;
         shard_ordered[i].id(shard_ordered_ser[i].id);
-        shard_ordered[i].callback(shard_ordered_ser[i].callback);
+        shard_ordered[i].callback( shard_ordered_ser[i].callbackID, shard_ordered_ser[i].callbackFunc );
       }
     }
 
@@ -169,7 +171,6 @@ std::map<EdgeTaskId,VPartId> vpart_map;
 
 Controller* Controller::instance = NULL;
 std::map<BabelFlow::TaskId,BabelFlow::Payload> (*Controller::input_initialization)(int, char**) = NULL;
-std::vector<Callback> Controller::mCallbacks;
 
 std::vector<BabelFlow::Task> Controller::alltasks;
 std::map<BabelFlow::TaskId,BabelFlow::Payload> Controller::mInitial_inputs;
@@ -640,7 +641,7 @@ int Controller::generic_task(const Task *task,
 
   // Execute the callbacks
   double t_start = Realm::Clock::current_time_in_microseconds();
-  mCallbacks[info.callbackID](inputs,outputs,info.id);
+  info.callbackFunc( inputs, outputs, info.id );
   double t_end = Realm::Clock::current_time_in_microseconds();
 
 #if PROFILING_TIMING
@@ -1366,7 +1367,7 @@ bool shard_main_task(const Task *task,
               else if(inro == 0){ // create new region
 
                 //printf("create new region\n");
-                IndexSpace curr_is = runtime->create_index_space(ctx, Domain::from_rect<1>(LegionRuntime::Arrays::Rect<1>(0, estimate_output_size(int_task.callback(), ro, input_block_size))));//OUTPUT_SIZE-1)));
+                IndexSpace curr_is = runtime->create_index_space(ctx, Domain::from_rect<1>(LegionRuntime::Arrays::Rect<1>(0, estimate_output_size(int_task.callbackId(), ro, input_block_size))));//OUTPUT_SIZE-1)));
 
                 curr_lr = runtime->create_logical_region(ctx, curr_is, pay_fs);
                 
@@ -1398,7 +1399,8 @@ bool shard_main_task(const Task *task,
     //TaskInfoExt info;
     TaskInfo info;
     info.id = int_task.id();
-    info.callbackID = int_task.callback();
+    info.callbackID = int_task.callbackId();
+    info.callbackFunc = int_task.callbackFunc();
     info.lenInput = int_task.incoming().size();
     info.lenOutput = int_task.outputs().size();
     // for(int ro=0; ro < int_task.outputs().size(); ro++){
@@ -2412,7 +2414,8 @@ int Controller::run(std::map<BabelFlow::TaskId,BabelFlow::Payload>& initial_inpu
 
   DEBUG_PRINT((stdout,"init data region end %d\n", index-1));
 
-  init_launch.callback = 0; // TODO could be confused with relay...
+  init_launch.callbackId = 0; // TODO could be confused with relay...
+  init_launch.callbackFunc = nullptr;
   init_launch.n_tasks = mInitial_inputs.size();
 
   launch_data.push_back(init_launch);
@@ -2438,17 +2441,6 @@ int Controller::run(std::map<BabelFlow::TaskId,BabelFlow::Payload>& initial_inpu
 #endif
 
   return Runtime::start(legion_argc, legion_argv);
-}
-
-int Controller::registerCallback(BabelFlow::CallbackId id, Callback func){
-  assert (id > 0); // Callback 0 is reserved for relays
-  
-  if (mCallbacks.size() <= id)
-    mCallbacks.resize(id+1);
-  
-  mCallbacks[id] = func;
-  
-  return 1;
 }
 
 static void update_mappers(Machine machine, Runtime *runtime,

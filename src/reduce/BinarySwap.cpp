@@ -108,14 +108,14 @@ Task BinarySwap::task(uint64_t gId) const{
   uint8_t lvl = level(it->id());
 
   if (lvl == 0) { // If this is a leaf node
-    it->callback(1); 
+    it->callback( TaskCB::LEAF_TASK_CB, queryCallback( TaskCB::LEAF_TASK_CB ) ); 
 
     incoming.resize(1); // One dummy input
     incoming[0] = TNULL;
     it->incoming(incoming);
   } 
   else {
-    it->callback(2);
+    it->callback( TaskCB::MID_TASK_CB, queryCallback( TaskCB::MID_TASK_CB ) );
 
     incoming.resize(2);
 
@@ -134,7 +134,7 @@ Task BinarySwap::task(uint64_t gId) const{
   }
   
   if(lvl == mRounds)
-    it->callback(3);
+    it->callback( TaskCB::ROOT_TASK_CB, queryCallback( TaskCB::ROOT_TASK_CB ) );
 
   // Set outputs
   if(lvl < mRounds){
@@ -188,9 +188,9 @@ std::vector<Task> BinarySwap::localGraph(ShardId id,
 
 //-----------------------------------------------------------------------------
 
-void BinarySwap::output_dot( const std::vector< std::vector<Task> >& tasks_v, 
-                             std::ostream& outs, 
-                             const std::string& eol ) const
+void BinarySwap::outputDot( const std::vector< std::vector<Task> >& tasks_v, 
+                            std::ostream& outs, 
+                            const std::string& eol ) const
 {
   for( uint32_t i = 0; i <= mRounds; ++i )
     outs << "f" << i << " [label=\"level " << i << "\"]" << eol <<std::endl;
@@ -208,7 +208,7 @@ void BinarySwap::output_dot( const std::vector< std::vector<Task> >& tasks_v,
   {
     for( const Task& tsk : tasks_v[i] )
     {
-      outs << tsk.id() << " [label=\"" << tsk.id() << "," << uint32_t(tsk.callback()) 
+      outs << tsk.id() << " [label=\"" << tsk.id() << "," << uint32_t(tsk.callbackId()) 
            << "\",color=" << (level(tsk.id()) == 0 ? "red" : "black") << "]" << eol << std::endl;
 
       // Print incoming edges

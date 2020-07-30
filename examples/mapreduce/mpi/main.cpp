@@ -36,21 +36,17 @@ int main(int argc, char *argv[])
   size_t arr_len = 50;
 
   MapReduceGraph graph(n_workers);
+  graph.registerCallback( MapReduceGraph::SPLIT_LOAD, split_load );
+  graph.registerCallback( MapReduceGraph::MAP_FUNC, map_func );
+  graph.registerCallback( MapReduceGraph::RED_FUNC, reduce_func );
+  graph.registerCallback( MapReduceGraph::PRINT_FUNC, print_func );
+
   ModuloMap task_map(mpi_size, graph.size());
   Controller master;
   master.initialize(graph, &task_map, MPI_COMM_WORLD);
-  master.registerCallback(SPLIT_LOAD, split_load);
-  master.registerCallback(MAP_FUNC, map_func);
-  master.registerCallback(RED_FUNC, reduce_func);
-  master.registerCallback(PRINT_FUNC, print_func);
 
-  if (mpi_rank == 0) {
-    stringstream ss;
-    ss << "graph.dot";
-    FILE *output = fopen(ss.str().c_str(), "w");
-    graph.output_graph(mpi_size, &task_map, output);
-    fclose(output);
-  }
+  if (mpi_rank == 0)
+    graph.outputGraph( mpi_size, &task_map, "graph.dot" );
 
   // Build input
   std::map<TaskId, Payload> inputs;

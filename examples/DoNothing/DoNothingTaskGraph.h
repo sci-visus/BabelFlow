@@ -11,6 +11,8 @@ class DoNothingTaskGraph : public BabelFlow::TaskGraph {
 private:
   BabelFlow::ShardId n_controllers;
 public:
+  enum TaskCB { LEAF_TASK_CB = 0, MID_TASK_CB = 1 };
+
   DoNothingTaskGraph() = default;
   
   DoNothingTaskGraph(BabelFlow::ShardId count);

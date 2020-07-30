@@ -20,7 +20,7 @@ namespace BabelFlow
 class DefGraphConnector : public TaskGraphConnector
 {
 public:
-  DefGraphConnector();
+  DefGraphConnector() = default;
   
   DefGraphConnector( ShardId controller_cnt, 
                      TaskGraph* src_gr, 

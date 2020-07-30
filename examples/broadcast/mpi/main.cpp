@@ -38,6 +38,7 @@
 #include "BroadcastGraph.h"
 #include "BroadcastCallbacks.h"
 #include "ModuloMap.h"
+#include "RelayTask.h"
 #include "mpi/Controller.h"
 
 uint32_t gCount = 0;
@@ -80,17 +81,17 @@ int main(int argc, char* argv[])
   uint32_t valence = atoi(argv[2]);
 
   BroadcastGraph graph(leafs,valence);
+  graph.registerCallback( BroadcastGraph::LEAF_TASK_CB, print_message );
+  graph.registerCallback( BroadcastGraph::BCAST_TASK_CB, relay_message );
+
   //std::cout << "graph size " << graph.size() << "\n";
   ModuloMap task_map(mpi_width,graph.size());
 
   Controller master;
 
-  FILE* output = fopen("broadcast_task_graph.dot","w");
-  graph.output_graph(mpi_width,&task_map,output);
-  fclose(output);
+  graph.outputGraph( mpi_width, &task_map, "broadcast_task_graph.dot" );
 
   master.initialize(graph,&task_map);
-  master.registerCallback(1,print_message);
   
   std::map<TaskId,Payload> inputs;
 

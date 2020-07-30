@@ -51,6 +51,7 @@ class KWayReductionTaskMap;
 class KWayReduction : public TaskGraph
 {
 public:
+  enum TaskCB { LEAF_TASK_CB = 1, MID_TASK_CB = 2, ROOT_TASK_CB = 3 };
 
   friend class KWayReductionTaskMap;
 
@@ -112,7 +113,7 @@ public:
   virtual void deserialize(Payload buffer) override;
 
 protected:
-  virtual void output_dot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const override;
+  virtual void outputDot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const override;
 
 private:
 

@@ -165,7 +165,7 @@ Task KWayReduction::task(uint64_t gId) const {
   std::vector<std::vector<TaskId> > outgoing;
 
   if (it->id() < mLvlOffset[1]) { // If this is a leaf node
-    it->callback(1); // Local compute
+    it->callback( TaskCB::LEAF_TASK_CB, queryCallback( TaskCB::LEAF_TASK_CB ) ); // Local compute
 
     incoming.resize(1); // One dummy input
     incoming[0] = TNULL;
@@ -187,7 +187,7 @@ Task KWayReduction::task(uint64_t gId) const {
     uint8_t lvl = level(it->id());
 
     // Join computation
-    it->callback(2);
+    it->callback( TaskCB::MID_TASK_CB, queryCallback( TaskCB::MID_TASK_CB ) );
 
     // Directly compute all the incoming
     incoming = expand(it->id());
@@ -197,7 +197,7 @@ Task KWayReduction::task(uint64_t gId) const {
 
     outgoing[0].resize(1);
     if (it->id() == mLvlOffset.back()-1){  // if this is the root
-      it->callback(3);
+      it->callback( TaskCB::ROOT_TASK_CB, queryCallback( TaskCB::ROOT_TASK_CB ) );
       outgoing.resize(0);
       //outgoing[0][0] = TNULL; // parent
     }
@@ -233,9 +233,9 @@ std::vector<Task> KWayReduction::localGraph(ShardId id,
 
 //-----------------------------------------------------------------------------
 
-void KWayReduction::output_dot( const std::vector< std::vector<Task> >& tasks_v, 
-                                std::ostream& outs, 
-                                const std::string& eol ) const
+void KWayReduction::outputDot( const std::vector< std::vector<Task> >& tasks_v, 
+                               std::ostream& outs, 
+                               const std::string& eol ) const
 {
   for( uint32_t i = 0; i <= mRounds; ++i )
     outs << "f" << i << " [label=\"level " << i << "\"]" << eol <<std::endl;
@@ -253,7 +253,7 @@ void KWayReduction::output_dot( const std::vector< std::vector<Task> >& tasks_v,
   {
     for( const Task& tsk : tasks_v[i] )
     {
-      outs << tsk.id() << " [label=\"" << tsk.id() << "," << uint32_t(tsk.callback()) 
+      outs << tsk.id() << " [label=\"" << tsk.id() << "," << uint32_t(tsk.callbackId()) 
            << "\",color=" << (level(tsk.id()) == 0 ? "red" : "black") << "]" << eol << std::endl;
 
       // Print incoming edges

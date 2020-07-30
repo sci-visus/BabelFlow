@@ -58,7 +58,7 @@ int HierarchicalTaskGraph::output_hierarchical_graph(FILE* output) const{
   
   for (tIt=mSubtasks.begin();tIt!=mSubtasks.end();tIt++) {
     TaskId::InnerTaskId tid = tIt->id();
-    fprintf(output, "%d [label=\"%d,%d\"]\n", tid, tid, tIt->callback());
+    fprintf(output, "%d [label=\"%d,%d\"]\n", tid, tid, tIt->callbackId());
     for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
       if (*it != TNULL)
         fprintf(output, "%d -> %d\n", TaskId::InnerTaskId(*it), tid);

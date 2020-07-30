@@ -33,8 +33,10 @@
 #include <vector>
 
 #include "Definitions.h"
+#include "Payload.h"
 
-namespace BabelFlow{
+namespace BabelFlow
+{
 
 class TaskGraph;
 
@@ -49,7 +51,7 @@ class Task
 public:
 
   //! Default constructor
-  Task(TaskId id = TNULL) : mId(id), mCallback(0) {}
+  Task(TaskId id = TNULL) : mId(id), mCallbackId(0), mCallbackFunc(nullptr) {}
 
   //! Copy constructor
   Task(const Task& t);
@@ -66,11 +68,14 @@ public:
   //! Set the task id
   void id(TaskId i) {mId = i;}
 
-  //! Return the callback
-  CallbackId callback() const {return mCallback;}
+  //! Return the callback index
+  CallbackId callbackId() const { return mCallbackId; }
+
+  //! Return the callback func pointer
+  Callback callbackFunc() const { return mCallbackFunc; }
 
   //! Set the callback
-  void callback(CallbackId cb) {mCallback = cb;}
+  void callback( CallbackId cbid, Callback cb ) { mCallbackId = cbid; mCallbackFunc = cb; }
 
   //! Return the number of incoming messages
   uint32_t fanin() const {return mIncoming.size();}
@@ -108,7 +113,10 @@ private:
   TaskId mId;
 
   //! The index of the callback associate with this task
-  CallbackId mCallback;
+  CallbackId mCallbackId;
+
+  //! The callback func pointer associated with this task
+  Callback mCallbackFunc;
 
   //! The set of tasks which will produce one of the inputs
   std::vector<TaskId> mIncoming;
