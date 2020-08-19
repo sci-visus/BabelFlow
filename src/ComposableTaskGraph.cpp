@@ -52,7 +52,7 @@ std::vector<Task> ComposableTaskGraph::localGraph( ShardId id, const TaskMap* ta
   {
     std::stringstream ss;
     ss << "comp_gr_tasks_" << id << ".html";
-    output_tasks_html( tasks, ss.str() );
+    outputTasksHtml( tasks, ss.str() );
   }
 #endif
 
@@ -66,24 +66,31 @@ Task ComposableTaskGraph::task( const TaskId& task_id ) const
   uint32_t graph_id = task_id.graphId();
   assert( graph_id < m_graphs.size() );
   TaskGraph* gr = m_graphs[graph_id];
-  Task tsk = gr->task( gr->gId( task_id ) );
+  TaskId orig_task_id( task_id.tid() );
+  Task tsk = gr->task( gr->gId( orig_task_id ) );
 
   // The next line ensures that the id in the task itself contains the graph_id;
   // in the lines below same thing is repeated for all incoming and outgoing tasks
   tsk.id( TaskId( tsk.id().tid(), graph_id ) );
   
   // Convert task ids of incoming tasks
-  for( TaskId& tid : tsk.incoming() ) 
-    tid.graphId() = graph_id;
-  
+  for( TaskId& tid : tsk.incoming() )
+  {
+    if( tid != TNULL )
+      tid.graphId() = graph_id;
+  }
+
   // Convert task ids of outgoing tasks
   for( uint32_t i = 0; i < tsk.fanout(); ++i )
   {  
     for( TaskId& tid : tsk.outgoing(i) )
-      tid.graphId() = graph_id;
+    {
+      if( tid != TNULL )
+        tid.graphId() = graph_id;
+    }
   }
 
-  // If task t has zero outputs (root task), or a TNULL output, connect it to a leaf task in graph_id + 1,
+  // If task t has TNULL output connect it to a leaf task in graph_id + 1,
   // use m_connector[graph_id] for that:
   if( graph_id < m_connectors.size() )
   {
@@ -101,11 +108,13 @@ Task ComposableTaskGraph::task( const TaskId& task_id ) const
 
       // Each output data has to be sent to connected tasks in the next graph
       for( TaskId& tid : connected_tsk ) 
-      {
         tid.graphId() = graph_id + 1;
 
-        std::vector<TaskId> outg( 1, tid );
-        tsk.outputs().push_back( outg );
+      // Right now the assumption is that if a task is a root task in graph_id, then it only has TNULL ouputs,
+      // which means we should replace all these outputs with connected_tsk
+      for( uint32_t i = 0; i < tsk.fanout(); ++i )
+      {
+        tsk.outgoing( i ) = connected_tsk;
       }
     }
   }

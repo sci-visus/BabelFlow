@@ -125,7 +125,7 @@ void TaskGraph::outputHelper( const std::vector< std::vector<Task> >& tasks_v, s
   }
 
   outs << "strict digraph G {" << eol << std::endl;
-  outs << "  ordering=out;" << eol << std::endl;
+  // outs << "  ordering=out;" << eol << std::endl;
   outs << "  rankdir=TB;" << eol << std::endl;
   outs << "  ranksep=0.8;" << eol << std::endl;
 

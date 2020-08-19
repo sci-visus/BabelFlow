@@ -120,7 +120,7 @@ Task RadixKExchange::task(uint64_t gId) const
   } 
   else 
   {
-    if( lvl == totalLevels() )    // root node -- no outputs
+    if( lvl == totalLevels() )    // root node -- TNULL output
     {
       it->callback( TaskCB::ROOT_TASK_CB, queryCallback( TaskCB::ROOT_TASK_CB ) );
     }
@@ -147,6 +147,13 @@ Task RadixKExchange::task(uint64_t gId) const
       outgoing[i].resize( 1 );  // only one destination for each outgoing message
       outgoing[i][0] = out_neighbors[i];
     }
+  }
+  else if( lvl == totalLevels() )   // root node -- TNULL output
+  {
+    // An output with destination TNULL signifies an output to be extracted
+    // from this task or to be linked to another graph
+    outgoing.resize(1);
+    outgoing[0].resize(1, TNULL);
   }
 
   it->outputs(outgoing);

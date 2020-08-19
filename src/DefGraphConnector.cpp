@@ -138,6 +138,9 @@ bool DefGraphConnector::isRootTask( const Task& tsk )
 {
   bool is_out_task = true;
 
+  if( tsk.fanout() == 0 )
+    is_out_task = false;
+  
   for( uint32_t i = 0; i < tsk.fanout(); ++i )
   {
     const std::vector<TaskId>& outg = tsk.outgoing(i);
@@ -156,6 +159,9 @@ bool DefGraphConnector::isRootTask( const Task& tsk )
 
 bool DefGraphConnector::isLeafTask( const Task& tsk )
 {
+  if( tsk.incoming().size() == 0 )
+    return false;
+
   auto res = std::find_if( tsk.incoming().begin(), tsk.incoming().end(), [&](const TaskId& tid) { return tid != TNULL; } );
   return res == tsk.incoming().end();
 }

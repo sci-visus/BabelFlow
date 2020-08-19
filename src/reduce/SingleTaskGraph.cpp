@@ -32,11 +32,17 @@ Task SingleTaskGraph::task( uint64_t gId ) const
 
   t.callback( TaskCB::SINGLE_TASK_CB, queryCallback( TaskCB::SINGLE_TASK_CB ) );  // Only one callback function 
 
-  // Should the task get input from the controller?
+  // Single input from controller
   std::vector<TaskId> incoming( 1 );
   incoming[0] = TNULL;
   t.incoming( incoming );
-  ///
+  
+  // An output with destination TNULL signifies an output to be extracted
+  // from this task or to be linked to another graph
+  std::vector< std::vector<TaskId> > outgoing;
+  outgoing.resize(1);
+  outgoing[0].resize(1, TNULL);
+  t.outputs( outgoing );
 
   return t;
 }
