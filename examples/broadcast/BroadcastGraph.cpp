@@ -77,9 +77,9 @@ BabelFlow::Task BroadcastGraph::task(uint64_t gId) const
 
   // If this is a leaf
   if (task.id() >= (size() - pow(mValence, mLevels)))
-    task.callback(1);
+    task.callback( BroadcastGraph::LEAF_TASK_CB, queryCallback( BroadcastGraph::LEAF_TASK_CB ) );
   else { // If we are not the leaf
-    task.callback(0); // We are a relay task
+    task.callback( BroadcastGraph::BCAST_TASK_CB, queryCallback( BroadcastGraph::BCAST_TASK_CB ) ); // We are a relay task
 
     // And we have valence many outputs
     for (i = 0; i < mValence; i++)

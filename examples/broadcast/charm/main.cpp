@@ -46,19 +46,6 @@
 using namespace BabelFlow;
 using namespace charm;
 
-BabelFlow::Callback registered_callback(BabelFlow::CallbackId id)
-{
-  switch (id) {
-    case 0:
-      return BabelFlow::relay_message;
-    case 1:
-      return print_message;
-    default:
-      assert(false);
-      break;
-  }
-  return NULL;
-}
 
 BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload buffer)
 {
@@ -86,13 +73,13 @@ public:
     uint32_t valence = atoi(m->argv[2]);
 
     BroadcastGraph graph(leafs,valence);
+    graph.registerCallback( BroadcastGraph::LEAF_TASK_CB, print_message );
+    graph.registerCallback( BroadcastGraph::BCAST_TASK_CB, relay_message );
 
     // Output the graph for testing
     ModuloMap task_map(1,graph.size());
-    FILE* output=fopen("broadcast_task_graph.dot","w");
-    graph.output_graph(1,&task_map,output);
-    fclose(output);
-
+    graph.outputGraph( 1, &task_map, "broadcast_task_graph.dot" );
+    
     Controller controller;
 
     BabelFlow::charm::Controller::ProxyType proxy;

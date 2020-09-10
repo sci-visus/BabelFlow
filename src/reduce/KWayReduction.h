@@ -51,6 +51,7 @@ class KWayReductionTaskMap;
 class KWayReduction : public TaskGraph
 {
 public:
+  enum TaskCB { LEAF_TASK_CB = 1, MID_TASK_CB = 2, ROOT_TASK_CB = 3 };
 
   friend class KWayReductionTaskMap;
 
@@ -86,7 +87,7 @@ public:
 
   //! Compute the fully specified tasks for the
   //! given controller id and task map
-  virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const;
+  virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const override;
 
   //! Return the total number of tasks
   /*! This function computes the total number of tasks in the graph.
@@ -96,23 +97,23 @@ public:
    *
    * @return The total number of tasks
    */
-  virtual uint32_t size() const { return mLvlOffset[mRounds]; }
+  virtual uint32_t size() const override { return mLvlOffset[mRounds]; }
 
   //! Return the total number of rounds needed to merge
   uint8_t rounds() const { return mRounds; }
 
-  //! Output the entire graph as dot file
-  virtual int output_graph(ShardId count, const TaskMap* task_map, FILE* output);
+  virtual Task task(uint64_t gId) const override;
 
-  virtual Task task(uint64_t gId) const;
-
-  virtual uint64_t gId(TaskId tId) const { return tId; };
+  virtual uint64_t gId(TaskId tId) const override{ return tId; };
 
   //! Serialize a task graph
-  virtual Payload serialize() const;
+  virtual Payload serialize() const override;
 
   //! Deserialize a task graph. This will consume the payload
-  virtual void deserialize(Payload buffer);
+  virtual void deserialize(Payload buffer) override;
+
+protected:
+  virtual void outputDot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const override;
 
 private:
 
@@ -145,10 +146,10 @@ private:
   TaskId baseId(TaskId id) const { return id &= ~sPrefixMask; }
 
   //! Return thecomputation round this task is part of
-  TaskId round(TaskId id) const { return id >> sPostfixSize; }
+  // TaskId round(TaskId id) const { return id >> sPostfixSize; }
 
   //! Compute the id of a task in a certain round
-  TaskId roundId(TaskId id, uint8_t round) const;
+  // TaskId roundId(TaskId id, uint8_t round) const;
 
   //! Return whether this is a gather or scatter task
   bool gatherTask(TaskId id) const { return (id & sPrefixMask) == 0; }

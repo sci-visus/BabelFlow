@@ -1,6 +1,14 @@
+/*
+ * ComposableTaskMap.h
+ *
+ *  Created on: Jul 7, 2020
+ *      Author: sshudler
+ */
+
 #ifndef COMPOSABLE_TASK_MAP_H__
 #define COMPOSABLE_TASK_MAP_H__
 
+#include <vector>
 #include "TaskGraph.h"
 
 
@@ -10,8 +18,10 @@ namespace BabelFlow
 class ComposableTaskMap : public TaskMap
 {
 public:
+  //! Default constructor
+  ComposableTaskMap() = default; // added to accommodate ascent interface
 
-  ComposableTaskMap( TaskMap* map1, TaskMap* map2 );
+  ComposableTaskMap( const std::vector<TaskMap*>& task_maps );
   
   virtual ~ComposableTaskMap() {}
   
@@ -22,8 +32,8 @@ public:
   virtual std::vector<TaskId> tasks(ShardId id) const;
 
 private:
-  TaskMap* m_TMap1;
-  TaskMap* m_TMap2;
+
+  std::vector<TaskMap*> m_taskMaps;
   
 };      // class ComposableTaskMap
 

@@ -39,9 +39,6 @@
 
 #include "charm_babelflow.decl.h"
 
-//! Global function returning the callbacks
-//! Must be implemented by the calling application code
-extern BabelFlow::Callback registered_callback(BabelFlow::CallbackId id);
 
 //! Global function to create a task graph
 //! Must be implemented by the calling application code

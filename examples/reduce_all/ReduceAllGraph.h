@@ -36,16 +36,16 @@
 #include "Definitions.h"
 #include "TaskGraph.h"
 
-enum CallbackTypes {
-    LOCAL_COMPUTE_TASK = 1,
-    REDUCTION_TASK = 2,
-    COMPLETE_REDUCTION_TASK = 3,
-    RESULT_REPORT_TASK = 4,
-    RESULT_BROADCAST_TASK = 0
-};
 
 class ReduceAllGraph : public BabelFlow::TaskGraph {
 public:
+    enum CallbackTypes {
+      LOCAL_COMPUTE_TASK = 1,
+      REDUCTION_TASK = 2,
+      COMPLETE_REDUCTION_TASK = 3,
+      RESULT_REPORT_TASK = 4,
+      RESULT_BROADCAST_TASK = 0
+    };
 
     /*! Create a tree based reduce all with at least the given number of
      *  leafs and the given fanin. During the reduction phase the nodes will

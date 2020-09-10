@@ -46,21 +46,6 @@
 using namespace BabelFlow;
 using namespace charm;
 
-BabelFlow::Callback registered_callback(BabelFlow::CallbackId id)
-{
-  switch (id) {
-    case 0:
-      return BabelFlow::relay_message;
-    case 1:
-      return add_int;
-    case 2:
-      return report_sum;
-    default:
-      assert(false);
-      break;
-  }
-  return NULL;
-}
 
 BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload buffer)
 {
@@ -90,14 +75,13 @@ public:
     uint32_t valence = atoi(m->argv[2]);
 
     ReductionGraph graph(leafs,valence);
-
+    graph.registerCallback( ReductionGraph::RED_TASK_CB, add_int );
+    graph.registerCallback( ReductionGraph::ROOT_TASK_CB, report_sum );
 
     // Output the graph for testing
     ModuloMap task_map(1,graph.size());
-    FILE* output=fopen("output.dot","w");
-    graph.output_graph(1,&task_map,output);
-    fclose(output);
-
+    graph.outputGraph( 1, &task_map, "output.dot" );
+    
     BabelFlow::charm::Controller controller;
     
     BabelFlow::charm::Controller::ProxyType proxy;

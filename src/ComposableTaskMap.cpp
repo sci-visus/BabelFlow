@@ -1,3 +1,10 @@
+/*
+ * ComposableTaskMap.cpp
+ *
+ *  Created on: Jul 7, 2020
+ *      Author: sshudler
+ */
+
 #include <vector>
 #include <algorithm>
 
@@ -11,8 +18,8 @@ namespace BabelFlow
 
 //-----------------------------------------------------------------------------
 
-ComposableTaskMap::ComposableTaskMap( TaskMap* map1, TaskMap* map2 )
- : m_TMap1( map1 ), m_TMap2( map2 )
+ComposableTaskMap::ComposableTaskMap( const std::vector<TaskMap*>& task_maps )
+ : m_taskMaps( task_maps )
 {
 }
 
@@ -22,27 +29,26 @@ ShardId ComposableTaskMap::shard(TaskId id) const
 {
   uint32_t graph_id = id.graphId();
   
-  assert( graph_id == 1 || graph_id == 2 );
+  assert( graph_id < m_taskMaps.size() );
   
-  TaskMap* tm = (graph_id == 1) ? m_TMap1 : m_TMap2;
-  return tm->shard( id );
+  return m_taskMaps[graph_id]->shard( id );
 }
 
 //-----------------------------------------------------------------------------
 
 std::vector<TaskId> ComposableTaskMap::tasks(ShardId id) const
 {
-  std::vector<TaskId> tids_gr_1 = m_TMap1->tasks( id );
-  std::vector<TaskId> tids_gr_2 = m_TMap2->tasks( id );
+  std::vector<TaskId> rv;
   
-  // Transform the task ids into pairs of [graphId, TaskId]
-  std::for_each( tids_gr_1.begin(), tids_gr_1.end(), [](TaskId& tid) { tid.graphId() = 1; } );
-  std::for_each( tids_gr_2.begin(), tids_gr_2.end(), [](TaskId& tid) { tid.graphId() = 2; } );
+  for( uint32_t i = 0; i < m_taskMaps.size(); ++i )
+  {
+    std::vector<TaskId> tasks = m_taskMaps[i]->tasks( id );
+    // Add the graph id to each TaskId
+    std::for_each( tasks.begin(), tasks.end(), [&](TaskId& tid) { tid.graphId() = i; } );
+    rv.insert( rv.end(), tasks.begin(), tasks.end() );
+  }
   
-  // Append all the ids into one array
-  tids_gr_1.insert( tids_gr_1.end(), tids_gr_2.begin(), tids_gr_2.end() );
-  
-  return tids_gr_1;
+  return rv;
 }
 
 //-----------------------------------------------------------------------------

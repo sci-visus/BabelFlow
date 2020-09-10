@@ -41,7 +41,6 @@ std::map<EdgeTaskId,VPartId> vpart_map;
 
 Controller* Controller::instance = NULL;
 std::map<BabelFlow::TaskId,BabelFlow::Payload> (*Controller::input_initialization)(int, char**) = NULL;
-std::vector<Callback> Controller::mCallbacks;
 
 std::vector<BabelFlow::Task> Controller::alltasks;
 std::map<BabelFlow::TaskId,BabelFlow::Payload> Controller::mInitial_inputs;
@@ -452,7 +451,7 @@ int Controller::generic_task(const Task *task,
   }
   
   // Execute the callbacks
-  mCallbacks[info.callbackID](inputs,outputs,info.id);
+  info.callbackFunc( inputs, outputs, info.id );
 
   DEBUG_PRINT((stderr,"Task %d executed cb %d\n", info.id, info.callbackID));
 
@@ -654,7 +653,8 @@ void Controller::init(){
 
   DEBUG_PRINT((stdout,"init data region end %d\n", index-1));
 
-  init_launch.callback = 0; // TODO could be confused with relay...
+  init_launch.callbackID = 0; // TODO could be confused with relay...
+  init_launch.callbackFunc = nullptr;
   init_launch.n_tasks = mInitial_inputs.size();
 
   launch_data.push_back(init_launch);
@@ -733,7 +733,7 @@ void Controller::top_level_task(const LegionRuntime::HighLevel::Task *task,
   for(int i=1; i < launch_data.size(); i++){
     LaunchData& launch = launch_data[i];
     
-    DEBUG_PRINT((stdout,"Launch %d callback %d partititions size %d\n", i, launch.callback, launch.vparts.size()));
+    DEBUG_PRINT((stdout,"Launch %d callback %d partititions size %d\n", i, launch.callbackID, launch.vparts.size()));
     DEBUG_PRINT((stdout,"coloring size %d ntasks %u\n",launch.vparts[0].coloring.size(), launch.n_tasks));
 
     LegionRuntime::Arrays::Rect<1> color_bounds(LegionRuntime::Arrays::Point<1>(0),LegionRuntime::Arrays::Point<1>(launch.n_tasks-1));
@@ -866,17 +866,6 @@ int Controller::run(std::map<BabelFlow::TaskId,BabelFlow::Payload>& initial_inpu
   mInitial_inputs = initial_inputs;
 
   return HighLevelRuntime::start(legion_argc, legion_argv);
-}
-
-int Controller::registerCallback(BabelFlow::CallbackId id, Callback func){
-  assert (id > 0); // Callback 0 is reserved for relays
-  
-  if (mCallbacks.size() <= id)
-    mCallbacks.resize(id+1);
-  
-  mCallbacks[id] = func;
-  
-  return 1;
 }
 
 Controller::Controller()

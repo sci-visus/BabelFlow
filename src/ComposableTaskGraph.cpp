@@ -1,18 +1,28 @@
-
+/*
+ * ComposableTaskGraph.cpp
+ *
+ *  Created on: Jul 7, 2020
+ *      Author: sshudler
+ */
+ 
 #include <vector>
 #include <algorithm>
+#include <cassert>
+#include <sstream>
 
 #include "ComposableTaskGraph.h"
+
+
+// #define COMPOSABLE_TGRAPH_DEBUG
 
 
 namespace BabelFlow
 {
 
-
 //-----------------------------------------------------------------------------
 
-ComposableTaskGraph::ComposableTaskGraph( TaskGraph* graph1, TaskGraph* graph2 )
- : m_graph1( graph1 ), m_graph2( graph2 )
+ComposableTaskGraph::ComposableTaskGraph( std::vector<TaskGraph*>& gr_vec, std::vector<TaskGraphConnector*>& gr_connectors  )
+ : m_graphs( gr_vec ), m_connectors( gr_connectors )
 {
   init();
 }
@@ -21,99 +31,206 @@ ComposableTaskGraph::ComposableTaskGraph( TaskGraph* graph1, TaskGraph* graph2 )
 
 void ComposableTaskGraph::init()
 {
-  // Run localGraph for graph1 and graph2
-  // When terminal (root) nodes in graph1 are found save their tids
-  // Do the same for leaf nodes in graph2
+  // Place holder, at the moment performs just a sanity check
+
+  uint32_t num_graphs = m_graphs.size();
+  uint32_t num_connectors = m_connectors.size();
+  assert( num_graphs = num_connectors + 1 );
 }
 
 //-----------------------------------------------------------------------------
 
-std::vector<Task> ComposableTaskGraph::localGraph(ShardId id, const TaskMap* task_map) const
+std::vector<Task> ComposableTaskGraph::localGraph( ShardId id, const TaskMap* task_map ) const
 {
   std::vector<TaskId> tids = task_map->tasks(id);
   std::vector<Task> tasks( tids.size() );
   for( uint32_t i = 0; i < tids.size(); ++i )
-    tasks[i] = task( tids[i] );
-    //tasks[i] = task( gId( tids[i] ) );
+    tasks[i] = task( tids[i] );         // Do not use gId() since it will collapse TaskId into just a uint32_t, but we
+                                        // need to know the graph id in the task() function
   
+#ifdef COMPOSABLE_TGRAPH_DEBUG
+  {
+    std::stringstream ss;
+    ss << "comp_gr_tasks_" << id << ".html";
+    outputTasksHtml( tasks, ss.str() );
+  }
+#endif
+
   return tasks;
 }
 
 //-----------------------------------------------------------------------------
 
-// gid problematic!! How to get graph id?
-Task ComposableTaskGraph::task(const TaskId& task_id) const
+Task ComposableTaskGraph::task( const TaskId& task_id ) const
 {
   uint32_t graph_id = task_id.graphId();
-  TaskGraph* gr = (graph_id == 1) ? m_graph1 : m_graph2;
-  Task t = gr->task( gr->gId( task_id ) );
-  // The next line ensures that the id in the task itself is set to a [graph_id, orig_tid] pair;
+  assert( graph_id < m_graphs.size() );
+  TaskGraph* gr = m_graphs[graph_id];
+  TaskId orig_task_id( task_id.tid() );
+  Task tsk = gr->task( gr->gId( orig_task_id ) );
+
+  // The next line ensures that the id in the task itself contains the graph_id;
   // in the lines below same thing is repeated for all incoming and outgoing tasks
-  t.id( TaskId( t.id().tid(), graph_id ) );
+  tsk.id( TaskId( tsk.id().tid(), graph_id ) );
   
   // Convert task ids of incoming tasks
-  std::for_each( t.incoming().begin(), t.incoming().end(), [=](TaskId& tid) { tid.graphId() = graph_id; } );
-  
+  for( TaskId& tid : tsk.incoming() )
+  {
+    if( tid != TNULL )
+      tid.graphId() = graph_id;
+  }
+
   // Convert task ids of outgoing tasks
-  std::for_each( t.outputs().begin(), t.outputs().end(), [=](std::vector<TaskId>& outg)
-  { std::for_each( outg.begin(), outg.end(), [=](TaskId& tid) { tid.graphId() = graph_id; } ); }
-  );
+  for( uint32_t i = 0; i < tsk.fanout(); ++i )
+  {  
+    for( TaskId& tid : tsk.outgoing(i) )
+    {
+      if( tid != TNULL )
+        tid.graphId() = graph_id;
+    }
+  }
+
+  // If task t has TNULL output connect it to a leaf task in graph_id + 1,
+  // use m_connector[graph_id] for that:
+  if( graph_id < m_connectors.size() )
+  {
+    std::vector<TaskId> connected_tsk = m_connectors[graph_id]->getOutgoingConnectedTasks( tsk.id() );
+    if( connected_tsk.size() > 0 )
+    {
+#ifdef COMPOSABLE_TGRAPH_DEBUG
+      {
+        std::cout << "ComposableTaskGraph - graph_id = " << graph_id 
+                  << ", found outgoing connection: " << tsk.id() << " --> ";
+        for( TaskId& tid : connected_tsk ) std::cout << tid << "  ";
+        std::cout << std::endl;
+      }
+#endif
+
+      // Each output data has to be sent to connected tasks in the next graph
+      for( TaskId& tid : connected_tsk ) 
+        tid.graphId() = graph_id + 1;
+
+      // Right now the assumption is that if a task is a root task in graph_id, then it only has TNULL ouputs,
+      // which means we should replace all these outputs with connected_tsk
+      for( uint32_t i = 0; i < tsk.fanout(); ++i )
+      {
+        tsk.outgoing( i ) = connected_tsk;
+      }
+    }
+  }
+
+  // If task tsk has TNULL input (leaf task in graph_id) connect it to the root task in graph_id - 1.
+  // Use m_connector[graph_id - 1] for that.
+  if( graph_id > 0 )
+  {
+    std::vector<TaskId> connected_tsk = m_connectors[graph_id - 1]->getIncomingConnectedTasks( tsk.id() );
+    if( connected_tsk.size() > 0 )
+    {
+#ifdef COMPOSABLE_TGRAPH_DEBUG
+      {
+        std::cout << "ComposableTaskGraph - graph_id = " << graph_id 
+                  << ", found incoming connection: " << tsk.id() << " <-- ";
+        for( TaskId& tid : connected_tsk ) std::cout << tid << "  ";
+        std::cout << std::endl;
+      }
+#endif
+
+      for( TaskId& tid : connected_tsk ) 
+        tid.graphId() = graph_id - 1;
+
+      // Right now the assumption is that if a task is a leaf task in graph_id, then it only has TNULL inputs,
+      // which means we should replace all these inputs with connected_tsk
+      tsk.incoming( connected_tsk );
+    }
+  }
   
-  // If a task in graph1 has zero outputs, or a TNULL output connect it to leaf task in graph2
-  // For now assume the number of roots in graph1 and leafs in graph2 are equal -- if not get a mapping
-  // policy in the constructor
   
-  return t;
+  return tsk;
 }
 
 //-----------------------------------------------------------------------------
 
 uint32_t ComposableTaskGraph::size() const
 {
-  // Should glue tasks be included? Do we need them?
-  return m_graph1->size() + m_graph2->size();
+  uint32_t total_sz = 0;
+  std::for_each( m_graphs.begin(), m_graphs.end(), [&total_sz](TaskGraph* gr) { total_sz += gr->size(); } );
+  return total_sz;
 }
 
 //-----------------------------------------------------------------------------
 
 Payload ComposableTaskGraph::serialize() const
 {
-  Payload payl_gr1 = m_graph1->serialize();
-  Payload payl_gr2 = m_graph2->serialize();
-  int32_t sz1 = payl_gr1.size();
-  int32_t sz2 = payl_gr2.size();
-  int32_t total_sz = sz1 + sz2 + 2*sizeof(int32_t);
+  // Serialization order:
+  // - Num graphs
+  // - Payload size (x num graphs times)
+  // - Buffer for each graph
+  uint32_t payl_sz = 0;
+  std::vector<Payload> payloads( m_graphs.size() );
+  
+  // Serialize each graph separately and count the size of the payloads
+  for( uint32_t i = 0; i < m_graphs.size(); ++i )
+  {
+    Payload pl = m_graphs[i]->serialize();
+    payloads[i] = pl;
+    payl_sz += pl.size();
+  }
+  
+  uint32_t total_sz = (1 + m_graphs.size())*sizeof(uint32_t) + payl_sz;
   
   char* buff = new char[total_sz];
+  char* bf_ptr = buff;
+  char* bf_pl_ptr = buff + (total_sz  - payl_sz);
   
-  memcpy( buff, &sz1, sizeof(int32_t) );
-  memcpy( buff + sizeof(int32_t), &sz2, sizeof(int32_t) );
-  memcpy( buff + 2*sizeof(int32_t), payl_gr1.buffer(), sz1 );
-  memcpy( buff + 2*sizeof(int32_t) + sz1, payl_gr2.buffer(), sz2 );
+  // Write the number of graphs
+  uint32_t num_graphs = m_graphs.size();
+  memcpy( bf_ptr, &num_graphs, sizeof(uint32_t) );
+  bf_ptr += sizeof(uint32_t);
   
-  delete[] payl_gr1.buffer();
-  delete[] payl_gr2.buffer();
+  // Write the payload sizes and the payloads themselves
+  for( uint32_t i = 0; i < payloads.size(); ++i )
+  {
+    Payload& pl = payloads[i];
+    uint32_t pl_size = pl.size();
+
+    memcpy( bf_ptr, &pl_size, sizeof(uint32_t) );
+    bf_ptr += sizeof(uint32_t);
+    
+    memcpy( bf_pl_ptr, pl.buffer(), pl_size );
+    bf_pl_ptr += pl_size;
+    
+    delete[] pl.buffer();
+  }
   
-  return Payload( total_sz, buff );
+  return Payload( int32_t(total_sz), buff );
 }
 
 //-----------------------------------------------------------------------------
 
-void ComposableTaskGraph::deserialize(Payload buffer)
+void ComposableTaskGraph::deserialize( Payload pl )
 {
-  int32_t* buff_ptr = (int32_t*)(buffer.buffer());
-  int32_t sz1 = buff_ptr[0];
-  int32_t sz2 = buff_ptr[1];
+  // Deserialization order:
+  // - Num graphs
+  // - Payload sizes
+  // - Payload for each graph
+  uint32_t* buff_ptr = (uint32_t*)(pl.buffer());
   
-  Payload payl_gr1( sz1, buffer.buffer() + 2*sizeof(int32_t) );
-  Payload payl_gr2( sz2, buffer.buffer() + 2*sizeof(int32_t) + sz1 );
+  // Sanity check -- the number of graphs in this object should be the same as the number
+  // of graphs about to be deserialized
+  assert( buff_ptr[0] == m_graphs.size() );
   
-  m_graph1->deserialize( payl_gr1 );
-  m_graph2->deserialize( payl_gr2 );
+  char* bf_ptr = pl.buffer() + (1 + m_graphs.size())*sizeof(uint32_t);  // ptr into the payload part of the buffer
+  
+  for( uint32_t i = 0; i < m_graphs.size(); ++i )
+  {
+    Payload pl( int32_t(buff_ptr[i+1]), bf_ptr );
+    bf_ptr += buff_ptr[i+1];
+    m_graphs[i]->deserialize( pl );
+  }
   
   init();
   
-  delete[] buffer.buffer();
+  delete[] pl.buffer();
 }
 
 //-----------------------------------------------------------------------------

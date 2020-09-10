@@ -9,6 +9,7 @@
 #include <mpi/Controller.h>
 #include <ModuloMap.h>
 #include <PreProcessInputTaskGraph.hpp>
+#include <RelayTask.h>
 #include <sstream>
 #include <ModTaskMap.hpp>
 #include "DoNothingTaskGraph.h"
@@ -59,22 +60,20 @@ int main(int argc, char **argv)
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   vector<int> data(8, mpi_rank);
   DoNothingTaskGraph graph(mpi_size);
+  graph.registerCallback( DoNothingTaskGraph::LEAF_TASK_CB, relay_message );
+  graph.registerCallback( DoNothingTaskGraph::MID_TASK_CB, print_data );
   ModuloMap taskMap(mpi_size, graph.size());
 
   PreProcessInputTaskGraph modGraph(mpi_size, &graph, &taskMap);
+  modGraph.registerCallback( PreProcessInputTaskGraph::PRE_PROC_TASK_CB, preprocess_data );
   ModTaskMap modMap(&taskMap);
   modMap.update(modGraph);
 
-  if (mpi_rank == 0) {
-    FILE *meow = fopen("meow.dot", "w");
-    modGraph.output_graph(mpi_size, &modMap, meow);
-    fclose(meow);
-  }
+  if (mpi_rank == 0) 
+    modGraph.outputGraph( mpi_size, &modMap, "meow.dot" );
 
   Controller master;
   master.initialize(modGraph, &modMap, MPI_COMM_WORLD);
-  master.registerCallback(1, print_data);
-  master.registerCallback(modGraph.newCallBackId, preprocess_data);
 
   Payload payload;
   char *buffer = new char[data.size() * sizeof(int)];

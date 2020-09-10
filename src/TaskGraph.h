@@ -36,6 +36,7 @@
 #include <cassert>
 #include <string>
 #include <typeinfo>
+#include <ostream>
 
 #include "Task.h"
 #include "Payload.h"
@@ -46,7 +47,8 @@
 //TaskGraphFactory::registerCreator( std::string( typeid( cls ).name() ), &TaskGraphFactory::createT< cls > );
 
 
-namespace BabelFlow {
+namespace BabelFlow 
+{
 
 class TaskMap;
 
@@ -85,14 +87,27 @@ public:
   //! Deserialize a task graph. This will consume the payload
   virtual void deserialize(Payload buffer) {assert(false);}
 
+  //! Register a callback for the given id
+  virtual void registerCallback( CallbackId id, Callback func );
+
+  //! Returns the callback func pointer for the given id
+  virtual Callback queryCallback( CallbackId id ) const;
+
   //! Output the entire graph as dot file
-  virtual int output_graph(ShardId count, const TaskMap* task_map, FILE* output);
+  virtual void outputGraph( ShardId count, const TaskMap* task_map, const std::string& filename ) const;
 
   //! Output the entire graph as dot file embedded in HTML
-  virtual int output_graph_html(ShardId count, const TaskMap* task_map, FILE* output);
+  virtual void outputGraphHtml( ShardId count, const TaskMap* task_map, const std::string& filename ) const;
+
+  virtual void outputTasksHtml( const std::vector<Task>& tasks_v, const std::string& filename ) const;
 
 protected:
-  virtual int output_graph_dot(ShardId count, const TaskMap* task_map, FILE* output, const std::string &eol);
+  void outputHelper( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, bool incl_html ) const;
+
+  virtual void outputDot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const;
+
+  //! A list of registered callbacks
+  std::vector<Callback> m_callbackVec;
 };
 
 

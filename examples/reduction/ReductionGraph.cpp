@@ -100,13 +100,13 @@ BabelFlow::Task ReductionGraph::task(uint64_t gId) const
 
   // Then we assign the outputs
   if (task.id() != 0) {// If we are not the root
-    task.callback(1); // We do a reduction
+    task.callback( TaskCB::RED_TASK_CB, queryCallback( TaskCB::RED_TASK_CB ) ); // We do a reduction
     outgoing.resize(1);
     outgoing[0].resize(1);
     outgoing[0][0] = (task.id() - 1) / mValence;
   }
   else {
-    task.callback(2); // Otherwise we report the result
+    task.callback( TaskCB::ROOT_TASK_CB, queryCallback( TaskCB::ROOT_TASK_CB ) ); // Otherwise we report the result
     outgoing.clear();
   }
 

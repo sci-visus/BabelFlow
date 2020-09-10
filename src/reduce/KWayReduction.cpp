@@ -16,6 +16,8 @@ using namespace BabelFlow;
 
 uint32_t KWayReduction::sDATASET_DIMS[3];
 
+//-----------------------------------------------------------------------------
+
 KWayReduction::KWayReduction(const std::string& config)
 {
   std::stringstream cmd(config);
@@ -33,10 +35,14 @@ KWayReduction::KWayReduction(const std::string& config)
   init(dim, factor);
 }
 
+//-----------------------------------------------------------------------------
+
 KWayReduction::KWayReduction(uint32_t block_dim[3], uint32_t factor) : mFactor(factor)
 {
   init(block_dim, factor);
 }
+
+//-----------------------------------------------------------------------------
 
 void KWayReduction::init(uint32_t block_dim[3], uint32_t factor)
 {
@@ -101,6 +107,8 @@ void KWayReduction::init(uint32_t block_dim[3], uint32_t factor)
 
 }
 
+//-----------------------------------------------------------------------------
+
 Payload KWayReduction::serialize() const
 {
   uint32_t* buffer = new uint32_t[8];
@@ -147,6 +155,8 @@ void KWayReduction::deserialize(Payload buffer)
   delete[] buffer.buffer();
 }
 
+//-----------------------------------------------------------------------------
+
 Task KWayReduction::task(uint64_t gId) const { 
   Task t(gId);
   Task* it = &t;
@@ -155,7 +165,7 @@ Task KWayReduction::task(uint64_t gId) const {
   std::vector<std::vector<TaskId> > outgoing;
 
   if (it->id() < mLvlOffset[1]) { // If this is a leaf node
-    it->callback(1); // Local compute
+    it->callback( TaskCB::LEAF_TASK_CB, queryCallback( TaskCB::LEAF_TASK_CB ) ); // Local compute
 
     incoming.resize(1); // One dummy input
     incoming[0] = TNULL;
@@ -177,7 +187,7 @@ Task KWayReduction::task(uint64_t gId) const {
     uint8_t lvl = level(it->id());
 
     // Join computation
-    it->callback(2);
+    it->callback( TaskCB::MID_TASK_CB, queryCallback( TaskCB::MID_TASK_CB ) );
 
     // Directly compute all the incoming
     incoming = expand(it->id());
@@ -187,7 +197,7 @@ Task KWayReduction::task(uint64_t gId) const {
 
     outgoing[0].resize(1);
     if (it->id() == mLvlOffset.back()-1){  // if this is the root
-      it->callback(3);
+      it->callback( TaskCB::ROOT_TASK_CB, queryCallback( TaskCB::ROOT_TASK_CB ) );
       outgoing.resize(0);
       //outgoing[0][0] = TNULL; // parent
     }
@@ -206,72 +216,69 @@ Task KWayReduction::task(uint64_t gId) const {
 
 }
 
+//-----------------------------------------------------------------------------
+
 std::vector<Task> KWayReduction::localGraph(ShardId id,
                                         const TaskMap* task_map) const
 {
-  // First get all the ids we need
-  std::vector<TaskId> ids = task_map->tasks(id);
-
-  // The create the required number of tasks
-  std::vector<Task> tasks;
-
-  //! Now assign all the task ids
-  for (TaskId i=0;i<ids.size();i++)
-    tasks.push_back(task(ids[i]));
+  // Get all the ids we need from the TaskMap
+  std::vector<TaskId> tids = task_map->tasks( id );
+  std::vector<Task> tasks( tids.size() );
+  // Assign all the task ids
+  for( uint32_t i = 0; i < tids.size(); ++i )
+    tasks[i] = task( gId( tids[i] ) );
 
   return tasks;
 }
 
-int KWayReduction::output_graph(ShardId count, 
-                            const TaskMap* task_map, FILE* output)
+//-----------------------------------------------------------------------------
+
+void KWayReduction::outputDot( const std::vector< std::vector<Task> >& tasks_v, 
+                               std::ostream& outs, 
+                               const std::string& eol ) const
 {
-  fprintf(output,"digraph G {\n");
-  fprintf(output,"\trankdir=TB;ranksep=0.8;\n");
-
-  for (uint8_t i=0;i<mRounds;i++)
-    fprintf(output,"f%d [label=\"level %d\"]",i,i);
-
-
-  fprintf(output,"f0 ");
-  for (uint8_t i=1;i<mRounds;i++) {
-    fprintf(output," -> f%d",i);
+  for( uint32_t i = 0; i <= mRounds; ++i )
+    outs << "f" << i << " [label=\"level " << i << "\"]" << eol <<std::endl;
+  
+  if( mRounds > 0 )
+  {
+    outs << "f0 ";
+    for( uint32_t i = 1; i <= mRounds; ++i )
+      outs << " -> f" << i;
+    outs << eol << std::endl;
+    outs << eol << std::endl;
   }
-  fprintf(output,"\n\n");
 
-  std::vector<Task> tasks;
-  std::vector<Task>::iterator tIt;
-  std::vector<TaskId>::iterator it;
+  for( uint32_t i = 0; i < tasks_v.size(); ++i )
+  {
+    for( const Task& tsk : tasks_v[i] )
+    {
+      outs << tsk.id() << " [label=\"" << tsk.id() << "," << uint32_t(tsk.callbackId()) 
+           << "\",color=" << (level(tsk.id()) == 0 ? "red" : "black") << "]" << eol << std::endl;
 
-  for (uint32_t i=0;i<count;i++) {
-    tasks = localGraph(i,task_map);
-
-
-    for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      TaskId::InnerTaskId tid = tIt->id();
-      if (round(tid) == 0)
-        fprintf(output,"%d [label=\"(%d, %d) ,%d)\",color=red]\n",
-                tid, TaskId::InnerTaskId(baseId(tid)), TaskId::InnerTaskId(round(tid)), tIt->callback());
-      else
-        fprintf(output,"%d [label=\"(%d, %d) ,%d)\",color=black]\n",
-                tid, TaskId::InnerTaskId(baseId(tid)), TaskId::InnerTaskId(round(tid)), tIt->callback());
-
-      for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
-        if (*it != TNULL)
-          fprintf(output,"%d -> %d\n", TaskId::InnerTaskId(*it), tid);
+      // Print incoming edges
+      for( const TaskId& tid : tsk.incoming() )
+      {
+        if( tid != TNULL )
+          outs << tid << " -> " << tsk.id() << eol << std::endl;
       }
+
+      // Print outgoing edges
+      for( uint32_t i = 0; i < tsk.fanout(); ++i )
+      {
+        for( const TaskId& tid : tsk.outgoing(i) )
+        {
+          if( tid != TNULL )
+            outs << tsk.id() << " -> " << tid << eol << std::endl;
+        }
+      }
+
+      outs << "{rank = same; f" << uint32_t( level( baseId(tsk.id()) ) ) << "; " << tsk.id() << "}" << eol << std::endl;
     }
-
-    for (tIt=tasks.begin();tIt!=tasks.end();tIt++)
-      fprintf(output,"{rank = same; f%d; %d}\n",
-              level(baseId(tIt->id())), TaskId::InnerTaskId(tIt->id()));
-
   }
-
-  fprintf(output,"}\n");
-  return 1;
 }
 
-
+//-----------------------------------------------------------------------------
 
 uint8_t KWayReduction::level(TaskId id) const
 {
@@ -286,11 +293,14 @@ uint8_t KWayReduction::level(TaskId id) const
   return l;
 }
 
-TaskId KWayReduction::roundId(TaskId id, uint8_t round) const
-{
-  return (id | (round << sPostfixSize));
-}
+//-----------------------------------------------------------------------------
 
+// TaskId KWayReduction::roundId(TaskId id, uint8_t round) const
+// {
+//   return (id | (round << sPostfixSize));
+// }
+
+//-----------------------------------------------------------------------------
 
 TaskId KWayReduction::reduce(TaskId source) const
 {
@@ -310,6 +320,8 @@ TaskId KWayReduction::reduce(TaskId source) const
 
   return source;
 }
+
+//-----------------------------------------------------------------------------
 
 std::vector<TaskId> KWayReduction::expand(TaskId source) const
 {
@@ -332,6 +344,7 @@ std::vector<TaskId> KWayReduction::expand(TaskId source) const
   return up;
 }
 
+//-----------------------------------------------------------------------------
 
 TaskId KWayReduction::gridReduce(TaskId source, uint8_t lvl) const
 {
@@ -355,6 +368,8 @@ TaskId KWayReduction::gridReduce(TaskId source, uint8_t lvl) const
 
   return source;
 }
+
+//-----------------------------------------------------------------------------
 
 std::vector<TaskId> KWayReduction::gridExpand(TaskId source, uint8_t lvl) const
 {
@@ -387,5 +402,5 @@ std::vector<TaskId> KWayReduction::gridExpand(TaskId source, uint8_t lvl) const
   return up;
 }
 
-
+//-----------------------------------------------------------------------------
 

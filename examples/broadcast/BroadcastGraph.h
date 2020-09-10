@@ -40,6 +40,7 @@
 class BroadcastGraph : public BabelFlow::TaskGraph
 {
 public:
+  enum TaskCB { BCAST_TASK_CB = 0, LEAF_TASK_CB = 1 };
 
   /*! Create a tree broadcast with at least the given number of leaf
    *  and the given fanout. All interior nodes will have callback=0

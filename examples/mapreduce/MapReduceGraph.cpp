@@ -31,7 +31,7 @@ BabelFlow::Task MapReduceGraph::task(uint64_t gId) const
     incoming.resize(1, TNULL);
     task.incoming() = incoming;
     task.outputs() = outgoing;
-    task.callback(SPLIT_LOAD);
+    task.callback( MapReduceGraph::SPLIT_LOAD, queryCallback( MapReduceGraph::SPLIT_LOAD ) );
   }
     // collector
   else if (gId == size() - 2) {
@@ -42,14 +42,14 @@ BabelFlow::Task MapReduceGraph::task(uint64_t gId) const
     outgoing.resize(1);
     outgoing[0].push_back(size() - 1);
     task.outputs() = outgoing;
-    task.callback(RED_FUNC);
+    task.callback( MapReduceGraph::RED_FUNC, MapReduceGraph::queryCallback( RED_FUNC ) );
   }
     // printer
   else if (gId == size() - 1) {
     incoming.resize(1);
     incoming[0] = size() - 2;
     task.incoming(incoming);
-    task.callback(PRINT_FUNC);
+    task.callback( MapReduceGraph::PRINT_FUNC, queryCallback( MapReduceGraph::PRINT_FUNC ) );
   }
     // worker
   else {
@@ -59,7 +59,7 @@ BabelFlow::Task MapReduceGraph::task(uint64_t gId) const
     outgoing[0].push_back(size() - 2);
     task.incoming() = incoming;
     task.outputs() = outgoing;
-    task.callback(MAP_FUNC);
+    task.callback( MapReduceGraph::MAP_FUNC, queryCallback( MapReduceGraph::MAP_FUNC ) );
   }
   return task;
 }

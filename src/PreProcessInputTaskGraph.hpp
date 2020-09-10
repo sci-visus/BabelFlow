@@ -17,6 +17,8 @@ namespace BabelFlow
 class PreProcessInputTaskGraph : public TaskGraph
 {
 public:
+  enum TaskCB { PRE_PROC_TASK_CB = 9 };
+
   PreProcessInputTaskGraph() = default;
 
   PreProcessInputTaskGraph(ShardId count, TaskGraph* g, TaskMap* m);
@@ -53,8 +55,6 @@ public:
   std::vector<std::vector<TaskId> > data_tasks;
   uint64_t maxGid = 0;
   TaskId maxTid = 0;
-  CallbackId newCallBackId = 0;
-
 };
 
 

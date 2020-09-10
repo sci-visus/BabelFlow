@@ -39,6 +39,7 @@
 class ReductionGraph : public BabelFlow::TaskGraph
 {
 public:
+  enum TaskCB { RED_TASK_CB = 1, ROOT_TASK_CB = 2 };
 
   /*! Create a tree based reduction with at least the given number of
    *  leafs and the given fanin. All nodes but the root will

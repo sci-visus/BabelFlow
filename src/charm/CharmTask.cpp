@@ -63,10 +63,7 @@ void CharmTask::exec()
   //fprintf(stderr,"CharmTask<TaskGraphClass, CallbackClass>::exec() %d  fanout %d\n",mTask.id(),mTask.fanout());
   std::vector<Payload> outputs(mTask.fanout());
 
-  //mCallback(mInputs,outputs,mTask.id());
-
-  Callback cb = registered_callback(mTask.callback());
-  cb(mInputs,outputs,mTask.id());
+  mTask.callbackFunc()( mInputs, outputs, mTask.id() );
 
   std::vector<char> buffer;
 

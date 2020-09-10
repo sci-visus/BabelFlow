@@ -26,76 +26,154 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "TaskGraph.h"
+#include <fstream>
+#include <cassert>
 
-using namespace BabelFlow;
+#include "TaskGraph.h"
 
 
 //TaskGraphFactory::MapType TaskGraphFactory::m_map;
 
-int TaskGraph::output_graph(ShardId count, const TaskMap* task_map, FILE* output)
+namespace BabelFlow 
 {
-  output_graph_dot(count,task_map,output,"\n");
+
+//-----------------------------------------------------------------------------
+
+void TaskGraph::registerCallback( CallbackId id, Callback func )
+{
+  if( m_callbackVec.size() <= id )
+    m_callbackVec.resize( id + 1, nullptr );
+
+  m_callbackVec[id] = func;
 }
 
+//-----------------------------------------------------------------------------
 
-int TaskGraph::output_graph_html(ShardId count, const TaskMap* task_map, FILE* output)
+Callback TaskGraph::queryCallback( CallbackId id ) const
 {
-  // The following code is taken from Ascent:
+  assert( id < m_callbackVec.size() );
 
-  fprintf(output,
-    "<!DOCTYPE html>\n"
-    "<meta charset=\"utf-8\">\n"
-    "<body>\n"
-    "<script src=\"https://d3js.org/d3.v4.min.js\"></script>\n"
-    "<script src=\"https://unpkg.com/viz.js@1.8.0/viz.js\" type=\"javascript/worker\"></script>\n"
-    "<script src=\"https://unpkg.com/d3-graphviz@1.3.1/build/d3-graphviz.min.js\"></script>\n"
-    "<div id=\"graph\" style=\"text-align: center;\"></div>\n"
-    "<script>\n"
-    "\n"
-    "d3.select(\"#graph\")\n"
-    "  .graphviz()\n"
-    "    .renderDot('");
-
-  // gen dot def, with proper js escaping
-  // we are injected as inline js literal -- new lines need to be escaped.
-  // Add \ to the end of each line in our dot output.
-  output_graph_dot(count,task_map,output," \\\n");
-
-  fprintf(output,
-    "');\n"
-    "\n"
-    "</script>\n"
-    "</body>\n"
-    "</html>\n");
+  return m_callbackVec[ id ];
 }
 
+//-----------------------------------------------------------------------------
 
-int TaskGraph::output_graph_dot(ShardId count, const TaskMap* task_map, FILE* output, const std::string &eol)
+void TaskGraph::outputGraph( ShardId shard_count, const TaskMap* task_map, const std::string& filename ) const
 {
-  fprintf(output,"digraph G {%s",eol.c_str());
+  std::ofstream ofs( filename );
 
-  std::vector<Task> tasks;
-  std::vector<Task>::iterator tIt;
-  std::vector<TaskId>::iterator it;
+  std::vector< std::vector<Task> > tasks( shard_count );
+  for( uint32_t i = 0; i < shard_count; ++i )
+    tasks[i] = localGraph( i, task_map );
 
-  for (uint32_t i=0;i<count;i++) {
-    tasks = localGraph(i,task_map);
+  outputHelper( tasks, ofs, false );
 
-    for (tIt=tasks.begin();tIt!=tasks.end();tIt++) {
-      TaskId::InnerTaskId tid = tIt->id();
-      fprintf(output, "%d [label=\"%d,%d\"]%s", tid , tid, tIt->callback(), eol.c_str());
-      for (it=tIt->incoming().begin();it!=tIt->incoming().end();it++) {
-        if (*it != TNULL)
-          fprintf(output, "%d -> %d%s", TaskId::InnerTaskId(*it), tid, eol.c_str());
+  ofs.close();
+}
+
+//-----------------------------------------------------------------------------
+
+void TaskGraph::outputGraphHtml( ShardId shard_count, const TaskMap* task_map, const std::string& filename ) const
+{
+  std::ofstream ofs( filename );
+
+  std::vector< std::vector<Task> > tasks( shard_count );
+  for( uint32_t i = 0; i < shard_count; ++i )
+    tasks[i] = localGraph( i, task_map );
+  
+  outputHelper( tasks, ofs, true );
+
+  ofs.close();
+}
+
+//-----------------------------------------------------------------------------
+
+void TaskGraph::outputTasksHtml( const std::vector<Task>& task_vec, const std::string& filename ) const
+{
+  std::ofstream ofs( filename );
+
+  std::vector< std::vector<Task> > tasks( 1 );
+  tasks[0] = task_vec;
+
+  outputHelper( tasks, ofs, true );
+
+  ofs.close();
+}
+
+//-----------------------------------------------------------------------------
+
+void TaskGraph::outputHelper( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, bool incl_html ) const
+{
+  std::string eol;
+
+  if( incl_html )
+  {
+    eol = " \\";
+
+    outs << "<!DOCTYPE html>" << std::endl;
+    outs << "<meta charset=\"utf-8\">" << std::endl;
+    outs << "<body>" << std::endl;
+    outs << "<script src=\"https://d3js.org/d3.v4.min.js\"></script>" << std::endl;
+    outs << "<script src=\"https://unpkg.com/viz.js@1.8.0/viz.js\" type=\"javascript/worker\"></script>" << std::endl;
+    outs << "<script src=\"https://unpkg.com/d3-graphviz@1.3.1/build/d3-graphviz.min.js\"></script>" << std::endl;
+    outs << "<div id=\"graph\" style=\"text-align: center;\"></div>" << std::endl;
+    outs << "<script>" << std::endl;
+    outs << std::endl;
+    outs << "d3.select(\"#graph\")" << std::endl;
+    outs << "  .graphviz()" << std::endl;
+    outs << "    .renderDot('";
+  }
+
+  outs << "strict digraph G {" << eol << std::endl;
+  // outs << "  ordering=out;" << eol << std::endl;
+  outs << "  rankdir=TB;" << eol << std::endl;
+  outs << "  ranksep=0.8;" << eol << std::endl;
+
+  outputDot( tasks_v, outs, eol );
+  
+  outs << "}" << eol << std::endl;
+
+  if( incl_html )
+  {
+    outs << "');" << std::endl;
+    outs << std::endl;
+    outs << "</script>" << std::endl;
+    outs << "</body>" << std::endl;
+    outs << "</html>" << std::endl;
+  }
+}
+
+//-----------------------------------------------------------------------------
+
+void TaskGraph::outputDot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const
+{
+  for( uint32_t i = 0; i < tasks_v.size(); ++i )
+  {
+    for( const Task& tsk : tasks_v[i] )
+    {
+      outs << tsk.id() << " [label=\"" << tsk.id() << "," << uint32_t(tsk.callbackId()) << "\"]" << eol << std::endl;
+
+      // Print incoming edges
+      for( const TaskId& tid : tsk.incoming() )
+      {
+        if( tid != TNULL )
+          outs << tid << " -> " << tsk.id() << eol << std::endl;
+      }
+
+      // Print outgoing edges
+      for( uint32_t i = 0; i < tsk.fanout(); ++i )
+      {
+        for( const TaskId& tid : tsk.outgoing(i) )
+        {
+          if( tid != TNULL )
+            outs << tsk.id() << " -> " << tid << eol << std::endl;
+        }
       }
     }
   }
-
-  fprintf(output,"}%s",eol.c_str());
-  return 1;
 }
 
+//-----------------------------------------------------------------------------
 
 //bool TaskGraphFactory::registerCreator(const std::string& name, TaskGraphFactory::CreatorFunc func)
 //{
@@ -105,3 +183,5 @@ int TaskGraph::output_graph_dot(ShardId count, const TaskMap* task_map, FILE* ou
 //  m_map[name] = func;
 //  return true;
 //}
+
+}   // end namespace BabelFlow

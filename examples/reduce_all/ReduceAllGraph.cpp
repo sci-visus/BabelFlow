@@ -102,13 +102,14 @@ BabelFlow::Task ReduceAllGraph::task(uint64_t gId) const {
 
     // Then we assign the outputs
     if (task.id() != 0) { // If we are not the root of the reduction
-      task.callback(!leaf_task ? LOCAL_COMPUTE_TASK : REDUCTION_TASK);
+      CallbackTypes cbt = !leaf_task ? ReduceAllGraph::LOCAL_COMPUTE_TASK : ReduceAllGraph::REDUCTION_TASK;
+      task.callback( cbt, queryCallback( cbt ) );
 
       outgoing.resize(1);
       outgoing[0].resize(1);
       outgoing[0][0] = (task.id() - 1) / mValence;
     } else {
-      task.callback(COMPLETE_REDUCTION_TASK); // Otherwise we start the broadcast
+      task.callback( ReduceAllGraph::COMPLETE_REDUCTION_TASK, queryCallback( ReduceAllGraph::COMPLETE_REDUCTION_TASK ) ); // Otherwise we start the broadcast
       outgoing.resize(1);
       outgoing[0].resize(mValence);
 
@@ -122,13 +123,13 @@ BabelFlow::Task ReduceAllGraph::task(uint64_t gId) const {
 
     // If this is a leaf
     if (task.id() >= (size() - leafCount())) {
-      task.callback(RESULT_REPORT_TASK);    // Report result
+      task.callback( ReduceAllGraph::RESULT_REPORT_TASK, queryCallback( ReduceAllGraph::RESULT_REPORT_TASK ) );    // Report result
 //      for (i = 0; i < mValence; i++)
 //        outgoing[0][i] = TNULL;
       outgoing.clear();
     }
     else { // If we are not the leaf
-      task.callback(RESULT_BROADCAST_TASK); // We are a relay task
+      task.callback( ReduceAllGraph::RESULT_BROADCAST_TASK, queryCallback( ReduceAllGraph::RESULT_BROADCAST_TASK ) ); // We are a relay task
 
       // And we have valence many outputs
       for (i = 0; i < mValence; i++) {

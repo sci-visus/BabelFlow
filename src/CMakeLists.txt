@@ -6,6 +6,7 @@ set(RED_HEADERS
     reduce/KWayReductionTaskMap.h
     reduce/RadixKExchange.h
     reduce/RadixKExchangeTaskMap.h
+    reduce/SingleTaskGraph.h
 )
 
 set(RED_SRC
@@ -15,6 +16,7 @@ set(RED_SRC
     reduce/KWayReductionTaskMap.cpp
     reduce/RadixKExchange.cpp
     reduce/RadixKExchangeTaskMap.cpp
+    reduce/SingleTaskGraph.cpp
 )
 
 set(BASE_BFLOW_HEADERS
@@ -36,6 +38,9 @@ set(BASE_BFLOW_HEADERS
     
     ComposableTaskGraph.h
     ComposableTaskMap.h
+
+    TaskGraphConnector.h
+    DefGraphConnector.h
 )
 
 set(BASE_BFLOW_SRC
@@ -50,6 +55,8 @@ set(BASE_BFLOW_SRC
     
     ComposableTaskGraph.cpp
     ComposableTaskMap.cpp
+
+    DefGraphConnector.cpp
 )
 
 SET(BABELFLOW_HEADERS
