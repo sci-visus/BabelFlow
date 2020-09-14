@@ -24,8 +24,9 @@ using namespace Legion;
 using namespace Legion::Mapping;
 using namespace LegionRuntime::HighLevel;
 using namespace LegionRuntime::Accessor;
+using namespace BabelFlow::legion;
 
-//#define DEBUG_DATAFLOW
+#define DEBUG_DATAFLOW
 
 #ifdef DEBUG_DATAFLOW
 # define DEBUG_PRINT(x) fprintf x
@@ -369,7 +370,7 @@ void printColors(std::set<Color> colors){
 
 // Generic task. Accordingly with the task descriptor received takes a number input regions, 
 // copy them into arrays, executes a callback, copy the output arrays into output regions
-int Controller::generic_task(const Task *task,
+int Controller::generic_task(const Legion::Task *task,
                    const std::vector<PhysicalRegion> &regions,
                    Context ctx, HighLevelRuntime *runtime){
 
@@ -386,10 +387,10 @@ int Controller::generic_task(const Task *task,
 
   TaskInfo info = *(TaskInfo*)(launch_data[nlaunch].arg_map.get_point(DomainPoint::from_point<1>(LegionRuntime::Arrays::Point<1>(coord_t(subregion_index)))).get_ptr());
    
-  DEBUG_PRINT((stderr,"Task %d: regions %lu (in %d + out %d), cb %d\n", info.id, task->regions.size(), info.lenInput, info.lenOutput, info.callbackID));
+  DEBUG_PRINT((stderr,"Task %d: regions %lu (in %d + out %d), cb %d\n", info.id.tid(), task->regions.size(), info.lenInput, info.lenOutput, info.callbackID));
 
   if(info.callbackID == 0){ // Is a relay task
-    DEBUG_PRINT((stderr, "<<<<< I'm a relay task %d\n", info.id));
+    DEBUG_PRINT((stderr, "<<<<< I'm a relay task %d\n", info.id.tid()));
 
     if(info.lenInput > 1){
       fprintf(stderr, "Relay task with more than one input!\n");
@@ -402,7 +403,7 @@ int Controller::generic_task(const Task *task,
 
 #ifdef DEBUG_DATAFLOW
   if(info.lenInput > task->regions.size()){
-    fprintf(stderr, "wrong region size for task %u expected len %lu but %lu\n", info.id, info.lenInput+info.lenOutput, task->regions.size());
+    fprintf(stderr, "wrong region size for task %u expected len %lu but %lu\n", info.id.tid(), info.lenInput+info.lenOutput, task->regions.size());
     exit(0);
   }
 #endif
@@ -451,9 +452,9 @@ int Controller::generic_task(const Task *task,
   }
   
   // Execute the callbacks
-  info.callbackFunc( inputs, outputs, info.id );
+  info.callbackFunc( inputs, outputs, info.id.tid() );
 
-  DEBUG_PRINT((stderr,"Task %d executed cb %d\n", info.id, info.callbackID));
+  DEBUG_PRINT((stderr,"Task %d executed cb %d\n", info.id.tid(), info.callbackID));
 
   // Copy the outputs from buffers to Regions
   for(int i=0; i < outputs.size(); i++){
@@ -575,7 +576,7 @@ void printEdges(std::set<EdgeTaskId> toResolveEdges){
 
   for(edges=toResolveEdges.begin(); edges != toResolveEdges.end(); edges++){
     EdgeTaskId ed = *edges;
-    printf("\t edge %d %d\n", ed.first, ed.second);
+    printf("\t edge %d %d\n", ed.first.tid(), ed.second.tid());
   }
 }
 

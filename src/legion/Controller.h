@@ -26,6 +26,9 @@
 using namespace LegionRuntime::HighLevel;
 using namespace LegionRuntime::Accessor;
 
+namespace BabelFlow {
+
+namespace legion {
 
 typedef std::pair<BabelFlow::TaskId,BabelFlow::TaskId> EdgeTaskId;
 typedef LegionRuntime::Arrays::coord_t RegionsIndexType;
@@ -45,6 +48,13 @@ class DomainSelection{
  public:
   GlobalIndexType low[3];
   GlobalIndexType high[3];
+
+  DomainSelection(){
+    for(int d=0;d<3;d++){
+      low[d]=0;
+      high[d]=0;
+    }
+  }
 };
 
 class VPartId{
@@ -150,22 +160,22 @@ public:
   //! Start the computation
   int run(std::map<BabelFlow::TaskId,BabelFlow::Payload>& initial_inputs);
 
-  static LogicalRegion load_task(const Task *task,
+  static LogicalRegion load_task(const Legion::Task *task,
                    const std::vector<PhysicalRegion> &regions,
                    Context ctx, HighLevelRuntime *runtime);
 
-  static int generic_task(const Task *task,
+  static int generic_task(const Legion::Task *task,
                   const std::vector<PhysicalRegion> &regions,
                   Context ctx, HighLevelRuntime *runtime);
   
-  static void distributed_initialization(const Task *task,
+  static void distributed_initialization(const Legion::Task *task,
                     const std::vector<PhysicalRegion> &phy_regions,
                     Context ctx, HighLevelRuntime *runtime);
   
   static void mapper_registration(Machine machine, HighLevelRuntime *rt,
                       const std::set<Processor> &local_procs);
   
-  static void top_level_task(const Task *task,
+  static void top_level_task(const Legion::Task *task,
                  const std::vector<PhysicalRegion> &regions,
                  Context ctx, HighLevelRuntime *runtime);
   
@@ -176,4 +186,6 @@ public:
   
 };
 
+}
+}
 #endif /* LEGION_CONTROLLER_H */

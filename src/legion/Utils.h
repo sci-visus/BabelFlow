@@ -17,6 +17,7 @@
 using namespace LegionRuntime::HighLevel;
 using namespace LegionRuntime::Accessor;
 using namespace LegionRuntime::Arrays;
+using namespace BabelFlow::legion;
 
 #ifdef DEBUG_DATAFLOW
 # define DEBUG_PRINT(x) fprintf x

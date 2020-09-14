@@ -27,6 +27,7 @@
 using namespace LegionRuntime::HighLevel;
 using namespace LegionRuntime::Accessor;
 using namespace LegionRuntime::Arrays;
+using namespace BabelFlow::legion;
 
 namespace Utils {
 
@@ -118,7 +119,7 @@ namespace Utils {
       for(int ri=0; ri < task.incoming().size(); ri++){
         
         if(vpart_map.find(std::make_pair(task.incoming()[ri], task.id())) == vpart_map.end()){
-          fprintf(stderr,"THIS SHOULD NOT HAPPEN: Mapping input region %d -> %d not found\n", task.incoming()[ri], task.id());
+          fprintf(stderr,"THIS SHOULD NOT HAPPEN: Mapping input region %d -> %d not found\n", task.incoming()[ri].tid(), task.id().tid());
           assert(false);
         }
       
@@ -159,13 +160,13 @@ namespace Utils {
         break;
       }
 
-      DEBUG_PRINT((stderr,"MAPPING task %d callback %d\n", task.id(), task.callback()));
+      DEBUG_PRINT((stderr,"MAPPING task %d callback %d\n", task.id(), task.callbackId()));
       
       //MetaDataFlow metadata;
       //TaskInfo& ti = metadata.info;//argsvec[task_counter].info;
       TaskInfo ti;
       ti.id = task.id();
-      ti.callbackID = task.callback();
+      ti.callbackID = task.callbackId();
       ti.lenInput = task.incoming().size();
       ti.lenOutput = task.outputs().size();
       // for(int to=0; to < task.outputs().size(); to++){
@@ -185,7 +186,7 @@ namespace Utils {
         
         if(vpart_map.find(std::make_pair(task.incoming()[ri], task.id())) == vpart_map.end()){
           
-          fprintf(stderr,"THIS SHOULD NOT HAPPEN: Mapping input region %d -> %d not found\n", task.incoming()[ri], task.id());
+          fprintf(stderr,"THIS SHOULD NOT HAPPEN: Mapping input region %d -> %d not found\n", task.incoming()[ri].tid(), task.id().tid());
 
           assert(false);
         }
@@ -224,16 +225,16 @@ namespace Utils {
       for(int ro=0; ro < task.outputs().size(); ro++){
 
 #if PMT_OUTPUT_SIZE
-        if(task.callback() ==1){
+        if(task.callbackId() ==1){
           if(ro == 0)
             output_size = input_block_size/9;///9;
           else
             output_size = input_block_size+input_block_size/4;
         }
-        else if(task.callback() == 2){
+        else if(task.callbackId() == 2){
           output_size = input_block_size;//input_block_size+input_block_size/9;//10
         }
-        else if(task.callback() == 3){
+        else if(task.callbackId() == 3){
           output_size = input_block_size+input_block_size/4;
         }
         else
@@ -358,7 +359,7 @@ namespace Utils {
       for(int r=0; r < round_groups.size(); r++){
       
         LaunchData launch;
-        launch.callback = taskmap[*round_groups[r].begin()].callback();
+        launch.callbackID = taskmap[*round_groups[r].begin()].callbackId();
 
         if(round_id > 0 && (*round_groups[r].begin())== BabelFlow::TNULL) { // TODO check why this happens
           DEBUG_PRINT((stderr,"skipping invalid round with first task BabelFlow::TNULL (r>0)\n"));

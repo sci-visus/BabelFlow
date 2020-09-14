@@ -47,6 +47,8 @@ int add_int(std::vector<BabelFlow::Payload>& inputs, std::vector<BabelFlow::Payl
 
   output[0].initialize(size,buffer);
 
+  printf("summing %d", *result);
+
   int r = rand() % 100000;
   usleep(r);
 
