@@ -26,7 +26,7 @@ using namespace LegionRuntime::HighLevel;
 using namespace LegionRuntime::Accessor;
 using namespace BabelFlow::legion;
 
-#define DEBUG_DATAFLOW
+//#define DEBUG_DATAFLOW
 
 #ifdef DEBUG_DATAFLOW
 # define DEBUG_PRINT(x) fprintf x
@@ -37,6 +37,7 @@ using namespace BabelFlow::legion;
 #define USE_VIRTUAL_MAPPING 0
 
 std::vector<LaunchData> launch_data;
+
 std::map<BabelFlow::TaskId,BabelFlow::Task> taskmap;
 std::map<EdgeTaskId,VPartId> vpart_map;
 
@@ -438,6 +439,8 @@ int Controller::generic_task(const Legion::Task *task,
 
     //runtime->unmap_region(ctx,regions[i]);
     BabelFlow::Payload pay(input_size*BYTES_PER_POINT, buffer);
+
+    //printf("in the buffer %d size %ld\n", *(FunctionType*)buffer, input_size);
     
     inputs.push_back(pay);
     
@@ -451,6 +454,7 @@ int Controller::generic_task(const Legion::Task *task,
     outputs.push_back(pay);
   }
   
+  DEBUG_PRINT((stderr,"before call %d\n", info.callbackFunc));  
   // Execute the callbacks
   info.callbackFunc( inputs, outputs, info.id.tid() );
 
@@ -588,6 +592,7 @@ void Controller::init(){
 
   for(uint32_t i=0; i < alltasks.size(); i++){
     taskmap[alltasks[i].id()] = alltasks[i];
+    //printf("found task %d g %d\n", alltasks[i].id().tid(), alltasks[i].id().graphId() );
   }
 
   RegionsIndexType input_block_size = 0;
@@ -601,7 +606,7 @@ void Controller::init(){
 
   std::vector<DomainSelection> boxes(mInitial_inputs.size());
 
-  printf("intial size %d\n", mInitial_inputs.size());
+  //printf("intial size %d\n", mInitial_inputs.size());
 
   RegionsIndexType bsize = sizeof(FunctionType*) + 6*sizeof(GlobalIndexType) + sizeof(FunctionType);
 
@@ -734,7 +739,7 @@ void Controller::top_level_task(const LegionRuntime::HighLevel::Task *task,
   for(int i=1; i < launch_data.size(); i++){
     LaunchData& launch = launch_data[i];
     
-    DEBUG_PRINT((stdout,"Launch %d callback %d partititions size %d\n", i, launch.callbackID, launch.vparts.size()));
+    DEBUG_PRINT((stdout,"Launch %d callback %d partitions size %d\n", i, launch.callbackID, launch.vparts.size()));
     DEBUG_PRINT((stdout,"coloring size %d ntasks %u\n",launch.vparts[0].coloring.size(), launch.n_tasks));
 
     LegionRuntime::Arrays::Rect<1> color_bounds(LegionRuntime::Arrays::Point<1>(0),LegionRuntime::Arrays::Point<1>(launch.n_tasks-1));

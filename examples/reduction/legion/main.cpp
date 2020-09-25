@@ -59,25 +59,9 @@ LogicalRegion load_task(const Legion::Task *task,
   //printf("from task %lld volume %d!\n", task->index_point.point_data[0], elem_rect_in.volume());
   assert(task->local_arglen == sizeof(DomainSelection));
 
-  DomainSelection box = *(DomainSelection*)task->local_args;//args;
-  /*if(elem_rect_in.volume() == 0){
-    fprintf(stdout,"invalid rect %llu %llu\n", elem_rect_in.lo,elem_rect_in.hi);
-    fprintf(stdout,"invalid data %d %d %d - %d %d %d \n", box.low[0],box.low[1],box.low[2],box.high[0],box.high[1],box.high[2]);
-    assert(false);
-    }*/
+  DomainSelection box = *(DomainSelection*)task->local_args;
 
-  // FunctionType threshold = (FunctionType)(-1)*FLT_MAX;
-  // char* dataset = NULL;
-  // //fprintf(stderr, "input initialization started\n");
-
-  // for (int i = 1; i < this_argc; i++){
-  //   if (!strcmp(this_argv[i],"-t"))
-  //     threshold = atof(this_argv[++i]);
-  //   if (!strcmp(this_argv[i],"-f"))
-  //     dataset = this_argv[++i];
-  // }
-
-  fprintf(stdout,"Load data %d %d %d - %d %d %d \n", box.low[0],box.low[1],box.low[2],box.high[0],box.high[1],box.high[2]);
+//  fprintf(stdout,"Load data %d %d %d - %d %d %d \n", box.low[0],box.low[1],box.low[2],box.high[0],box.high[1],box.high[2]);
 
   // char* data_block = read_block(dataset,box.low,box.high);
 
@@ -94,30 +78,18 @@ LogicalRegion load_task(const Legion::Task *task,
 
   //Payload pay = make_local_block((FunctionType*)(data_block), box.low, box.high, threshold);
 
-  Payload pay(sizeof(long long), (char*)&(task->index_point.point_data[0]));
-
-  // char filename[128];
-  // sprintf(filename, "outblock_%d.raw", task->index_point.point_data[0]);
-  // std::ofstream outfile (filename,std::ofstream::binary);
-  // outfile.write(pay.buffer(), pay.size());
-  // outfile.close();
+  FunctionType* buffer = new FunctionType[1];
+  *(buffer) = (FunctionType)box.low[0];
+  //memcpy(buffer, (char*)&(task->index_point.point_data[0]), sizeof(float));
+  Payload pay(sizeof(FunctionType), (char*)buffer);
 
   // printf("volume in %d size %d\n", task->index_point.point_data[0], pay.size());
   assert(elem_rect_in.volume() >= pay.size()/BYTES_PER_POINT);
 
   Controller::bufferToRegion(pay.buffer(), pay.size()/BYTES_PER_POINT, elem_rect_in, regions[0]);//&ctx, runtime);
-  //runtime->unmap_region(ctx,regions[0]);
 
-  // char offname[128];
-  //   sprintf(offname,"read_%d.raw", RegionsIndexType(elem_rect_in.lo));
-  //   std::ofstream outresfile(offname,std::ofstream::binary);
-
-  //    outresfile.write(reinterpret_cast<char*>(pay.buffer()),pay.size());
-
-  //    outresfile.close();
-
-  //delete [] pay.buffer();
-
+  delete [] pay.buffer();
+  
   return task->regions[0].region;
 }
 
@@ -136,7 +108,7 @@ int main(int argc, char* argv[])
   ReductionGraph graph(leafs,valence);
   graph.registerCallback( ReductionGraph::RED_TASK_CB, add_int );
   graph.registerCallback( ReductionGraph::ROOT_TASK_CB, report_sum );
-  ModuloMap task_map(leafs ,graph.size());
+  ModuloMap task_map(1,graph.size());
 
   Controller* master = Controller::getInstance();
 
@@ -144,35 +116,26 @@ int main(int argc, char* argv[])
 
   master->initialize(graph,&task_map, argc, argv);
 
+  // Function to fill up the input data
   HighLevelRuntime::register_legion_task<LogicalRegion, load_task>(LOAD_TASK_ID,
         Processor::LOC_PROC, true/*single*/, false/*index*/,
         AUTO_GENERATE_ID, TaskConfigOptions(true/*leaf*/), "load_task");
 
   std::map<TaskId,Payload> inputs;
 
-
   FunctionType count=1;
   FunctionType sum = 0;
 
+  printf("summing %d leafs %d inputs\n", graph.leafCount(), leafs);
   //std::vector<DomainSelection> blocks(graph.leafCount());
 
   for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
 
-/*
-    int32_t size = sizeof(uint32_t);
-    char* buffer = (char*)(new uint32_t[1]);
-    *((uint32_t*)buffer) = count;
-
-
-    Payload data(size,buffer);
-
-    inputs[i] = data;
-*/
-
-    //*((FunctionType)blocks[i].data) = count;
+    // Here we are just setting up the domain decomposition,
+    // the input data are filled up by the load_task function
     DomainSelection b;
     b.low[0]=static_cast<GlobalIndexType>(count);
-    b.high[0]=static_cast<GlobalIndexType>(count+1);
+    b.high[0]=static_cast<GlobalIndexType>(count);
 
     size_t size = sizeof(DomainSelection);
     char* input = (char*)malloc(size);
@@ -186,6 +149,8 @@ int main(int argc, char* argv[])
   }
   
   master->run(inputs);
+
+  printf("verified sum %d\n", sum);
 
   return 0;
 }

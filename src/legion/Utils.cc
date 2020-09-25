@@ -160,13 +160,14 @@ namespace Utils {
         break;
       }
 
-      DEBUG_PRINT((stderr,"MAPPING task %d callback %d\n", task.id(), task.callbackId()));
+      DEBUG_PRINT((stderr,"MAPPING task %d callback %d\n", task.id().tid(), task.callbackId()));
       
       //MetaDataFlow metadata;
       //TaskInfo& ti = metadata.info;//argsvec[task_counter].info;
       TaskInfo ti;
       ti.id = task.id();
       ti.callbackID = task.callbackId();
+      ti.callbackFunc = task.callbackFunc();
       ti.lenInput = task.incoming().size();
       ti.lenOutput = task.outputs().size();
       // for(int to=0; to < task.outputs().size(); to++){
@@ -211,7 +212,7 @@ namespace Utils {
         }
         
 
-        DEBUG_PRINT((stderr,"\t mapping in (%d,%d) rect [%llu %llu] vpart_id %d %d (%d) size %d\n", task.incoming()[ri], task.id(), lrect.lo[0], lrect.hi[0],vpid.round_id,vpid.part_id, vpid.color, RegionsIndexType(lrect.hi-lrect.lo)+1));
+        DEBUG_PRINT((stderr,"\t mapping in (%d,%d) rect [%llu %llu] vpart_id %d %d (%d) size %d\n", task.incoming()[ri].tid(), task.id().tid(), lrect.lo[0], lrect.hi[0],vpid.round_id.tid(),vpid.part_id.tid(), vpid.color, RegionsIndexType(lrect.hi-lrect.lo)+1));
         //printf("setting in %d index %d rect [%llu %llu]\n", ri, requirements[ri].local_index, lrect.lo[0], lrect.hi[0]);
 
         total_input_size += RegionsIndexType(lrect.hi-lrect.lo)+1;
@@ -262,7 +263,7 @@ namespace Utils {
           vpart_map[out_edge] = vpid;
           out_count++;
 
-          DEBUG_PRINT((stderr,"\t mapping out (%d,%d) [%d %d] vpart_id %d %d (%d) size %d\n", task.id(), task.outputs()[ro][inro],out_rect.lo[0],out_rect.hi[0],vpid.round_id,vpid.part_id,vpid.color, output_size));
+          DEBUG_PRINT((stderr,"\t mapping out (%d,%d) [%d %d] vpart_id %d %d (%d) size %d\n", task.id().tid(), task.outputs()[ro][inro].tid(),out_rect.lo[0],out_rect.hi[0],vpid.round_id.tid(),vpid.part_id.tid(),vpid.color, output_size));
 
         }
     
@@ -289,7 +290,7 @@ namespace Utils {
       }
     }        
     return false;
-  }
+  } 
 
   void compute_launch_data(const RegionsIndexType input_block_size, std::set<BabelFlow::TaskId>& currEpochTasks, std::set<EdgeTaskId>& current_inputs,
     std::set<EdgeTaskId>& current_outputs, std::map<BabelFlow::TaskId,BabelFlow::Task>& taskmap,
@@ -312,19 +313,19 @@ namespace Utils {
       std::set<BabelFlow::TaskId>::iterator currEpIt;
       for(currEpIt=currEpochTasks.begin(); currEpIt != currEpochTasks.end(); currEpIt++){
         const BabelFlow::Task& lt = taskmap[*currEpIt];
-        //printf("task %d\n",lt.id());
+        //printf("task %d\n",lt.id().tid());
 
         int in_unresolved = lt.incoming().size();
         for(int in=0; in < lt.incoming().size(); in++){
           EdgeTaskId inedge = std::make_pair(lt.incoming()[in], lt.id());
-          //printf("\tlooking for edge %d %d\n", lt.incoming()[in], lt.id());
+          //printf("\tlooking for edge %d %d\n", lt.incoming()[in].tid(), lt.id().tid());
           if(findEdge(inedge, current_inputs)){
             in_unresolved--; // one fail is enough
           }else
             break;
         }
         if(in_unresolved == 0){
-          //printf("task %d resolved callback %d\n\n", lt.id(), lt.callback());
+          //printf("task %d resolved callback %d\n\n", lt.id().tid(), lt.callbackId());
           nextEpochTasks.insert(lt.id());
 
           round_tasks.insert(lt.id());
@@ -332,14 +333,14 @@ namespace Utils {
           const std::vector<std::vector<BabelFlow::TaskId> >& outputs = lt.outputs();
           for(int o=0; o < outputs.size(); o++){
           for(int inro=0; inro < outputs[o].size(); inro++){
-            EdgeTaskId outedge = std::make_pair(lt.id(),outputs[o][inro]);
+            EdgeTaskId outedge = std::make_pair(lt.id().tid(),outputs[o][inro]);
             
             if(in_unresolved == 0){
               current_outputs.insert(outedge);
             }
             tempCurrEpoch.insert(outputs[o][inro]);
 
-            //printf("add to next input %d %d\n", lt.id(),outputs[o][inro]);
+            //printf("add to next input %d %d\n", lt.id().tid(),outputs[o][inro].tid());
           }
         }
           

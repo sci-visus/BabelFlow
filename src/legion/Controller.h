@@ -85,6 +85,8 @@ public:
   ArgumentMap arg_map;
   std::vector<VirtualPartition> vparts;
   uint32_t n_tasks;
+
+  LaunchData(){arg_map = ArgumentMap();}
 };
 
 // struct MetaRegions{
