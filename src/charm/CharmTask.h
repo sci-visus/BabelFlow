@@ -37,6 +37,31 @@
 #include "../TaskGraph.h"
 #include "../Payload.h"
 
+namespace BabelFlow {
+namespace charm {
+
+class CharmPayload : public Payload
+{
+public:
+  CharmPayload() {}
+  CharmPayload(Payload& payl) : Payload(payl.size(), payl.buffer()) {}
+
+  void pup(PUP::er &p);
+};
+
+class CharmTaskId : public TaskId
+{
+public:
+  CharmTaskId() {}
+  CharmTaskId(const TaskId& tid) : TaskId(tid) {}
+
+  void pup(PUP::er &p);
+};
+
+}
+}
+
+
 #include "charm_babelflow.decl.h"
 
 
@@ -48,20 +73,27 @@ extern BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload buffer);
 namespace BabelFlow {
 namespace charm {
 
-//! Allow us to send Payload buffers using charm++
-inline void operator|(PUP::er &p, BabelFlow::Payload& buffer) {
+// //! Allow us to send Payload buffers using charm++
+// inline void operator|(PUP::er &p, BabelFlow::Payload& buffer) 
+// {
+//   p|buffer.mSize;
+//   if (p.isUnpacking())
+//     buffer.mBuffer = new char[buffer.size()];
+//   PUParray(p, buffer.buffer(), buffer.size());
 
-  p|buffer.mSize;
-  if (p.isUnpacking())
-    buffer.mBuffer = new char[buffer.size()];
-  PUParray(p, buffer.buffer(), buffer.size());
 
+//   // If charm will delete the object make sure that we release the
+//   // memory buffer
+//   if (p.isDeleting())
+//     delete[] buffer.buffer();
+// }
 
-  // If charm will delete the object make sure that we release the
-  // memory buffer
-  if (p.isDeleting())
-    delete[] buffer.buffer();
-}
+// //! Allow us to send TaskId's using charm++
+// inline void operator|(PUP::er &p, BabelFlow::TaskId& tsk_id) 
+// {
+//   p|tsk_id.graphId();
+//   p|tsk_id.tid();
+// }
 
 //! Make defining the global task graph function easy
 template<class TaskGraphClass>

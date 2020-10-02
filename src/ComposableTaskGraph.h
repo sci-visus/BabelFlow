@@ -31,10 +31,10 @@ public:
   virtual std::vector<Task> localGraph( ShardId id, const TaskMap* task_map ) const override;
 
   //! Return the task for the given global task id
-  virtual Task task( uint64_t gId ) const override { assert(false); return Task(); }
+  virtual Task task( uint64_t gId ) const override;
 
   //! Return the global id of the given task id
-  virtual uint64_t gId( TaskId tId ) const override { return TaskId::InnerTaskId(tId); }
+  virtual uint64_t gId( TaskId tId ) const override { return tId.graphId()*m_graphs.size() + tId.tid(); }
 
   //! Return the total number of tasks (or some reasonable upper bound)
   virtual uint32_t size() const override;

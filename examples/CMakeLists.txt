@@ -1,5 +1,6 @@
 add_subdirectory(reduction)
 add_subdirectory(reduce_all)
 add_subdirectory(broadcast)
-add_subdirectory(mapreduce)
-add_subdirectory(DoNothing)
+add_subdirectory(radixk)
+# add_subdirectory(mapreduce)
+# add_subdirectory(DoNothing)

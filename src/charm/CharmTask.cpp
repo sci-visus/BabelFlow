@@ -33,6 +33,29 @@ namespace BabelFlow {
 namespace charm {
 
 
+void CharmPayload::pup(PUP::er &p)
+{
+  p|mSize;
+  if (p.isUnpacking())
+    mBuffer = new char[size()];
+  PUParray(p, buffer(), size());
+
+  // If charm will delete the object make sure that we release the
+  // memory buffer
+  if (p.isDeleting())
+    delete[] buffer();
+}
+
+
+void CharmTaskId::pup(PUP::er &p)
+{
+  int32_t gid = (int32_t)graphId();
+  int32_t tsk_id = (int32_t)tid();
+  p|gid;
+  p|tsk_id;
+}
+
+
 CharmTask::CharmTask(Payload buffer)
 {
   //fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
@@ -76,7 +99,10 @@ void CharmTask::exec()
     {
       //fprintf(stderr,"\nProcessing output from %d to %d\n",mTask.id(),mOutputs[i][j]);
       if (mOutputs[i][j] != (uint64_t)-1)
-        this->thisProxy[mOutputs[i][j]].addInput(mTask.id(),buffer);
+      {
+        CharmTaskId ch_tid(mTask.id());
+        this->thisProxy[mOutputs[i][j]].addInput(ch_tid,buffer);
+      }
     }
   }
 
@@ -118,7 +144,7 @@ void CharmTask::addInput(TaskId source, Buffer buffer)
   }
 
   if (!input_added) {
-    fprintf(stderr,"Unknown sender %d in CharmTask::addInput for task %d\n",source,mTask.id());
+    std::cerr << "Unknown sender " << source << " in CharmTask::addInput for task " << mTask.id() << std::endl;
     assert (false);
   }
   else{
