@@ -43,6 +43,7 @@ function(add_charm_executable MODULE NAME)
 endfunction()
 
 find_program(CHARM_COMPILER charmc
+    PATHS ${CHARM_DIR}
     PATH_SUFFIXES charm/bin bin
 )
 if (NOT CHARM_COMPILER)

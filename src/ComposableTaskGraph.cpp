@@ -61,6 +61,24 @@ std::vector<Task> ComposableTaskGraph::localGraph( ShardId id, const TaskMap* ta
 
 //-----------------------------------------------------------------------------
 
+Task ComposableTaskGraph::task( uint64_t gId ) const 
+{ 
+  assert( gId < size() );
+
+  uint64_t cnt = 0;
+  for( uint32_t i = 0; i < m_graphs.size(); ++i ) 
+  {
+    const TaskGraph* gr = m_graphs[i];
+    if( cnt <= gId && gId < cnt + gr->size() )
+      return task( TaskId( gId - cnt, i ) );
+    cnt += gr->size();
+  }
+
+  // We shouldn't reach this point
+}
+
+//-----------------------------------------------------------------------------
+
 Task ComposableTaskGraph::task( const TaskId& task_id ) const
 {
   uint32_t graph_id = task_id.graphId();
