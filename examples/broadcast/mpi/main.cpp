@@ -81,8 +81,8 @@ int main(int argc, char* argv[])
   uint32_t valence = atoi(argv[2]);
 
   BroadcastGraph graph(leafs,valence);
-  graph.registerCallback( BroadcastGraph::LEAF_TASK_CB, print_message );
-  graph.registerCallback( BroadcastGraph::BCAST_TASK_CB, relay_message );
+  TaskGraph::registerCallback( graph.type(), BroadcastGraph::LEAF_TASK_CB, print_message );
+  TaskGraph::registerCallback( graph.type(), BroadcastGraph::BCAST_TASK_CB, relay_message );
 
   //std::cout << "graph size " << graph.size() << "\n";
   ModuloMap task_map(mpi_width,graph.size());

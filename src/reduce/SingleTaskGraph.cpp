@@ -30,7 +30,7 @@ Task SingleTaskGraph::task( uint64_t gId ) const
 {
   Task t( gId );
 
-  t.callback( TaskCB::SINGLE_TASK_CB, queryCallback( TaskCB::SINGLE_TASK_CB ) );  // Only one callback function 
+  t.callback( TaskCB::SINGLE_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::SINGLE_TASK_CB ) );  // Only one callback function 
 
   // Single input from controller
   std::vector<TaskId> incoming( 1 );

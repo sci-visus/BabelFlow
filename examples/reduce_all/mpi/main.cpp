@@ -73,11 +73,11 @@ int main(int argc, char *argv[]) {
 
   start = clock();
   ReduceAllGraph graph(leafs, valence);
-  graph.registerCallback( ReduceAllGraph::LOCAL_COMPUTE_TASK, add_int);
-  graph.registerCallback( ReduceAllGraph::REDUCTION_TASK, add_int);
-  graph.registerCallback( ReduceAllGraph::COMPLETE_REDUCTION_TASK, add_int_broadcast);
-  graph.registerCallback( ReduceAllGraph::RESULT_REPORT_TASK, print_result);
-  graph.registerCallback( ReduceAllGraph::RESULT_BROADCAST_TASK, relay_message );
+  TaskGraph::registerCallback( graph.type(), ReduceAllGraph::LOCAL_COMPUTE_TASK, add_int);
+  TaskGraph::registerCallback( graph.type(), ReduceAllGraph::REDUCTION_TASK, add_int);
+  TaskGraph::registerCallback( graph.type(), ReduceAllGraph::COMPLETE_REDUCTION_TASK, add_int_broadcast);
+  TaskGraph::registerCallback( graph.type(), ReduceAllGraph::RESULT_REPORT_TASK, print_result);
+  TaskGraph::registerCallback( graph.type(), ReduceAllGraph::RESULT_BROADCAST_TASK, relay_message );
 
   if (rank == 0)
     printf("Graph size %d reduction size %d leaf tasks %d\n", graph.size(), graph.reductionSize(), graph.leafCount());

@@ -1,5 +1,7 @@
 
 set(SRC
+    ../lodepng.h
+    ../lodepng.cpp
     ../CompositingUtils.h
     ../CompositingUtils.cpp
     main.cpp

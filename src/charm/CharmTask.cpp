@@ -49,18 +49,17 @@ void CharmPayload::pup(PUP::er &p)
 
 void CharmTaskId::pup(PUP::er &p)
 {
-  int32_t gid = (int32_t)graphId();
-  int32_t tsk_id = (int32_t)tid();
-  p|gid;
-  p|tsk_id;
+  p|m_gr;
+  p|m_tid;
 }
 
 
-CharmTask::CharmTask(Payload buffer)
+CharmTask::CharmTask(CharmPayload buffer)
 {
   //fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
-
-  TaskGraph* graph = make_task_graph(buffer);
+  register_callbacks();
+  
+  TaskGraph* graph = make_task_graph(buffer);  
   mTask = graph->task(this->thisIndex);
 
   mInputs.resize(mTask.fanin());
@@ -84,6 +83,11 @@ CharmTask::CharmTask(Payload buffer)
 void CharmTask::exec()
 {
   //fprintf(stderr,"CharmTask<TaskGraphClass, CallbackClass>::exec() %d  fanout %d\n",mTask.id(),mTask.fanout());
+
+  /////
+  // std::cout << "CharmTask::exec -- start -- " << mTask.id() << " fanout " << mTask.fanout() << std::endl;
+  /////
+
   std::vector<Payload> outputs(mTask.fanout());
 
   mTask.callbackFunc()( mInputs, outputs, mTask.id() );
@@ -117,19 +121,23 @@ void CharmTask::exec()
     outputs[i].reset();
 
   outputs.clear();
+
+  /////
+  // std::cout << "CharmTask::exec -- end -- " << mTask.id() << " fanout " << mTask.fanout() << std::endl;
+  /////
 }
 
-void CharmTask::addInput(TaskId source, Buffer buffer)
+void CharmTask::addInput(CharmTaskId source, Buffer buffer)
 {
-  TaskId i;
+  TaskId src_tsk( source.tid(), source.graphId() );
   bool is_ready = true;
   bool input_added = false;
 
   //fprintf(stderr,"CharmTask<TaskGraphClass, CallbackClass>::addInput id %d source %d \n", mTask.id(),source);
 
-  for (i=0;i<mTask.fanin();i++) {
+  for (uint32_t i=0; i < mTask.fanin(); i++) {
     //fprintf(stderr,"\t %d incoming %d\n",mTask.id(),mTask.incoming()[i]);
-    if (mTask.incoming()[i] == source) {
+    if (mTask.incoming()[i] == src_tsk) {
       assert(mInputs[i].buffer() == NULL);
 
       // Not clear whether we need to copy the data here
@@ -144,7 +152,7 @@ void CharmTask::addInput(TaskId source, Buffer buffer)
   }
 
   if (!input_added) {
-    std::cerr << "Unknown sender " << source << " in CharmTask::addInput for task " << mTask.id() << std::endl;
+    std::cerr << "Unknown sender " << src_tsk << " in CharmTask::addInput for task " << mTask.id() << std::endl;
     assert (false);
   }
   else{

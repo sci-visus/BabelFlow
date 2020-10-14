@@ -27,6 +27,8 @@ public:
   
   void init();
   
+  virtual std::vector<Task> allGraph() const override;
+
   //! Compute the fully specified tasks for the given controller
   virtual std::vector<Task> localGraph( ShardId id, const TaskMap* task_map ) const override;
 
@@ -34,7 +36,7 @@ public:
   virtual Task task( uint64_t gId ) const override;
 
   //! Return the global id of the given task id
-  virtual uint64_t gId( TaskId tId ) const override { return tId.graphId()*m_graphs.size() + tId.tid(); }
+  virtual uint64_t gId( TaskId tId ) const override;
 
   //! Return the total number of tasks (or some reasonable upper bound)
   virtual uint32_t size() const override;

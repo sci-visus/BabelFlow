@@ -108,14 +108,14 @@ Task BinarySwap::task(uint64_t gId) const{
   uint8_t lvl = level(it->id());
 
   if (lvl == 0) { // If this is a leaf node
-    it->callback( TaskCB::LEAF_TASK_CB, queryCallback( TaskCB::LEAF_TASK_CB ) ); 
+    it->callback( TaskCB::LEAF_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::LEAF_TASK_CB ) ); 
 
     incoming.resize(1); // One dummy input
     incoming[0] = TNULL;
     it->incoming(incoming);
   } 
   else {
-    it->callback( TaskCB::MID_TASK_CB, queryCallback( TaskCB::MID_TASK_CB ) );
+    it->callback( TaskCB::MID_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::MID_TASK_CB ) );
 
     incoming.resize(2);
 
@@ -134,7 +134,7 @@ Task BinarySwap::task(uint64_t gId) const{
   }
   
   if(lvl == mRounds)
-    it->callback( TaskCB::ROOT_TASK_CB, queryCallback( TaskCB::ROOT_TASK_CB ) );
+    it->callback( TaskCB::ROOT_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::ROOT_TASK_CB ) );
 
   // Set outputs
   if(lvl < mRounds){

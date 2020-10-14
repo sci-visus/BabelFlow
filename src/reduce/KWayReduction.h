@@ -85,9 +85,13 @@ public:
   //! Destructor
   virtual ~KWayReduction() {}
 
+  // virtual uint32_t type() const override { return 2; };
+
   //! Compute the fully specified tasks for the
   //! given controller id and task map
   virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const override;
+
+  virtual std::vector<Task> allGraph() const override;
 
   //! Return the total number of tasks
   /*! This function computes the total number of tasks in the graph.

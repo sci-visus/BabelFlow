@@ -81,7 +81,7 @@ Task PreProcessInputTaskGraph::task(uint64_t gId) const
     t.outputs().resize(1);
     t.outputs()[0].resize(1);
     t.outputs()[0][0] = old_tid;
-    t.callback( TaskCB::PRE_PROC_TASK_CB, queryCallback( TaskCB::PRE_PROC_TASK_CB ) );
+    t.callback( TaskCB::PRE_PROC_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::PRE_PROC_TASK_CB ) );
     return t;
   }
 }

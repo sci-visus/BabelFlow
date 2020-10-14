@@ -66,8 +66,8 @@ int main(int argc, char* argv[])
   uint32_t valence = atoi(argv[2]);
 
   ReductionGraph graph(leafs,valence);
-  graph.registerCallback( ReductionGraph::RED_TASK_CB, add_int );
-  graph.registerCallback( ReductionGraph::ROOT_TASK_CB, report_sum );
+  TaskGraph::registerCallback( graph.type(), ReductionGraph::RED_TASK_CB, add_int );
+  TaskGraph::registerCallback( graph.type(), ReductionGraph::ROOT_TASK_CB, report_sum );
   ModuloMap task_map(mpi_width,graph.size());
 
   Controller master;
