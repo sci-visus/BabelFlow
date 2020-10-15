@@ -9,6 +9,7 @@
 #include <cmath>
 
 #include "RadixKExchange.h"
+#include "RadixKExchangeTaskMap.h"
 
 using namespace BabelFlow;
 
@@ -91,7 +92,7 @@ void RadixKExchange::deserialize(Payload buffer)
   RadixKExchange::sDATASET_DIMS[0] = buff_ptr[1];
   RadixKExchange::sDATASET_DIMS[1] = buff_ptr[2];
   RadixKExchange::sDATASET_DIMS[2] = buff_ptr[3];
-  
+
   std::vector<uint32_t> radix_v(buff_ptr[4]);
   
   for( uint32_t i=0; i < radix_v.size(); ++i ) radix_v[i] = buff_ptr[rad_offset + i];
@@ -100,6 +101,8 @@ void RadixKExchange::deserialize(Payload buffer)
 
   delete[] buffer.buffer();
 }
+
+//-----------------------------------------------------------------------------
 
 Task RadixKExchange::task(uint64_t gId) const
 {
@@ -113,7 +116,7 @@ Task RadixKExchange::task(uint64_t gId) const
   
   if( lvl == 0 )        // Leaf node
   {
-    it->callback( TaskCB::LEAF_TASK_CB, queryCallback( TaskCB::LEAF_TASK_CB ) ); 
+    it->callback( TaskCB::LEAF_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::LEAF_TASK_CB ) ); 
 
     incoming.resize(1); // One dummy input from controller
     incoming[0] = TNULL;
@@ -122,11 +125,11 @@ Task RadixKExchange::task(uint64_t gId) const
   {
     if( lvl == totalLevels() )    // root node -- TNULL output
     {
-      it->callback( TaskCB::ROOT_TASK_CB, queryCallback( TaskCB::ROOT_TASK_CB ) );
+      it->callback( TaskCB::ROOT_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::ROOT_TASK_CB ) );
     }
     else
     {
-      it->callback( TaskCB::MID_TASK_CB, queryCallback( TaskCB::MID_TASK_CB ) );            // middle node
+      it->callback( TaskCB::MID_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::MID_TASK_CB ) );            // middle node
     }
     // Neighbors from previous level are inputs to current level
     getRadixNeighbors( it->id(), lvl - 1, false, incoming );
@@ -140,6 +143,10 @@ Task RadixKExchange::task(uint64_t gId) const
     std::vector<TaskId> out_neighbors;
     getRadixNeighbors( it->id(), lvl, true, out_neighbors );
     
+    /////
+    // std::cout << "RadixKExchange::task num out neighbors " << out_neighbors.size() << std::endl;
+    /////
+
     outgoing.resize( out_neighbors.size() );
     
     for( uint32_t i = 0; i < outgoing.size(); ++i )
@@ -159,6 +166,22 @@ Task RadixKExchange::task(uint64_t gId) const
   it->outputs(outgoing);
 
   return t;
+}
+
+//-----------------------------------------------------------------------------
+
+std::vector<Task> RadixKExchange::allGraph() const
+{
+  RadixKExchangeTaskMap radixk_tskm(1, this);
+  std::vector<TaskId> tids = radixk_tskm.tasks(0);
+  std::vector<Task> tasks( tids.size() );
+  // Assign all the task ids
+  for( uint32_t i = 0; i < tids.size(); ++i )
+  {
+    tasks[i] = task( gId( tids[i] ) );
+  }
+
+  return tasks;
 }
 
 //-----------------------------------------------------------------------------

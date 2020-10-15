@@ -23,28 +23,19 @@ class TaskGraphConnector
 {
 public:
   TaskGraphConnector() 
-  : m_controllerCount( 0 ), 
-    m_srcGraph( nullptr ),
+  : m_srcGraph( nullptr ),
     m_srcGraphId( 0 ), 
     m_dstGraph( nullptr ), 
-    m_dstGraphId( 0 ),
-    m_srcMap( nullptr ), 
-    m_dstMap( nullptr ) {}
+    m_dstGraphId( 0 ) {}
 
-  TaskGraphConnector( ShardId controller_cnt, 
-                      TaskGraph* src_gr, 
+  TaskGraphConnector( TaskGraph* src_gr, 
                       uint32_t src_gr_id, 
                       TaskGraph* dst_gr,
-                      uint32_t dst_gr_id, 
-                      TaskMap* src_map, 
-                      TaskMap* dst_map  )
-  : m_controllerCount( controller_cnt ), 
-    m_srcGraph( src_gr ),
+                      uint32_t dst_gr_id )
+  : m_srcGraph( src_gr ),
     m_srcGraphId( src_gr_id ), 
     m_dstGraph( dst_gr ), 
-    m_dstGraphId( dst_gr_id ),
-    m_srcMap( src_map ), 
-    m_dstMap( dst_map ) {}
+    m_dstGraphId( dst_gr_id ) {}
 
   virtual ~TaskGraphConnector() {}
 
@@ -52,15 +43,13 @@ public:
 
   virtual std::vector<TaskId> getIncomingConnectedTasks( const TaskId& task_id ) const = 0;
 
+  virtual uint32_t type() const = 0;
+
 protected:
-  ShardId     m_controllerCount;
   TaskGraph*  m_srcGraph;
   uint32_t    m_srcGraphId;
   TaskGraph*  m_dstGraph;
   uint32_t    m_dstGraphId;
-  TaskMap*    m_srcMap;
-  TaskMap*    m_dstMap;
-
 };  // class TaskGraphConnector
 
 }   // namespace BabelFlow

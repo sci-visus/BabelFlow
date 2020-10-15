@@ -9,6 +9,7 @@
 #include <sstream>
 
 #include "KWayReduction.h"
+#include "KWayReductionTaskMap.h"
 
 
 using namespace BabelFlow;
@@ -165,7 +166,7 @@ Task KWayReduction::task(uint64_t gId) const {
   std::vector<std::vector<TaskId> > outgoing;
 
   if (it->id() < mLvlOffset[1]) { // If this is a leaf node
-    it->callback( TaskCB::LEAF_TASK_CB, queryCallback( TaskCB::LEAF_TASK_CB ) ); // Local compute
+    it->callback( TaskCB::LEAF_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::LEAF_TASK_CB ) ); // Local compute
 
     incoming.resize(1); // One dummy input
     incoming[0] = TNULL;
@@ -187,7 +188,7 @@ Task KWayReduction::task(uint64_t gId) const {
     uint8_t lvl = level(it->id());
 
     // Join computation
-    it->callback( TaskCB::MID_TASK_CB, queryCallback( TaskCB::MID_TASK_CB ) );
+    it->callback( TaskCB::MID_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::MID_TASK_CB ) );
 
     // Directly compute all the incoming
     incoming = expand(it->id());
@@ -197,7 +198,7 @@ Task KWayReduction::task(uint64_t gId) const {
 
     outgoing[0].resize(1);
     if (it->id() == mLvlOffset.back()-1){  // if this is the root
-      it->callback( TaskCB::ROOT_TASK_CB, queryCallback( TaskCB::ROOT_TASK_CB ) );
+      it->callback( TaskCB::ROOT_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::ROOT_TASK_CB ) );
       outgoing.resize(0);
       //outgoing[0][0] = TNULL; // parent
     }
@@ -218,8 +219,21 @@ Task KWayReduction::task(uint64_t gId) const {
 
 //-----------------------------------------------------------------------------
 
-std::vector<Task> KWayReduction::localGraph(ShardId id,
-                                        const TaskMap* task_map) const
+std::vector<Task> KWayReduction::allGraph() const 
+{
+  KWayReductionTaskMap kway_tskm(1, this);
+  std::vector<TaskId> tids = kway_tskm.tasks(0);
+  std::vector<Task> tasks( tids.size() );
+  // Assign all the task ids
+  for( uint32_t i = 0; i < tids.size(); ++i )
+    tasks[i] = task( gId( tids[i] ) );
+
+  return tasks;
+}
+
+//-----------------------------------------------------------------------------
+
+std::vector<Task> KWayReduction::localGraph(ShardId id, const TaskMap* task_map) const
 {
   // Get all the ids we need from the TaskMap
   std::vector<TaskId> tids = task_map->tasks( id );

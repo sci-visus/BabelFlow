@@ -35,12 +35,12 @@ BabelFlow::Task DoNothingTaskGraph::task(uint64_t gId) const {
     outgoing[0][0] = gId + n_controllers;
     t.incoming() = incoming;
     t.outputs() = outgoing;
-    t.callback( TaskCB::LEAF_TASK_CB, queryCallback( TaskCB::LEAF_TASK_CB ) );
+    t.callback( TaskCB::LEAF_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::LEAF_TASK_CB ) );
   } else {
     incoming.resize(1);
     incoming[0] = gId - n_controllers;
     t.incoming() = incoming;
-    t.callback( TaskCB::MID_TASK_CB, queryCallback( TaskCB::MID_TASK_CB ) );
+    t.callback( TaskCB::MID_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::MID_TASK_CB ) );
   }
   return t;
 }

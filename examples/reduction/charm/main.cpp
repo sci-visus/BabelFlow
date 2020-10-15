@@ -53,6 +53,13 @@ BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload buffer)
 }
 
 
+void register_callbacks()
+{
+  TaskGraph::registerCallback( typeid(ReductionGraph).name(), ReductionGraph::RED_TASK_CB, add_int );
+  TaskGraph::registerCallback( typeid(ReductionGraph).name(), ReductionGraph::ROOT_TASK_CB, report_sum );
+}
+
+
 class Main : public CBase_Main
 {
 public:
@@ -75,8 +82,7 @@ public:
     uint32_t valence = atoi(m->argv[2]);
 
     ReductionGraph graph(leafs,valence);
-    graph.registerCallback( ReductionGraph::RED_TASK_CB, add_int );
-    graph.registerCallback( ReductionGraph::ROOT_TASK_CB, report_sum );
+    register_callbacks();
 
     // Output the graph for testing
     ModuloMap task_map(1,graph.size());

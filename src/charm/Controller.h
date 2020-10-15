@@ -38,6 +38,7 @@
 
 #include "charm_babelflow.decl.h"
 
+
 namespace BabelFlow {
 
 namespace charm {
@@ -57,7 +58,7 @@ public:
   ~Controller() {}
 
   //! Initialize the controller with the given graph
-  ProxyType initialize(Payload buffer,TaskId size);
+  ProxyType initialize(Payload buffer, uint32_t size);
 
 };
 

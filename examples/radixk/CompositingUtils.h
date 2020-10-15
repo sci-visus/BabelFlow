@@ -52,17 +52,19 @@ struct ImageData
   void delBuffers();
 };
   
-void compose_images(const std::vector<ImageData>& input_images, 
-                    std::vector<ImageData>& out_images, 
-                    int id,
-                    bool flip_split_side,
-                    bool skip_z_check);
+// void compose_images(const std::vector<ImageData>& input_images, 
+//                     std::vector<ImageData>& out_images, 
+//                     int id,
+//                     bool flip_split_side,
+//                     bool skip_z_check);
                         
-void split_and_blend(const std::vector<ImageData>& input_images,
-                     std::vector<ImageData>& out_images,
-                     uint32_t* union_box,
-                     bool flip_split_side,
-                     bool skip_z_check);
+// void split_and_blend(const std::vector<ImageData>& input_images,
+//                      std::vector<ImageData>& out_images,
+//                      uint32_t* union_box,
+//                      bool flip_split_side,
+//                      bool skip_z_check);
+
+void register_callbacks();
 
 //-----------------------------------------------------------------------------
 

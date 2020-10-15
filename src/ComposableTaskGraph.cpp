@@ -11,6 +11,9 @@
 #include <sstream>
 
 #include "ComposableTaskGraph.h"
+#include "DefGraphConnector.h"
+#include "reduce/RadixKExchange.h"
+#include "reduce/KWayReduction.h"
 
 
 // #define COMPOSABLE_TGRAPH_DEBUG
@@ -36,6 +39,19 @@ void ComposableTaskGraph::init()
   uint32_t num_graphs = m_graphs.size();
   uint32_t num_connectors = m_connectors.size();
   assert( num_graphs = num_connectors + 1 );
+}
+
+//-----------------------------------------------------------------------------
+
+std::vector<Task> ComposableTaskGraph::allGraph() const
+{
+  std::vector<Task> all_tasks( size() );
+  for( uint32_t i = 0; i < all_tasks.size(); ++i )
+  {
+    all_tasks[i] = task( (uint64_t)i );
+  }
+
+  return all_tasks;
 }
 
 //-----------------------------------------------------------------------------
@@ -75,6 +91,19 @@ Task ComposableTaskGraph::task( uint64_t gId ) const
   }
 
   // We shouldn't reach this point
+}
+
+//-----------------------------------------------------------------------------
+
+uint64_t ComposableTaskGraph::gId( TaskId tId ) const
+{
+  uint64_t cnt = 0;
+  for( uint32_t i = 0; i < tId.graphId(); ++i ) 
+  {
+    cnt += m_graphs[i]->size();
+  }
+
+  return cnt + tId.tid();
 }
 
 //-----------------------------------------------------------------------------
@@ -183,6 +212,7 @@ Payload ComposableTaskGraph::serialize() const
   // - Num graphs
   // - Payload size (x num graphs times)
   // - Buffer for each graph
+  // - Graph connector types (num connectors = num graphs - 1)
   uint32_t payl_sz = 0;
   std::vector<Payload> payloads( m_graphs.size() );
   
@@ -194,11 +224,11 @@ Payload ComposableTaskGraph::serialize() const
     payl_sz += pl.size();
   }
   
-  uint32_t total_sz = (1 + m_graphs.size())*sizeof(uint32_t) + payl_sz;
+  uint32_t total_sz = (m_connectors.size() + 1 + 2 * m_graphs.size())*sizeof(uint32_t) + payl_sz;
   
   char* buff = new char[total_sz];
   char* bf_ptr = buff;
-  char* bf_pl_ptr = buff + (total_sz  - payl_sz);
+  char* bf_pl_ptr = buff + (1 + 2 * m_graphs.size())*sizeof(uint32_t);
   
   // Write the number of graphs
   uint32_t num_graphs = m_graphs.size();
@@ -210,16 +240,27 @@ Payload ComposableTaskGraph::serialize() const
   {
     Payload& pl = payloads[i];
     uint32_t pl_size = pl.size();
+    uint32_t gr_type = m_graphs[i]->type();
 
     memcpy( bf_ptr, &pl_size, sizeof(uint32_t) );
+    bf_ptr += sizeof(uint32_t);
+
+    memcpy( bf_ptr, &gr_type, sizeof(uint32_t) );
     bf_ptr += sizeof(uint32_t);
     
     memcpy( bf_pl_ptr, pl.buffer(), pl_size );
     bf_pl_ptr += pl_size;
     
-    delete[] pl.buffer();
+    pl.reset();
   }
   
+  for( uint32_t i = 0; i < m_connectors.size(); ++i )
+  {
+    uint32_t connector_type = m_connectors[i]->type();
+    memcpy( bf_pl_ptr, &connector_type, sizeof(uint32_t) );
+    bf_pl_ptr += sizeof(uint32_t);
+  }
+
   return Payload( int32_t(total_sz), buff );
 }
 
@@ -233,22 +274,50 @@ void ComposableTaskGraph::deserialize( Payload pl )
   // - Payload for each graph
   uint32_t* buff_ptr = (uint32_t*)(pl.buffer());
   
-  // Sanity check -- the number of graphs in this object should be the same as the number
-  // of graphs about to be deserialized
-  assert( buff_ptr[0] == m_graphs.size() );
+  m_graphs.resize( buff_ptr[0] );
   
-  char* bf_ptr = pl.buffer() + (1 + m_graphs.size())*sizeof(uint32_t);  // ptr into the payload part of the buffer
+  // Ptr into the payload part of the buffer
+  char* bf_ptr = pl.buffer() + (1 + 2 * m_graphs.size())*sizeof(uint32_t);
   
   for( uint32_t i = 0; i < m_graphs.size(); ++i )
   {
-    Payload pl( int32_t(buff_ptr[i+1]), bf_ptr );
-    bf_ptr += buff_ptr[i+1];
-    m_graphs[i]->deserialize( pl );
+    uint32_t pl_size = buff_ptr[2*i+1];
+    uint32_t gr_type = buff_ptr[2*i+2];
+
+    char* tmp_buff = new char[pl_size];
+    memcpy( tmp_buff, bf_ptr, pl_size );
+    Payload pay_ld( int32_t(pl_size), tmp_buff );
+    bf_ptr += pl_size;
+
+    switch( gr_type )
+    {
+      case 1:
+        m_graphs[i] = new RadixKExchange();
+        break;
+      case 2:
+        m_graphs[i] = new KWayReduction();
+        break;
+      default:
+        assert(false);
+    }
+
+    m_graphs[i]->deserialize( pay_ld );
   }
   
+  // bf_ptr now points to connector type part
+  m_connectors.resize( m_graphs.size() - 1 );
+  uint32_t* conn_types_ptr = (uint32_t*)bf_ptr;
+  for( uint32_t i = 0; i < m_connectors.size(); ++i )
+  {
+    if( conn_types_ptr[i] == 0 )  // Def connector
+    {
+      m_connectors[i] = new DefGraphConnector( m_graphs[i], i, m_graphs[i+1], i+1 );
+    }
+  }
+
   init();
   
-  delete[] pl.buffer();
+  pl.reset();
 }
 
 //-----------------------------------------------------------------------------

@@ -60,12 +60,12 @@ int main(int argc, char **argv)
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   vector<int> data(8, mpi_rank);
   DoNothingTaskGraph graph(mpi_size);
-  graph.registerCallback( DoNothingTaskGraph::LEAF_TASK_CB, relay_message );
-  graph.registerCallback( DoNothingTaskGraph::MID_TASK_CB, print_data );
+  TaskGraph::registerCallback( graph.type(), DoNothingTaskGraph::LEAF_TASK_CB, relay_message );
+  TaskGraph::registerCallback( graph.type(), DoNothingTaskGraph::MID_TASK_CB, print_data );
   ModuloMap taskMap(mpi_size, graph.size());
 
   PreProcessInputTaskGraph modGraph(mpi_size, &graph, &taskMap);
-  modGraph.registerCallback( PreProcessInputTaskGraph::PRE_PROC_TASK_CB, preprocess_data );
+  TaskGraph::registerCallback( modGraph.type(), PreProcessInputTaskGraph::PRE_PROC_TASK_CB, preprocess_data );
   ModTaskMap modMap(&taskMap);
   modMap.update(modGraph);
 

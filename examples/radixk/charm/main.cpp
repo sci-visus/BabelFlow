@@ -47,6 +47,8 @@ using namespace BabelFlow;
 using namespace charm;
 
 
+/* readonly */ CProxy_Main mainProxy;
+
 //-----------------------------------------------------------------------------
 
 class BabelCompRadixK_Charm : public comp_utils::BabelCompRadixK
@@ -74,7 +76,7 @@ public:
       buffer.assign(payl.buffer(), payl.buffer() + payl.size());
 
       // convert i to global_id ?
-      m_proxy[i].addInput(BabelFlow::TNULL, buffer);
+      m_proxy[i].addInput(CharmTaskId(BabelFlow::TNULL), buffer);
     }
   }
 
@@ -84,15 +86,19 @@ protected:
 };
 
 
-
 //-----------------------------------------------------------------------------
 
-/* readonly */ CProxy_Main mainProxy;
 
-
-BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload buffer)
+BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload payl)
 {
-  return BabelFlow::charm::make_task_graph_template<BabelFlow::ComposableTaskGraph>(buffer);
+  return BabelFlow::charm::make_task_graph_template<BabelFlow::ComposableTaskGraph>(payl);
+}
+
+
+void register_callbacks()
+{
+  comp_utils::register_callbacks();
+  comp_utils::BabelGraphWrapper::sIMAGE_NAME = "radixk_img";
 }
 
 
@@ -120,7 +126,13 @@ public:
     for( uint32_t i = 4; i < m->argc; ++i )
       radix_v.push_back(atoi(m->argv[i]));
 
-    std::cout << "Starting program with " << num_procs << " procs, fanin " << fanin << std::endl;
+    std::cout << "---" << std::endl;
+    std::cout << "Starting program with " << num_procs << " procs, fanin: " << fanin << std::endl;
+    std::cout << "Image prefix:" << img_prefix << std::endl;
+    std::cout << "Radices:" << std::endl;
+    for( uint32_t i = 0; i < radix_v.size(); ++i )
+      std::cout << radix_v[i] << " " << std::endl;
+    std::cout << "---" << std::endl;
 
     mainProxy = thisProxy;
 
@@ -131,6 +143,11 @@ public:
       std::stringstream img_name;
       img_name << img_prefix << i << ".bin";
       std::ifstream ifs(img_name.str());
+      if( !ifs.good() )
+      {
+        std::cout << "Couldn't open " << img_name.str() << std::endl;
+        exit(-1);
+      }
       ifs.seekg (0, ifs.end);
       int length = ifs.tellg();
       ifs.seekg (0, ifs.beg);
@@ -146,41 +163,13 @@ public:
     radixk_charm_wrapper.Initialize(inputs);
     radixk_charm_wrapper.Execute(inputs);
 
-    // uint32_t leafs = atoi(m->argv[1]);
-    // uint32_t valence = atoi(m->argv[2]);
-
-    // ReductionGraph graph(leafs,valence);
-    // graph.registerCallback( ReductionGraph::RED_TASK_CB, add_int );
-    // graph.registerCallback( ReductionGraph::ROOT_TASK_CB, report_sum );
-
-    // Output the graph for testing
-    // ModuloMap task_map(1,graph.size());
-    // graph.outputGraph( 1, &task_map, "output.dot" );
-    
-    // BabelFlow::charm::Controller controller;
-    
-    // BabelFlow::charm::Controller::ProxyType proxy;
-    // proxy = controller.initialize(graph.serialize(),graph.size());
-    
-    // uint32_t count=1;
-    // mSum = 0;
-    // for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
-
-    //   std::vector<char> buffer(sizeof(uint32_t));
-
-    //   buffer.assign((char*)&count,((char *)&count) + sizeof(uint32_t));
-
-    //   proxy[graph.gId(i)].addInput(TNULL,buffer);
-    //   mSum += count++;
-    // }
   }
 
   Main(CkMigrateMessage *m) {}
 
   void done() 
   {
-    std::cout << "Finished executing..." << std::endl;
-    CkExit();
+    // Control never reaches this point, that's what StatusMgr is for
   }
 };
 

@@ -37,6 +37,7 @@
 #include <string>
 #include <typeinfo>
 #include <ostream>
+#include <unordered_map>
 
 #include "Task.h"
 #include "Payload.h"
@@ -66,8 +67,13 @@ public:
   //! Default destructor
   virtual ~TaskGraph() {}
 
+  virtual uint32_t type() const;
+
   //! Compute the fully specified tasks for the given controller
   virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const = 0;
+
+  //! Compute fully specified tasks for the whole graph (in all controllers)
+  virtual std::vector<Task> allGraph() const { return std::vector<Task>(); }
 
   //! Return the task for the given global task id
   virtual Task task(uint64_t gId) const = 0;
@@ -87,12 +93,6 @@ public:
   //! Deserialize a task graph. This will consume the payload
   virtual void deserialize(Payload buffer) {assert(false);}
 
-  //! Register a callback for the given id
-  virtual void registerCallback( CallbackId id, Callback func );
-
-  //! Returns the callback func pointer for the given id
-  virtual Callback queryCallback( CallbackId id ) const;
-
   //! Output the entire graph as dot file
   virtual void outputGraph( ShardId count, const TaskMap* task_map, const std::string& filename ) const;
 
@@ -101,13 +101,27 @@ public:
 
   virtual void outputTasksHtml( const std::vector<Task>& tasks_v, const std::string& filename ) const;
 
+  //! Register a callback for the given id
+  static void registerCallback( uint32_t graph_type, CallbackId id, Callback func );
+
+  //! Register a callback for the given type name
+  static void registerCallback( const char* gr_type_name, CallbackId id, Callback func );
+
+  //! Returns the callback func pointer for the given id
+  static Callback queryCallback( uint32_t graph_type, CallbackId id );
+
 protected:
   void outputHelper( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, bool incl_html ) const;
 
   virtual void outputDot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const;
 
+  static uint32_t graphNameToTypeId( const char* gr_type_name );
+
   //! A list of registered callbacks
-  std::vector<Callback> m_callbackVec;
+  // std::vector<Callback> m_callbackVec;
+
+  static std::unordered_map< uint32_t, std::vector<Callback> > s_callbackMap;
+  static std::unordered_map< std::string, uint32_t > s_typeIdsMap;
 };
 
 

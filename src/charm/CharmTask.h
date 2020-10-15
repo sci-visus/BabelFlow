@@ -65,6 +65,10 @@ public:
 #include "charm_babelflow.decl.h"
 
 
+//! Global function to register callbacks
+//! Must be implemented by the calling application code
+extern void register_callbacks();
+
 //! Global function to create a task graph
 //! Must be implemented by the calling application code
 extern BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload buffer);
@@ -73,37 +77,43 @@ extern BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload buffer);
 namespace BabelFlow {
 namespace charm {
 
-// //! Allow us to send Payload buffers using charm++
-// inline void operator|(PUP::er &p, BabelFlow::Payload& buffer) 
-// {
-//   p|buffer.mSize;
-//   if (p.isUnpacking())
-//     buffer.mBuffer = new char[buffer.size()];
-//   PUParray(p, buffer.buffer(), buffer.size());
-
-
-//   // If charm will delete the object make sure that we release the
-//   // memory buffer
-//   if (p.isDeleting())
-//     delete[] buffer.buffer();
-// }
-
-// //! Allow us to send TaskId's using charm++
-// inline void operator|(PUP::er &p, BabelFlow::TaskId& tsk_id) 
-// {
-//   p|tsk_id.graphId();
-//   p|tsk_id.tid();
-// }
 
 //! Make defining the global task graph function easy
 template<class TaskGraphClass>
-TaskGraph *make_task_graph_template(Payload buffer)
+TaskGraph *make_task_graph_template(Payload payl)
 {
   TaskGraph* graph =  new TaskGraphClass();
-  graph->deserialize(buffer);
+  graph->deserialize(payl);
 
   return graph;
 }
+
+
+class StatusMgr : public Chare
+{
+public:
+  StatusMgr(unsigned int total_tasks)
+  {
+    m_totalTasks = total_tasks;
+    m_startTime = CkWallTimer();
+  }
+
+  void done()
+  {
+    static uint32_t checkin_count = 0;
+
+    checkin_count++;
+    if( m_totalTasks == checkin_count )
+    {
+      std::cout << "Finished executing, runtime (sec): " <<  CkWallTimer() - m_startTime << std::endl;
+      CkExit();
+    }
+  }
+
+private:
+  uint32_t m_totalTasks;
+  uint32_t m_startTime;
+};
 
 
 //! Default message for charm
@@ -114,7 +124,7 @@ class CharmTask : public CBase_CharmTask
 public:
 
   //! Constructor which sets the callback and decodes destinations
-  CharmTask(Payload buffer);
+  CharmTask(CharmPayload buffer);
 
   //! Default
   CharmTask(CkMigrateMessage *m) {}
@@ -126,7 +136,9 @@ public:
   void exec();
 
   //! Call to add new input data
-  void addInput(TaskId source, Buffer buffer);
+  void addInput(CharmTaskId source, Buffer buffer);
+
+  static void initStatusMgr(uint32_t total_tasks);
 
 private:
 
@@ -138,6 +150,8 @@ private:
 
   //! The global charm-ids of all outputs
   std::vector<std::vector<uint64_t> > mOutputs;
+
+  static CProxy_StatusMgr mainStatusMgr;
 };
 
 

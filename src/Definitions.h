@@ -117,7 +117,7 @@ public:
     return out;
   }
 
-private:
+protected:
   InnerTaskId m_tid;   // Inner task id
   InnerTaskId m_gr;    // Graph id
 };

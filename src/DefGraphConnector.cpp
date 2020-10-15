@@ -15,14 +15,11 @@ namespace BabelFlow
 
 //-----------------------------------------------------------------------------
 
-DefGraphConnector::DefGraphConnector( ShardId controller_cnt, 
-                                      TaskGraph* src_gr, 
+DefGraphConnector::DefGraphConnector( TaskGraph* src_gr, 
                                       uint32_t src_gr_id, 
                                       TaskGraph* dst_gr,
-                                      uint32_t dst_gr_id, 
-                                      TaskMap* src_map, 
-                                      TaskMap* dst_map )
- : TaskGraphConnector( controller_cnt, src_gr, src_gr_id, dst_gr, dst_gr_id, src_map, dst_map )
+                                      uint32_t dst_gr_id )
+ : TaskGraphConnector( src_gr, src_gr_id, dst_gr, dst_gr_id )
 {
   init();
 }
@@ -56,19 +53,19 @@ std::vector<TaskId> DefGraphConnector::getIncomingConnectedTasks( const TaskId& 
 
 void DefGraphConnector::init()
 {
-  std::vector<Task> src_ts; 
-  std::vector<Task> dst_ts;
+  std::vector<Task> src_ts = m_srcGraph->allGraph(); 
+  std::vector<Task> dst_ts = m_dstGraph->allGraph();
   
   // Get tasks for each local graph
-  for( uint32_t i = 0; i < m_controllerCount; ++i )
-  {
-    std::vector<Task> local_src_gr = m_srcGraph->localGraph( i, m_srcMap );
-    std::vector<Task> local_dst_gr = m_dstGraph->localGraph( i, m_dstMap );
+  // for( uint32_t i = 0; i < m_controllerCount; ++i )
+  // {
+  //   std::vector<Task> local_src_gr = m_srcGraph->localGraph( i, m_srcMap );
+  //   std::vector<Task> local_dst_gr = m_dstGraph->localGraph( i, m_dstMap );
 
-    src_ts.insert( src_ts.end(), local_src_gr.begin(), local_src_gr.end() );
-    dst_ts.insert( dst_ts.end(), local_dst_gr.begin(), local_dst_gr.end() );
-  }
-  
+  //   src_ts.insert( src_ts.end(), local_src_gr.begin(), local_src_gr.end() );
+  //   dst_ts.insert( dst_ts.end(), local_dst_gr.begin(), local_dst_gr.end() );
+  // }
+
   /////
   //std::cout << "DefGraphConnector - no. source tasks: " << src_ts.size() << std::endl;
   //std::cout << "DefGraphConnector - no. destination tasks: " << dst_ts.size() << std::endl;
