@@ -1,13 +1,24 @@
-module charm_babelflow {
+module charm_babelflow 
+{
+  namespace BabelFlow 
+  {
+    namespace charm 
+    {
+      
+      readonly CProxy_StatusMgr mainProxyStatusMgr;
 
-  namespace BabelFlow {
-    namespace charm {
-  
-    array [1D] CharmTask {
+      array [1D] CharmTask 
+      {
         entry CharmTask(CharmPayload buffer);
         entry void addInput(CharmTaskId source, std::vector<char> input);
       };
 
-    }          
+      chare StatusMgr
+      {
+        entry StatusMgr(unsigned int);
+        entry void done();
+      };
+
+    }  
   }
-};
+}

@@ -89,6 +89,33 @@ TaskGraph *make_task_graph_template(Payload payl)
 }
 
 
+class StatusMgr : public Chare
+{
+public:
+  StatusMgr(unsigned int total_tasks)
+  {
+    m_totalTasks = total_tasks;
+    m_startTime = CkWallTimer();
+  }
+
+  void done()
+  {
+    static uint32_t checkin_count = 0;
+
+    checkin_count++;
+    if( m_totalTasks == checkin_count )
+    {
+      std::cout << "Finished executing, runtime (sec): " <<  CkWallTimer() - m_startTime << std::endl;
+      CkExit();
+    }
+  }
+
+private:
+  uint32_t m_totalTasks;
+  uint32_t m_startTime;
+};
+
+
 //! Default message for charm
 typedef std::vector<char> Buffer;
 
@@ -111,6 +138,8 @@ public:
   //! Call to add new input data
   void addInput(CharmTaskId source, Buffer buffer);
 
+  static void initStatusMgr(uint32_t total_tasks);
+
 private:
 
   //! The corresponding base task
@@ -121,6 +150,8 @@ private:
 
   //! The global charm-ids of all outputs
   std::vector<std::vector<uint64_t> > mOutputs;
+
+  static CProxy_StatusMgr mainStatusMgr;
 };
 
 

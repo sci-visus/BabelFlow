@@ -54,6 +54,15 @@ void CharmTaskId::pup(PUP::er &p)
 }
 
 
+/* readonly */ CProxy_StatusMgr mainProxyStatusMgr;
+
+
+void CharmTask::initStatusMgr(uint32_t total_tasks)
+{
+  mainProxyStatusMgr = CProxy_StatusMgr::ckNew(total_tasks);
+}
+
+
 CharmTask::CharmTask(CharmPayload buffer)
 {
   //fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
@@ -125,6 +134,8 @@ void CharmTask::exec()
   /////
   // std::cout << "CharmTask::exec -- end -- " << mTask.id() << " fanout " << mTask.fanout() << std::endl;
   /////
+
+  mainProxyStatusMgr.done();
 }
 
 void CharmTask::addInput(CharmTaskId source, Buffer buffer)

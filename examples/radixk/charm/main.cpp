@@ -47,6 +47,7 @@ using namespace BabelFlow;
 using namespace charm;
 
 
+/* readonly */ CProxy_Main mainProxy;
 
 //-----------------------------------------------------------------------------
 
@@ -86,8 +87,6 @@ protected:
 
 
 //-----------------------------------------------------------------------------
-
-/* readonly */ CProxy_Main mainProxy;
 
 
 BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload payl)
@@ -170,8 +169,7 @@ public:
 
   void done() 
   {
-    std::cout << "Finished executing..." << std::endl;
-    CkExit();
+    // Control never reaches this point, that's what StatusMgr is for
   }
 };
 
