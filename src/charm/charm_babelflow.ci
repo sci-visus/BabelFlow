@@ -16,6 +16,7 @@ module charm_babelflow
       chare StatusMgr
       {
         entry StatusMgr(unsigned int);
+        entry void start();
         entry void done();
       };
 

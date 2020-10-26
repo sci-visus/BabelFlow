@@ -91,6 +91,8 @@ CharmTask::CharmTask(CharmPayload buffer)
 
 void CharmTask::exec()
 {
+  mainProxyStatusMgr.start();
+  
   //fprintf(stderr,"CharmTask<TaskGraphClass, CallbackClass>::exec() %d  fanout %d\n",mTask.id(),mTask.fanout());
 
   /////
