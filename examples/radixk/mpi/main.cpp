@@ -32,69 +32,48 @@
 #include <cstdlib>
 #include <sstream>
 #include <fstream>
-#include <iostream>
-#include <mutex>
+
+#include <mpi.h>
 
 #include "CompositingUtils.h"
 #include "ModuloMap.h"
 #include "RelayTask.h"
-#include "charm/CharmTask.h"
-#include "charm/Controller.h"
+#include "ModuloMap.h"
+#include "mpi/Controller.h"
 
-#include "radixk.decl.h"
+// using namespace BabelFlow;
+// using namespace BabelFlow::mpi;
 
-
-using namespace BabelFlow;
-using namespace charm;
-
-
-/* readonly */ CProxy_Main mainProxy;
 
 //-----------------------------------------------------------------------------
 
-class BabelCompRadixK_Charm : public comp_utils::BabelCompRadixK
+class BabelCompRadixK_MPI : public comp_utils::BabelCompRadixK
 {
 public:
-  BabelCompRadixK_Charm(int32_t rank_id,
-                        int32_t n_blocks,
-                        int32_t fanin,
-                        const std::vector<uint32_t>& radix_v)
+  BabelCompRadixK_MPI(int32_t rank_id,
+                      int32_t n_blocks,
+                      int32_t fanin,
+                      const std::vector<uint32_t>& radix_v)
   : comp_utils::BabelCompRadixK(rank_id, n_blocks, fanin, radix_v) {}
 
   virtual void Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload>& inputs) override
   {
     BabelCompRadixK::Initialize(inputs);
 
-    m_proxy = m_controller.initialize(m_radGatherGraph.serialize(), m_radGatherGraph.size());
+    m_controller.initialize( m_radGatherGraph, &m_radGatherTaskMap, MPI_COMM_WORLD, &m_contMap );
   }
   
   virtual void Execute(std::map<BabelFlow::TaskId, BabelFlow::Payload>& inputs) override
   {
-    for( int32_t i = 0; i < m_nRanks; ++i )
-    {
-      BabelFlow::Payload& payl = inputs[i];
-      std::vector<char> buffer(payl.size());
-      buffer.assign(payl.buffer(), payl.buffer() + payl.size());
-
-      // convert i to global_id ?
-      m_proxy[i].addInput(CharmTaskId(BabelFlow::TNULL), buffer);
-    }
+    m_controller.run(inputs);
   }
 
 protected:
-  BabelFlow::charm::Controller m_controller;  
-  BabelFlow::charm::Controller::ProxyType m_proxy;
+  BabelFlow::mpi::Controller m_controller;
+  BabelFlow::ControllerMap m_contMap;
 };
 
-
 //-----------------------------------------------------------------------------
-
-
-BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload payl)
-{
-  return BabelFlow::charm::make_task_graph_template<BabelFlow::ComposableTaskGraph>(payl);
-}
-
 
 void register_callbacks()
 {
@@ -111,78 +90,82 @@ void register_callbacks()
   }
 }
 
-
-class Main : public CBase_Main
+int main(int argc, char* argv[])
 {
-public:
-
-  // uint32_t mSum;
-
-  //! The main constructor that constructs *and* starts the dataflow
-  Main(CkArgMsg* m)
+  if (argc < 5)
   {
+    std::cout << "Usage: " << argv[0] << " <fan-in> <img_prefix> <radices>" << std::endl;
+    return -1;
+  }
 
-    if (m->argc < 5)
-    {
-      std::cout << "Usage: " << m->argv[0] << " <nr of processes> <fan-in> <img_prefix> <radices>" << std::endl;
-      exit(-1);
-    }
-    
-    int32_t num_procs = atoi(m->argv[1]);
-    int32_t fanin = atoi(m->argv[2]);
-    std::string img_prefix(m->argv[3]);   // e.g.,  "raw_img_<rank>.bin"
-    std::vector<uint32_t> radix_v;
+  clock_t start, finish;
 
-    for( uint32_t i = 4; i < m->argc; ++i )
-      radix_v.push_back(atoi(m->argv[i]));
+  MPI_Init(&argc, &argv);
 
+  // Find out how many controllers we need
+  int nranks, my_rank;
+  MPI_Comm_size(MPI_COMM_WORLD, &nranks);
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+  int32_t fanin = atoi(argv[1]);
+  std::string img_prefix(argv[2]);   // e.g.,  "raw_img_<rank>.bin"
+  std::vector<uint32_t> radix_v;
+
+  for( uint32_t i = 3; i < argc; ++i )
+    radix_v.push_back(atoi(argv[i]));
+
+  if (my_rank == 0)
+  {
     std::cout << "---" << std::endl;
-    std::cout << "Starting program with " << num_procs << " procs, fanin: " << fanin << std::endl;
+    std::cout << "Starting program with " << nranks << " procs, fanin: " << fanin << std::endl;
     std::cout << "Image prefix:" << img_prefix << std::endl;
     std::cout << "Radices:" << std::endl;
     for( uint32_t i = 0; i < radix_v.size(); ++i )
       std::cout << radix_v[i] << " " << std::endl;
     std::cout << "---" << std::endl;
+  }    
 
-    mainProxy = thisProxy;
+  register_callbacks();
 
-    std::map<BabelFlow::TaskId, BabelFlow::Payload> inputs;
-    // read all input images
-    for( uint32_t i = 0; i < num_procs; ++i )
-    {
-      std::stringstream img_name;
-      img_name << img_prefix << i << ".bin";
-      std::ifstream ifs(img_name.str());
-      if( !ifs.good() )
-      {
-        std::cout << "Couldn't open " << img_name.str() << std::endl;
-        exit(-1);
-      }
-      ifs.seekg (0, ifs.end);
-      int length = ifs.tellg();
-      ifs.seekg (0, ifs.beg);
-      char* buff = new char[length];
-      ifs.read( buff, length );
-      ifs.close();
-
-      BabelFlow::Payload payl(length, buff);
-      inputs[i] = payl;
-    }
-
-    BabelCompRadixK_Charm radixk_charm_wrapper(0, num_procs, fanin, radix_v);
-    radixk_charm_wrapper.Initialize(inputs);
-    radixk_charm_wrapper.Execute(inputs);
-
-  }
-
-  Main(CkMigrateMessage *m) {}
-
-  void done() 
+  std::map<BabelFlow::TaskId, BabelFlow::Payload> inputs;
+  
+  // Read the input image
+  std::stringstream img_name;
+  img_name << img_prefix << my_rank << ".bin";
+  std::ifstream ifs(img_name.str());
+  if( !ifs.good() )
   {
-    // Control never reaches this point, that's what StatusMgr is for
+    std::cout << "Couldn't open " << img_name.str() << std::endl;
+    exit(-1);
   }
-};
+  ifs.seekg (0, ifs.end);
+  int length = ifs.tellg();
+  ifs.seekg (0, ifs.beg);
+  char* buff = new char[length];
+  ifs.read( buff, length );
+  ifs.close();
 
+  BabelFlow::Payload payl(length, buff);
+  inputs[my_rank] = payl;
+  
+  start = clock();
 
-#include "radixk.def.h"
+  BabelCompRadixK_MPI radixk_mpi_wrapper(0, nranks, fanin, radix_v);
+  radixk_mpi_wrapper.Initialize(inputs);
+  radixk_mpi_wrapper.Execute(inputs);
+
+  finish = clock();
+
+  double run_time, max_run_time;
+  max_run_time = run_time = (static_cast<double>(finish) - static_cast<double>(start)) / CLOCKS_PER_SEC;
+  MPI_Reduce(&run_time, &max_run_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+  if (my_rank == 0) 
+  {
+    std::cout << "Finished executing, runtime (sec): " << max_run_time << std::endl;
+  }
+
+  MPI_Finalize();
+  return 0;
+}
+
 

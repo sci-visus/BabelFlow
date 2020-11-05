@@ -95,7 +95,18 @@ public:
   StatusMgr(unsigned int total_tasks)
   {
     m_totalTasks = total_tasks;
-    m_startTime = CkWallTimer();
+  }
+
+  void start()
+  {
+    static std::mutex mtx;
+    static uint32_t checkin_count = 0;
+
+    std::unique_lock<std::mutex> lock(mtx);
+
+    checkin_count++;
+    if( checkin_count == 1 )  // First task started
+      m_startTime = CkWallTimer();
   }
 
   void done()
