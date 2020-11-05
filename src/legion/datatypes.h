@@ -30,7 +30,7 @@ enum FieldIDs {
 //! The global index type for large grids
 typedef uint32_t GlobalIndexType;
 //! The function type of the values
-typedef uint32_t FunctionType;
+//typedef uint32_t FunctionType;
 
 #endif // __DATA_TYPES_H__
 

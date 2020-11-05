@@ -134,13 +134,15 @@ public:
                   int32_t n_blocks,
                   int32_t fanin,
                   const std::vector<uint32_t>& radix_v);
-  virtual ~BabelCompRadixK();
+  ~BabelCompRadixK();
   
-  virtual void InitRadixKGraph();
-  virtual void InitGatherGraph();
-  virtual void Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload>& inputs) override;
+  void InitRadixKGraph();
+  void InitGatherGraph();
+  void Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload>& inputs);
+
+  void Execute(std::map<BabelFlow::TaskId, BabelFlow::Payload>& inputs) {}
   
-protected:
+public:
   std::vector<uint32_t> m_Radices;
   
   BabelFlow::SingleTaskGraph m_preProcTaskGr;

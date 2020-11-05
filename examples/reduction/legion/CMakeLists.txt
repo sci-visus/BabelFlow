@@ -5,7 +5,7 @@ set(SRC
     main.cpp
 )
 
-get_target_property(BabelFlow_INCLUDE_DIRS BabelFlow::babelflow INTERFACE_INCLUDE_DIRECTORIES)
+#get_target_property(BabelFlow_INCLUDE_DIRS BabelFlow::babelflow INTERFACE_INCLUDE_DIRECTORIES)
 
 #target_link_libraries(pmt_legion pmt idxio BabelFlow::babelflow BabelFlow::babelflow_legion Legion::Legion)
 

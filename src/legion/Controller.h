@@ -15,6 +15,7 @@
 // TODO when we move back the Legion controller to the BabelFlow project
 // we need to update these includes
 
+#include "TypeDefinitions.h"
 #include "../Definitions.h"
 #include "../TaskGraph.h"
 #include "../Payload.h"

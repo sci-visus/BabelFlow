@@ -36,7 +36,9 @@
 #include "ReductionGraph.h"
 #include "ReductionCallbacks.h"
 #include "ModuloMap.h"
+#include "TypeDefinitions.h"
 #include "legion/Controller.h"
+
 
 #ifdef USE_GASNET
 #include <gasnet.h>
@@ -126,7 +128,6 @@ int main(int argc, char* argv[])
   FunctionType count=1;
   FunctionType sum = 0;
 
-  printf("summing %d leafs %d inputs\n", graph.leafCount(), leafs);
   //std::vector<DomainSelection> blocks(graph.leafCount());
 
   for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
