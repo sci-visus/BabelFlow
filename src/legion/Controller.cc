@@ -388,7 +388,7 @@ int Controller::generic_task(const Legion::Task *task,
 
   TaskInfo info = *(TaskInfo*)(launch_data[nlaunch].arg_map.get_point(DomainPoint::from_point<1>(LegionRuntime::Arrays::Point<1>(coord_t(subregion_index)))).get_ptr());
    
-  DEBUG_PRINT((stderr,"Task %d: regions %lu (in %d + out %d), cb %d\n", info.id.tid(), task->regions.size(), info.lenInput, info.lenOutput, info.callbackID));
+  DEBUG_PRINT((stderr,"Task %d(%d): regions %lu (in %d + out %d), cb %d\n", info.id.tid(), info.id.graphId(), task->regions.size(), info.lenInput, info.lenOutput, info.callbackID));
 
   if(info.callbackID == 0){ // Is a relay task
     DEBUG_PRINT((stderr, "<<<<< I'm a relay task %d\n", info.id.tid()));
@@ -841,7 +841,7 @@ void Controller::top_level_task(const LegionRuntime::HighLevel::Task *task,
 
 int Controller::initialize(const BabelFlow::TaskGraph& graph, const BabelFlow::TaskMap* task_map, int argc, char **argv){
   // Assume there is only one controller, get all the tasks in the graph
-  alltasks = graph.localGraph(0, task_map);
+  alltasks = graph.allGraph();//graph.localGraph(0, task_map);
 
   for (int i = 1; i < argc; i++){
     if (!strcmp(argv[i],"-d")){

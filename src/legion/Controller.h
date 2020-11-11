@@ -60,8 +60,8 @@ class DomainSelection{
 
 class VPartId{
 public:
-  BabelFlow::TaskId round_id;
-  BabelFlow::TaskId part_id;
+  uint64_t round_id;
+  uint64_t part_id;
   Color color;
 };
 

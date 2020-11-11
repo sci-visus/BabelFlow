@@ -212,7 +212,7 @@ namespace Utils {
         }
         
 
-        DEBUG_PRINT((stderr,"\t mapping in (%d,%d) rect [%llu %llu] vpart_id %d %d (%d) size %d\n", task.incoming()[ri].tid(), task.id().tid(), lrect.lo[0], lrect.hi[0],vpid.round_id.tid(),vpid.part_id.tid(), vpid.color, RegionsIndexType(lrect.hi-lrect.lo)+1));
+        //DEBUG_PRINT((stderr,"\t mapping in (%d,%d) rect [%llu %llu] vpart_id %d %d (%d) size %d\n", task.incoming()[ri].tid(), task.id().tid(), lrect.lo[0], lrect.hi[0],vpid.round_id.tid(),vpid.part_id.tid(), vpid.color, RegionsIndexType(lrect.hi-lrect.lo)+1));
         //printf("setting in %d index %d rect [%llu %llu]\n", ri, requirements[ri].local_index, lrect.lo[0], lrect.hi[0]);
 
         total_input_size += RegionsIndexType(lrect.hi-lrect.lo)+1;
@@ -313,7 +313,7 @@ namespace Utils {
       std::set<BabelFlow::TaskId>::iterator currEpIt;
       for(currEpIt=currEpochTasks.begin(); currEpIt != currEpochTasks.end(); currEpIt++){
         const BabelFlow::Task& lt = taskmap[*currEpIt];
-        //printf("task %d\n",lt.id().tid());
+        //printf("task %d(%d)\n",lt.id().tid(),lt.id().graphId());
 
         int in_unresolved = lt.incoming().size();
         for(int in=0; in < lt.incoming().size(); in++){
@@ -325,7 +325,7 @@ namespace Utils {
             break;
         }
         if(in_unresolved == 0){
-          //printf("task %d resolved callback %d\n\n", lt.id().tid(), lt.callbackId());
+          //printf("task %d(%d) resolved callback %d\n", lt.id().tid(),lt.id().graphId(), lt.callbackId());
           nextEpochTasks.insert(lt.id());
 
           round_tasks.insert(lt.id());
@@ -333,14 +333,14 @@ namespace Utils {
           const std::vector<std::vector<BabelFlow::TaskId> >& outputs = lt.outputs();
           for(int o=0; o < outputs.size(); o++){
           for(int inro=0; inro < outputs[o].size(); inro++){
-            EdgeTaskId outedge = std::make_pair(lt.id().tid(),outputs[o][inro]);
+            EdgeTaskId outedge = std::make_pair(lt.id(),outputs[o][inro]);
             
             if(in_unresolved == 0){
               current_outputs.insert(outedge);
             }
             tempCurrEpoch.insert(outputs[o][inro]);
 
-            //printf("add to next input %d %d\n", lt.id().tid(),outputs[o][inro].tid());
+            //printf("add to next input %d(%d)  %d(%d)\n", lt.id().tid(),lt.id().graphId(),outputs[o][inro].tid(), outputs[o][inro].graphId());
           }
         }
           
@@ -369,7 +369,7 @@ namespace Utils {
 
         //printf("ROUND START %d\n", round_id);
         launch.n_tasks = compute_virtual_partitions(round_id, input_block_size, round_groups[r], launch.arg_map, launch.vparts, taskmap, vpart_map, launch_data);
-        //printf("PUTTING IN launch %d callback %d\n", round_id, launch.callback);
+        //printf("PUTTING IN launch %d callback %d n_tasks %d\n", round_id, launch.callbackID, launch.n_tasks);
         launch_data.push_back(launch);
         round_id++;
       }
