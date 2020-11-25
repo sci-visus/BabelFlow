@@ -9,9 +9,8 @@ if (ENABLE_MPI)
     add_subdirectory(mpi)
 elseif(ENABLE_CHARM)
     add_subdirectory(charm)
-# TODO Update example with new changes    
-#elseif(ENABLE_LEGION)
-#    add_subdirectory(legion)
+elseif(ENABLE_LEGION)
+    add_subdirectory(legion)
 endif()
 
  

@@ -386,6 +386,12 @@ int Controller::generic_task(const Legion::Task *task,
 
   //printf("retrieve metadata launch %d sub %d size %d\n", nlaunch, subregion_index, launch_data[nlaunch].arg_map.get_point(DomainPoint::from_point<1>(Point<1>(coord_t(subregion_index)))).get_size());
 
+// LAST ERROR when using multiple nodes
+// [1] #8  0x000000001470be3c in gasneti_defaultSignalHandler (sig=11) at /autofs/nccs-svm1_proj/csc340/spertruzz/gasnet_legion/GASNet-2020.3.0/gasnet_internal.c:716
+// [1] #9  <signal handler called>
+// [1] #10 0x0000000010266e74 in Legion::ArgumentMap::get_point (this=0x48, point=...) at /ccs/proj/csc340/spertruzz/legion/runtime/legion/legion.cc:416
+// [1] #11 0x000000001013b1ac in BabelFlow::legion::Controller::generic_task (task=0x2000b427ea20, regions=std::vector of length 5, capacity 8 = {...}, ctx=0x2000b432c990, runtime=0x49a92d80) at /ccs/proj/csc340/spertruzz/BabelFlow/src/legion/Controller.cc:389
+
   TaskInfo info = *(TaskInfo*)(launch_data[nlaunch].arg_map.get_point(DomainPoint::from_point<1>(LegionRuntime::Arrays::Point<1>(coord_t(subregion_index)))).get_ptr());
    
   DEBUG_PRINT((stderr,"Task %d(%d): regions %lu (in %d + out %d), cb %d\n", info.id.tid(), info.id.graphId(), task->regions.size(), info.lenInput, info.lenOutput, info.callbackID));
