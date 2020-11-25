@@ -6,11 +6,19 @@
  */
 
 #include "SingleTaskGraph.h"
-
+#include "ModuloMap.h"
 
 
 namespace BabelFlow
 {
+
+//-----------------------------------------------------------------------------
+
+std::vector<Task> SingleTaskGraph::allGraph() const
+{
+  ModuloMap tsk_map( 1, m_nRanks );
+  return localGraph( 0, &tsk_map );
+}
 
 //-----------------------------------------------------------------------------
 
@@ -30,18 +38,19 @@ Task SingleTaskGraph::task( uint64_t gId ) const
 {
   Task t( gId );
 
-  t.callback( TaskCB::SINGLE_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::SINGLE_TASK_CB ) );  // Only one callback function 
+  t.callback( TaskCB::SINGLE_TASK_CB, queryCallback( TaskCB::SINGLE_TASK_CB ) );  // Only one callback function 
 
   // Single input from controller
-  std::vector<TaskId> incoming( 1 );
-  incoming[0] = TNULL;
+  std::vector<TaskId> incoming( m_numInputSrcs, TNULL );
   t.incoming( incoming );
   
   // An output with destination TNULL signifies an output to be extracted
   // from this task or to be linked to another graph
   std::vector< std::vector<TaskId> > outgoing;
-  outgoing.resize(1);
-  outgoing[0].resize(1, TNULL);
+  outgoing.resize( m_numOutputData );
+  for( auto& tskid_v : outgoing )
+    tskid_v.resize( m_numOutputDest, TNULL );
+
   t.outputs( outgoing );
 
   return t;

@@ -161,7 +161,10 @@ Task ComposableTaskGraph::task( const TaskId& task_id ) const
       // which means we should replace all these outputs with connected_tsk
       for( uint32_t i = 0; i < tsk.fanout(); ++i )
       {
-        tsk.outgoing( i ) = connected_tsk;
+        auto& out_dest_v = tsk.outgoing( i );
+        uint32_t num_connected_tasks = std::min( out_dest_v.size(), connected_tsk.size() );
+        for( uint32_t j = 0; j < num_connected_tasks; ++j )
+          out_dest_v[j] = connected_tsk[j];
       }
     }
   }
@@ -187,7 +190,11 @@ Task ComposableTaskGraph::task( const TaskId& task_id ) const
 
       // Right now the assumption is that if a task is a leaf task in graph_id, then it only has TNULL inputs,
       // which means we should replace all these inputs with connected_tsk
-      tsk.incoming( connected_tsk );
+      auto& in_srcs_v = tsk.incoming();
+      uint32_t num_connected_tasks = std::min( in_srcs_v.size(), connected_tsk.size() );
+      uint32_t i = 0;
+      for( uint32_t j = in_srcs_v.size() - num_connected_tasks; j < in_srcs_v.size(); ++j, ++i )
+        in_srcs_v[j] = connected_tsk[i];
     }
   }
   
@@ -302,6 +309,7 @@ void ComposableTaskGraph::deserialize( Payload pl )
     }
 
     m_graphs[i]->deserialize( pay_ld );
+    m_graphs[i]->setGraphId( i );
   }
   
   // bf_ptr now points to connector type part

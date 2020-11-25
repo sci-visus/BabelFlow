@@ -143,9 +143,6 @@ public:
 protected:
   std::vector<uint32_t> m_Radices;
   
-  BabelFlow::SingleTaskGraph m_preProcTaskGr;
-  BabelFlow::ModuloMap m_preProcTaskMp;
-
   BabelFlow::RadixKExchange m_radixkGr;
   BabelFlow::RadixKExchangeTaskMap m_radixkMp; 
 

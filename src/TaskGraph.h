@@ -62,7 +62,7 @@ class TaskGraph
 public:
 
   //! Default constructor
-  TaskGraph(std::string config = "") {}
+  TaskGraph(std::string config = "") : m_graphId( 0 ) {}
 
   //! Default destructor
   virtual ~TaskGraph() {}
@@ -93,6 +93,13 @@ public:
   //! Deserialize a task graph. This will consume the payload
   virtual void deserialize(Payload buffer) {assert(false);}
 
+  virtual void setGraphId( uint32_t gr_id ) { m_graphId = gr_id; }
+
+  virtual uint32_t graphId() const { return m_graphId; }
+
+  //! Returns the callback func pointer for this graph and callback id
+  virtual Callback queryCallback( CallbackId cb_id ) const;
+
   //! Output the entire graph as dot file
   virtual void outputGraph( ShardId count, const TaskMap* task_map, const std::string& filename ) const;
 
@@ -101,24 +108,20 @@ public:
 
   virtual void outputTasksHtml( const std::vector<Task>& tasks_v, const std::string& filename ) const;
 
-  //! Register a callback for the given id
-  static void registerCallback( uint32_t graph_type, CallbackId id, Callback func );
+  //! Register a callback for the given graph id and callback id
+  static void registerCallback( uint32_t graph_id, CallbackId id, Callback func );
 
-  //! Register a callback for the given type name
-  static void registerCallback( const char* gr_type_name, CallbackId id, Callback func );
-
-  //! Returns the callback func pointer for the given id
-  static Callback queryCallback( uint32_t graph_type, CallbackId id );
+  //! Returns the callback func pointer for the given graph id and callback id
+  static Callback queryCallback( uint32_t graph_id, CallbackId id );
 
 protected:
+  uint32_t m_graphId;
+
   void outputHelper( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, bool incl_html ) const;
 
   virtual void outputDot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const;
 
   static uint32_t graphNameToTypeId( const char* gr_type_name );
-
-  //! A list of registered callbacks
-  // std::vector<Callback> m_callbackVec;
 
   static std::unordered_map< uint32_t, std::vector<Callback> > s_callbackMap;
   static std::unordered_map< std::string, uint32_t > s_typeIdsMap;

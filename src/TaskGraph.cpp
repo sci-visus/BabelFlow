@@ -42,9 +42,9 @@ std::unordered_map< std::string, uint32_t > TaskGraph::s_typeIdsMap;
 
 //-----------------------------------------------------------------------------
 
-void TaskGraph::registerCallback( uint32_t graph_type, CallbackId id, Callback func )
+void TaskGraph::registerCallback( uint32_t graph_id, CallbackId id, Callback func )
 {
-  std::vector<Callback>& cb_v = s_callbackMap[graph_type];
+  std::vector<Callback>& cb_v = s_callbackMap[graph_id];
   if( cb_v.size() <= id )
     cb_v.resize( id + 1, nullptr );
 
@@ -53,22 +53,14 @@ void TaskGraph::registerCallback( uint32_t graph_type, CallbackId id, Callback f
 
 //-----------------------------------------------------------------------------
 
-void TaskGraph::registerCallback( const char* gr_type_name, CallbackId id, Callback func )
+Callback TaskGraph::queryCallback( uint32_t graph_id, CallbackId id  )
 {
-  uint32_t graph_type = graphNameToTypeId( gr_type_name );
-  registerCallback( graph_type, id, func );
-}
-
-//-----------------------------------------------------------------------------
-
-Callback TaskGraph::queryCallback( uint32_t graph_type, CallbackId id  )
-{
-  auto iter = s_callbackMap.find( graph_type );
+  auto iter = s_callbackMap.find( graph_id );
   
   // assert( iter != s_callbackMap.end() );
   if( iter == s_callbackMap.end() )
   {
-    std::cerr << "TaskGraph::queryCallback - graph type " << graph_type << " not found!" << std::endl;
+    std::cerr << "TaskGraph::queryCallback - graph id " << graph_id << " not found!" << std::endl;
     exit( -1 );
   }
 
@@ -104,6 +96,13 @@ uint32_t TaskGraph::graphNameToTypeId( const char* gr_type_name )
 uint32_t TaskGraph::type() const
 {
   return graphNameToTypeId( typeid(*this).name() );
+}
+
+//-----------------------------------------------------------------------------
+
+Callback TaskGraph::queryCallback( CallbackId cb_id ) const
+{
+  return TaskGraph::queryCallback( graphId(), cb_id );
 }
 
 //-----------------------------------------------------------------------------

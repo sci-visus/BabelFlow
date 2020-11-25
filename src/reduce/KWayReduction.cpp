@@ -166,7 +166,7 @@ Task KWayReduction::task(uint64_t gId) const {
   std::vector<std::vector<TaskId> > outgoing;
 
   if (it->id() < mLvlOffset[1]) { // If this is a leaf node
-    it->callback( TaskCB::LEAF_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::LEAF_TASK_CB ) ); // Local compute
+    it->callback( TaskCB::LEAF_TASK_CB, queryCallback( TaskCB::LEAF_TASK_CB ) ); // Local compute
 
     incoming.resize(1); // One dummy input
     incoming[0] = TNULL;
@@ -188,7 +188,7 @@ Task KWayReduction::task(uint64_t gId) const {
     uint8_t lvl = level(it->id());
 
     // Join computation
-    it->callback( TaskCB::MID_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::MID_TASK_CB ) );
+    it->callback( TaskCB::MID_TASK_CB, queryCallback( TaskCB::MID_TASK_CB ) );
 
     // Directly compute all the incoming
     incoming = expand(it->id());
@@ -198,7 +198,7 @@ Task KWayReduction::task(uint64_t gId) const {
 
     outgoing[0].resize(1);
     if (it->id() == mLvlOffset.back()-1){  // if this is the root
-      it->callback( TaskCB::ROOT_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::ROOT_TASK_CB ) );
+      it->callback( TaskCB::ROOT_TASK_CB, queryCallback( TaskCB::ROOT_TASK_CB ) );
       outgoing.resize(0);
       //outgoing[0][0] = TNULL; // parent
     }

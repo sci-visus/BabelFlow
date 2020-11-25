@@ -55,8 +55,8 @@ BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload buffer)
 
 void register_callbacks()
 {
-  TaskGraph::registerCallback( typeid(BroadcastGraph).name(), BroadcastGraph::LEAF_TASK_CB, print_message );
-  TaskGraph::registerCallback( typeid(BroadcastGraph).name(), BroadcastGraph::BCAST_TASK_CB, relay_message );
+  TaskGraph::registerCallback( 0, BroadcastGraph::LEAF_TASK_CB, print_message );
+  TaskGraph::registerCallback( 0, BroadcastGraph::BCAST_TASK_CB, relay_message );
 }
 
 

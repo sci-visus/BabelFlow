@@ -55,8 +55,8 @@ BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload buffer)
 
 void register_callbacks()
 {
-  TaskGraph::registerCallback( typeid(ReductionGraph).name(), ReductionGraph::RED_TASK_CB, add_int );
-  TaskGraph::registerCallback( typeid(ReductionGraph).name(), ReductionGraph::ROOT_TASK_CB, report_sum );
+  TaskGraph::registerCallback( 0, ReductionGraph::RED_TASK_CB, add_int );
+  TaskGraph::registerCallback( 0, ReductionGraph::ROOT_TASK_CB, report_sum );
 }
 
 

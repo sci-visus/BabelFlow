@@ -706,9 +706,6 @@ void BabelCompRadixK::InitRadixKGraph()
 {
   // RadixK exchange graph
   m_radixkGr = BabelFlow::RadixKExchange( m_nRanks, m_Radices );
-  BabelFlow::TaskGraph::registerCallback( m_radixkGr.type(), BabelFlow::RadixKExchange::LEAF_TASK_CB, comp_utils::volume_render_radixk );
-  BabelFlow::TaskGraph::registerCallback( m_radixkGr.type(), BabelFlow::RadixKExchange::MID_TASK_CB, comp_utils::composite_radixk );
-  BabelFlow::TaskGraph::registerCallback( m_radixkGr.type(), BabelFlow::RadixKExchange::ROOT_TASK_CB, comp_utils::composite_radixk );
   m_radixkMp = BabelFlow::RadixKExchangeTaskMap( m_nRanks, &m_radixkGr );
 }
 
@@ -719,9 +716,6 @@ void BabelCompRadixK::InitGatherGraph()
   // Gather graph
   uint32_t blks[3] = { m_nRanks, 1, 1 };
   m_gatherTaskGr = BabelFlow::KWayReduction( blks, m_fanin );
-  BabelFlow::TaskGraph::registerCallback( m_gatherTaskGr.type(), BabelFlow::KWayReduction::LEAF_TASK_CB, comp_utils::pre_proc );
-  BabelFlow::TaskGraph::registerCallback( m_gatherTaskGr.type(), BabelFlow::KWayReduction::MID_TASK_CB, comp_utils::gather_results_radixk) ;
-  BabelFlow::TaskGraph::registerCallback( m_gatherTaskGr.type(), BabelFlow::KWayReduction::ROOT_TASK_CB, comp_utils::write_results_radixk );
   m_gatherTaskMp = BabelFlow::KWayReductionTaskMap( m_nRanks, &m_gatherTaskGr );
 }
 
@@ -732,6 +726,11 @@ void BabelCompRadixK::Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload>
   InitRadixKGraph();
   InitGatherGraph();
   
+  m_radixkGr.setGraphId( 0 );
+  m_gatherTaskGr.setGraphId( 1 );
+
+  register_callbacks();
+
   m_defGraphConnector = BabelFlow::DefGraphConnector( &m_radixkGr, 0, &m_gatherTaskGr, 1 );
 
   std::vector<BabelFlow::TaskGraphConnector*> gr_connectors{ &m_defGraphConnector };
@@ -744,7 +743,6 @@ void BabelCompRadixK::Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload>
 #ifdef COMP_UTIL_DEBUG
   if( m_rankId == 0 )
   {
-    m_preProcTaskGr.outputGraphHtml( m_nRanks, &m_preProcTaskMp, "pre-proc.html" );
     m_radixkGr.outputGraphHtml( m_nRanks, &m_radixkMp, "radixk.html" );
     m_gatherTaskGr.outputGraphHtml( m_nRanks, &m_gatherTaskMp, "gather-task.html" );
     m_radGatherGraph.outputGraphHtml( m_nRanks, &m_radGatherTaskMap, "radixk-gather.html" );
@@ -760,12 +758,12 @@ void BabelCompRadixK::Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload>
 
 void register_callbacks()
 {
-  BabelFlow::TaskGraph::registerCallback( typeid(BabelFlow::RadixKExchange).name(), BabelFlow::RadixKExchange::LEAF_TASK_CB, comp_utils::volume_render_radixk );
-  BabelFlow::TaskGraph::registerCallback( typeid(BabelFlow::RadixKExchange).name(), BabelFlow::RadixKExchange::MID_TASK_CB, comp_utils::composite_radixk );
-  BabelFlow::TaskGraph::registerCallback( typeid(BabelFlow::RadixKExchange).name(), BabelFlow::RadixKExchange::ROOT_TASK_CB, comp_utils::composite_radixk );
-  BabelFlow::TaskGraph::registerCallback( typeid(BabelFlow::KWayReduction).name(), BabelFlow::KWayReduction::LEAF_TASK_CB, comp_utils::pre_proc );
-  BabelFlow::TaskGraph::registerCallback( typeid(BabelFlow::KWayReduction).name(), BabelFlow::KWayReduction::MID_TASK_CB, comp_utils::gather_results_radixk) ;
-  BabelFlow::TaskGraph::registerCallback( typeid(BabelFlow::KWayReduction).name(), BabelFlow::KWayReduction::ROOT_TASK_CB, comp_utils::write_results_radixk );
+  BabelFlow::TaskGraph::registerCallback( 0, BabelFlow::RadixKExchange::LEAF_TASK_CB, comp_utils::volume_render_radixk );
+  BabelFlow::TaskGraph::registerCallback( 0, BabelFlow::RadixKExchange::MID_TASK_CB, comp_utils::composite_radixk );
+  BabelFlow::TaskGraph::registerCallback( 0, BabelFlow::RadixKExchange::ROOT_TASK_CB, comp_utils::composite_radixk );
+  BabelFlow::TaskGraph::registerCallback( 1, BabelFlow::KWayReduction::LEAF_TASK_CB, comp_utils::pre_proc );
+  BabelFlow::TaskGraph::registerCallback( 1, BabelFlow::KWayReduction::MID_TASK_CB, comp_utils::gather_results_radixk) ;
+  BabelFlow::TaskGraph::registerCallback( 1, BabelFlow::KWayReduction::ROOT_TASK_CB, comp_utils::write_results_radixk );
 }
 
 

@@ -116,7 +116,7 @@ Task RadixKExchange::task(uint64_t gId) const
   
   if( lvl == 0 )        // Leaf node
   {
-    it->callback( TaskCB::LEAF_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::LEAF_TASK_CB ) ); 
+    it->callback( TaskCB::LEAF_TASK_CB, queryCallback( TaskCB::LEAF_TASK_CB ) ); 
 
     incoming.resize(1); // One dummy input from controller
     incoming[0] = TNULL;
@@ -125,11 +125,11 @@ Task RadixKExchange::task(uint64_t gId) const
   {
     if( lvl == totalLevels() )    // root node -- TNULL output
     {
-      it->callback( TaskCB::ROOT_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::ROOT_TASK_CB ) );
+      it->callback( TaskCB::ROOT_TASK_CB, queryCallback( TaskCB::ROOT_TASK_CB ) );
     }
     else
     {
-      it->callback( TaskCB::MID_TASK_CB, TaskGraph::queryCallback( type(), TaskCB::MID_TASK_CB ) );            // middle node
+      it->callback( TaskCB::MID_TASK_CB, queryCallback( TaskCB::MID_TASK_CB ) );            // middle node
     }
     // Neighbors from previous level are inputs to current level
     getRadixNeighbors( it->id(), lvl - 1, false, incoming );

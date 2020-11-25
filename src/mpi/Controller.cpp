@@ -244,11 +244,14 @@ int Controller::run(std::map<TaskId,Payload>& initial_inputs)
       }
 
       // Pass on the input using TNULL as source indicating an outside input
-      wIt->second.addInput(TNULL,tIt->second);
+      bool task_ready = wIt->second.addInput(TNULL,tIt->second);
 
       // Start the task (note that for now we assume that all leaf tasks
       // have only a single input)
-      startTask(wIt->second);
+      if (task_ready)
+      {
+        startTask(wIt->second);
+      }
     }
   }
 

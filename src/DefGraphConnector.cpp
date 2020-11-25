@@ -67,8 +67,8 @@ void DefGraphConnector::init()
   // }
 
   /////
-  //std::cout << "DefGraphConnector - no. source tasks: " << src_ts.size() << std::endl;
-  //std::cout << "DefGraphConnector - no. destination tasks: " << dst_ts.size() << std::endl;
+  // std::cout << "DefGraphConnector - no. source tasks: " << src_ts.size() << std::endl;
+  // std::cout << "DefGraphConnector - no. destination tasks: " << dst_ts.size() << std::endl;
   /////
 
   std::vector<TaskId> output_ts, input_ts;
