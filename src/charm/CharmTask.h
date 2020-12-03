@@ -30,6 +30,7 @@
 #ifndef CHARM_CHARMTASK_H_
 #define CHARM_CHARMTASK_H_
 
+#include <mutex>
 #include "charm++.h"
 #include "pup_stl.h"
 
