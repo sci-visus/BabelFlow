@@ -19,8 +19,6 @@
 #include "ComposableTaskGraph.h"
 #include "ComposableTaskMap.h"
 #include "DefGraphConnector.h"
-#include "PreProcessInputTaskGraph.hpp"
-#include "ModTaskMap.hpp"
 #include "ModuloMap.h"
 
 
@@ -103,8 +101,6 @@ public:
 protected:
   BabelFlow::KWayReduction m_graph;
   BabelFlow::KWayReductionTaskMap m_taskMap; 
-  BabelFlow::PreProcessInputTaskGraph m_modGraph;
-  BabelFlow::ModTaskMap m_modMap;
 };
 
 //-----------------------------------------------------------------------------
@@ -121,8 +117,6 @@ public:
 protected:
   BabelFlow::BinarySwap m_graph;
   BabelFlow::BinarySwapTaskMap m_taskMap; 
-  BabelFlow::PreProcessInputTaskGraph m_modGraph;
-  BabelFlow::ModTaskMap m_modMap;
 };
 
 //-----------------------------------------------------------------------------

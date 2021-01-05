@@ -72,9 +72,6 @@ public:
   //! Compute the fully specified tasks for the given controller
   virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const = 0;
 
-  //! Compute fully specified tasks for the whole graph (in all controllers)
-  virtual std::vector<Task> allGraph() const { return std::vector<Task>(); }
-
   //! Return the task for the given global task id
   virtual Task task(uint64_t gId) const = 0;
 
@@ -83,6 +80,18 @@ public:
 
   //! Return the global id of the given leaf id
   //virtual uint64_t leaf(uint64_t lId) const = 0;
+
+  //! Return the total number of leaf tasks
+  virtual uint32_t numOfLeafs() const = 0;
+
+  //! Return the total number of root tasks
+  virtual uint32_t numOfRoots() const = 0;
+
+  //! Return the id for a leaf at the given index
+  virtual TaskId leaf(uint32_t idx) const = 0;
+
+  //! Return the id for a root at the given index
+  virtual TaskId root(uint32_t idx) const = 0;
 
   //! Return the total number of tasks (or some reasonable upper bound)
   virtual uint32_t size() const = 0;

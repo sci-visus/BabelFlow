@@ -612,17 +612,11 @@ void BabelCompReduce::Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload>
 {
   uint32_t blks[3] = { m_nRanks, 1, 1 };
   m_graph = BabelFlow::KWayReduction( blks, m_fanin );
-  BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::KWayReduction::LEAF_TASK_CB, comp_utils::volume_render_red );
-  BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::KWayReduction::MID_TASK_CB, comp_utils::composite_red) ;
-  BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::KWayReduction::ROOT_TASK_CB, comp_utils::write_results_red );
+  // BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::KWayReduction::LEAF_TASK_CB, comp_utils::volume_render_red );
+  // BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::KWayReduction::MID_TASK_CB, comp_utils::composite_red) ;
+  // BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::KWayReduction::ROOT_TASK_CB, comp_utils::write_results_red );
 
   m_taskMap = BabelFlow::KWayReductionTaskMap( m_nRanks, &m_graph );
-
-  m_modGraph = BabelFlow::PreProcessInputTaskGraph( m_nRanks, &m_graph, &m_taskMap );
-  BabelFlow::TaskGraph::registerCallback( m_modGraph.type(), BabelFlow::PreProcessInputTaskGraph::PRE_PROC_TASK_CB, comp_utils::pre_proc );
-
-  m_modMap = BabelFlow::ModTaskMap( &m_taskMap );
-  m_modMap.update( m_modGraph );
 
 #ifdef COMP_UTIL_DEBUG
   if( m_rankId == 0 )
@@ -630,10 +624,6 @@ void BabelCompReduce::Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload>
     m_graph.outputGraphHtml( m_nRanks, &m_taskMap, "reduce.html" );
   }
 #endif
-
-  // m_master.initialize( m_modGraph, &m_modMap, m_comm, &m_contMap );
-
-  // m_inputs[m_modGraph.new_tids[m_rankId]] = m_inputImg.serialize();
 }
 
 //-----------------------------------------------------------------------------
@@ -655,9 +645,9 @@ BabelCompBinswap::BabelCompBinswap(int32_t rank_id,
 void BabelCompBinswap::Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload>& inputs)
 {
   m_graph = BabelFlow::BinarySwap( m_nRanks );
-  BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::BinarySwap::LEAF_TASK_CB, comp_utils::volume_render_binswap );
-  BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::BinarySwap::MID_TASK_CB, comp_utils::composite_binswap );
-  BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::BinarySwap::ROOT_TASK_CB, comp_utils::write_results_binswap );
+  // BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::BinarySwap::LEAF_TASK_CB, comp_utils::volume_render_binswap );
+  // BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::BinarySwap::MID_TASK_CB, comp_utils::composite_binswap );
+  // BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::BinarySwap::ROOT_TASK_CB, comp_utils::write_results_binswap );
 
   m_taskMap = BabelFlow::BinarySwapTaskMap( m_nRanks, &m_graph );
 
@@ -667,16 +657,6 @@ void BabelCompBinswap::Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload
     m_graph.outputGraphHtml( m_nRanks, &m_taskMap, "bin-swap.html" );
   }
 #endif
-
-  m_modGraph = BabelFlow::PreProcessInputTaskGraph( m_nRanks, &m_graph, &m_taskMap );
-  BabelFlow::TaskGraph::registerCallback( m_modGraph.type(), BabelFlow::PreProcessInputTaskGraph::PRE_PROC_TASK_CB, comp_utils::pre_proc );
-
-  m_modMap = BabelFlow::ModTaskMap( &m_taskMap );
-  m_modMap.update( m_modGraph );
-
-  // m_master.initialize( m_modGraph, &m_modMap, m_comm, &m_contMap );
-
-  // m_inputs[m_modGraph.new_tids[m_rankId]] = m_inputImg.serialize();
 }
 
 //-----------------------------------------------------------------------------
@@ -748,10 +728,6 @@ void BabelCompRadixK::Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload>
     m_radGatherGraph.outputGraphHtml( m_nRanks, &m_radGatherTaskMap, "radixk-gather.html" );
   }
 #endif
-
-  // m_master.initialize( m_radGatherGraph, &m_radGatherTaskMap, m_comm, &m_contMap );
-
-  // m_inputs[m_rankId] = m_inputImg.serialize();
 }
 
 //-----------------------------------------------------------------------------

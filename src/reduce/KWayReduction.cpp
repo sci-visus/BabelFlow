@@ -9,7 +9,6 @@
 #include <sstream>
 
 #include "KWayReduction.h"
-#include "KWayReductionTaskMap.h"
 
 
 using namespace BabelFlow;
@@ -215,20 +214,6 @@ Task KWayReduction::task(uint64_t gId) const {
   
   return t;
 
-}
-
-//-----------------------------------------------------------------------------
-
-std::vector<Task> KWayReduction::allGraph() const 
-{
-  KWayReductionTaskMap kway_tskm(1, this);
-  std::vector<TaskId> tids = kway_tskm.tasks(0);
-  std::vector<Task> tasks( tids.size() );
-  // Assign all the task ids
-  for( uint32_t i = 0; i < tids.size(); ++i )
-    tasks[i] = task( gId( tids[i] ) );
-
-  return tasks;
 }
 
 //-----------------------------------------------------------------------------

@@ -38,20 +38,8 @@ void ComposableTaskGraph::init()
 
   uint32_t num_graphs = m_graphs.size();
   uint32_t num_connectors = m_connectors.size();
+
   assert( num_graphs = num_connectors + 1 );
-}
-
-//-----------------------------------------------------------------------------
-
-std::vector<Task> ComposableTaskGraph::allGraph() const
-{
-  std::vector<Task> all_tasks( size() );
-  for( uint32_t i = 0; i < all_tasks.size(); ++i )
-  {
-    all_tasks[i] = task( (uint64_t)i );
-  }
-
-  return all_tasks;
 }
 
 //-----------------------------------------------------------------------------
@@ -209,6 +197,34 @@ uint32_t ComposableTaskGraph::size() const
   uint32_t total_sz = 0;
   std::for_each( m_graphs.begin(), m_graphs.end(), [&total_sz](TaskGraph* gr) { total_sz += gr->size(); } );
   return total_sz;
+}
+
+//-----------------------------------------------------------------------------
+
+uint32_t ComposableTaskGraph::numOfLeafs() const
+{
+  return m_graphs[0]->numOfLeafs();
+}
+
+//-----------------------------------------------------------------------------
+
+uint32_t ComposableTaskGraph::numOfRoots() const
+{
+  return m_graphs[m_graphs.size()-1]->numOfRoots();
+}
+
+//-----------------------------------------------------------------------------
+
+TaskId ComposableTaskGraph::leaf( uint32_t idx ) const
+{
+  return m_graphs[0]->leaf( idx );
+}
+
+//-----------------------------------------------------------------------------
+
+TaskId ComposableTaskGraph::root( uint32_t idx ) const
+{
+  return m_graphs[m_graphs.size()-1]->root( idx );
 }
 
 //-----------------------------------------------------------------------------

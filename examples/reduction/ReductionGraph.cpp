@@ -87,7 +87,7 @@ BabelFlow::Task ReductionGraph::task(uint64_t gId) const
   std::vector<std::vector<BabelFlow::TaskId> > outgoing(1); // and one output
   uint32_t i;
 
-  if (gId < size() - leafCount()) {
+  if (gId < size() - numOfLeafs()) {
     incoming.resize(mValence);
     for (i=0;i<mValence;i++)
       incoming[i] = task.id()*mValence + i + 1;

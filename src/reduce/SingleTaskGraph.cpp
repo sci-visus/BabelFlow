@@ -6,19 +6,11 @@
  */
 
 #include "SingleTaskGraph.h"
-#include "ModuloMap.h"
 
 
 namespace BabelFlow
 {
 
-//-----------------------------------------------------------------------------
-
-std::vector<Task> SingleTaskGraph::allGraph() const
-{
-  ModuloMap tsk_map( 1, m_nRanks );
-  return localGraph( 0, &tsk_map );
-}
 
 //-----------------------------------------------------------------------------
 

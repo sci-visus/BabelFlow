@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
 
   uint32_t count=1;
   uint32_t sum = 0;
-  for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
+  for (TaskId i=graph.size()-graph.numOfLeafs();i<graph.size();i++) {
 
     int32_t size = sizeof(uint32_t);
     char* buffer = (char*)(new uint32_t[1]);

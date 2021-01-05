@@ -35,17 +35,26 @@ public:
   //! Compute the fully specified tasks for the given controller
   virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const override;
 
-  //! Compute fully specified tasks for the whole graph (in all controllers)
-  virtual std::vector<Task> allGraph() const override;
-
   //! Return the task for the given global task id
   virtual Task task(uint64_t gId) const override;
 
   //! Return the global id of the given task id
   virtual uint64_t gId(TaskId tId) const override { return tId; }
 
+  //! Return the total number of leaf tasks
+  virtual uint32_t numOfLeafs() const override { return size(); }
+
+  //! Return the total number of root tasks
+  virtual uint32_t numOfRoots() const override { return size(); }
+
+  //! Return the id for a leaf at the given index
+  virtual TaskId leaf(uint32_t idx) const override { return idx; }
+
+  //! Return the id for a root at the given index
+  virtual TaskId root(uint32_t idx) const override { return idx; }
+
   //! Return the total number of tasks (or some reasonable upper bound)
-  virtual uint32_t size() const override { return 1; }
+  virtual uint32_t size() const override { return m_nRanks; }
 
   //! Serialize a task graph
   virtual Payload serialize() const override;

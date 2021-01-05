@@ -9,7 +9,6 @@
 #include <cmath>
 
 #include "RadixKExchange.h"
-#include "RadixKExchangeTaskMap.h"
 
 using namespace BabelFlow;
 
@@ -166,22 +165,6 @@ Task RadixKExchange::task(uint64_t gId) const
   it->outputs(outgoing);
 
   return t;
-}
-
-//-----------------------------------------------------------------------------
-
-std::vector<Task> RadixKExchange::allGraph() const
-{
-  RadixKExchangeTaskMap radixk_tskm(1, this);
-  std::vector<TaskId> tids = radixk_tskm.tasks(0);
-  std::vector<Task> tasks( tids.size() );
-  // Assign all the task ids
-  for( uint32_t i = 0; i < tids.size(); ++i )
-  {
-    tasks[i] = task( gId( tids[i] ) );
-  }
-
-  return tasks;
 }
 
 //-----------------------------------------------------------------------------

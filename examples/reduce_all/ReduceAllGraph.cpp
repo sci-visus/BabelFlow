@@ -89,7 +89,7 @@ BabelFlow::Task ReduceAllGraph::task(uint64_t gId) const {
 
   if (gId < reductionSize()) {
     bool leaf_task = false;
-    if (gId < reductionSize() - leafCount()) {
+    if (gId < reductionSize() - numOfLeafs()) {
       leaf_task = true;
       incoming.resize(mValence);
       for (i = 0; i < mValence; i++)
@@ -122,7 +122,7 @@ BabelFlow::Task ReduceAllGraph::task(uint64_t gId) const {
     incoming.resize(1);
 
     // If this is a leaf
-    if (task.id() >= (size() - leafCount())) {
+    if (task.id() >= (size() - numOfLeafs())) {
       task.callback( ReduceAllGraph::RESULT_REPORT_TASK, TaskGraph::queryCallback( type(), ReduceAllGraph::RESULT_REPORT_TASK ) );    // Report result
 //      for (i = 0; i < mValence; i++)
 //        outgoing[0][i] = TNULL;

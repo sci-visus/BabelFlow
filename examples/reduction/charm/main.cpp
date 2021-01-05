@@ -95,7 +95,7 @@ public:
     
     uint32_t count=1;
     mSum = 0;
-    for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
+    for (TaskId i=graph.size()-graph.numOfLeafs();i<graph.size();i++) {
 
       std::vector<char> buffer(sizeof(uint32_t));
 

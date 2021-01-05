@@ -36,9 +36,6 @@ public:
   virtual uint32_t type() const override { return 0; };
 
 protected:
-  static bool isRootTask( const Task& tsk );
-  static bool isLeafTask( const Task& tsk );
-
   void init();
 
   std::unordered_map< TaskId, TaskId > m_outConnectorMap;
