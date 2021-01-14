@@ -66,8 +66,8 @@ int main(int argc, char* argv[])
   uint32_t valence = atoi(argv[2]);
 
   ReductionGraph graph(leafs,valence);
-  graph.registerCallback( ReductionGraph::RED_TASK_CB, add_int );
-  graph.registerCallback( ReductionGraph::ROOT_TASK_CB, report_sum );
+  TaskGraph::registerCallback( 0, ReductionGraph::RED_TASK_CB, add_int );
+  TaskGraph::registerCallback( 0, ReductionGraph::ROOT_TASK_CB, report_sum );
   ModuloMap task_map(mpi_width,graph.size());
 
   Controller master;
@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
 
   uint32_t count=1;
   uint32_t sum = 0;
-  for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
+  for (TaskId i=graph.size()-graph.numOfLeafs();i<graph.size();i++) {
 
     int32_t size = sizeof(uint32_t);
     char* buffer = (char*)(new uint32_t[1]);

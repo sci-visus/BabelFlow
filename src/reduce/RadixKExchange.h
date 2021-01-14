@@ -40,6 +40,8 @@ public:
 
   void init(uint32_t nblks, const std::vector<uint32_t>& radix_v);
   
+  // virtual uint32_t type() const override { return 1; };
+
   //! Compute the fully specified tasks for the
   //! given controller id and task map
   virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const override;
@@ -57,6 +59,18 @@ public:
    * @return The total number of tasks
    */
   virtual uint32_t size() const override { return (totalLevels() + 1) * m_Nblocks; }
+
+  //! Return the total number of leaf tasks
+  virtual uint32_t numOfLeafs() const override { return m_Nblocks; }
+
+  //! Return the total number of root tasks
+  virtual uint32_t numOfRoots() const override { return m_Nblocks; }
+
+  //! Return the id for a leaf at the given index
+  virtual TaskId leaf(uint32_t idx) const override { return idx; }
+
+  //! Return the id for a root at the given index
+  virtual TaskId root(uint32_t idx) const override { return idx + totalLevels()*m_Nblocks; }
 
   //! Serialize a task graph
   virtual Payload serialize() const override;

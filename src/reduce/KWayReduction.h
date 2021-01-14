@@ -85,6 +85,8 @@ public:
   //! Destructor
   virtual ~KWayReduction() {}
 
+  // virtual uint32_t type() const override { return 2; };
+
   //! Compute the fully specified tasks for the
   //! given controller id and task map
   virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const override;
@@ -98,6 +100,18 @@ public:
    * @return The total number of tasks
    */
   virtual uint32_t size() const override { return mLvlOffset[mRounds]; }
+
+  //! Return the total number of leaf tasks
+  virtual uint32_t numOfLeafs() const override { return mLvlOffset[1]; }
+
+  //! Return the total number of root tasks
+  virtual uint32_t numOfRoots() const override { return 1; }
+
+  //! Return the id for a leaf at the given index
+  virtual TaskId leaf(uint32_t idx) const override { return idx; }
+
+  //! Return the id for a root at the given index
+  virtual TaskId root(uint32_t idx) const override { return (mLvlOffset.back()-1); }
 
   //! Return the total number of rounds needed to merge
   uint8_t rounds() const { return mRounds; }

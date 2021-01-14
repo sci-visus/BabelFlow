@@ -33,11 +33,42 @@ namespace BabelFlow {
 namespace charm {
 
 
-CharmTask::CharmTask(Payload buffer)
+void CharmPayload::pup(PUP::er &p)
+{
+  p|mSize;
+  if (p.isUnpacking())
+    mBuffer = new char[size()];
+  PUParray(p, buffer(), size());
+
+  // If charm will delete the object make sure that we release the
+  // memory buffer
+  if (p.isDeleting())
+    delete[] buffer();
+}
+
+
+void CharmTaskId::pup(PUP::er &p)
+{
+  p|m_gr;
+  p|m_tid;
+}
+
+
+/* readonly */ CProxy_StatusMgr mainProxyStatusMgr;
+
+
+void CharmTask::initStatusMgr(uint32_t total_tasks)
+{
+  mainProxyStatusMgr = CProxy_StatusMgr::ckNew(total_tasks);
+}
+
+
+CharmTask::CharmTask(CharmPayload buffer)
 {
   //fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
-
-  TaskGraph* graph = make_task_graph(buffer);
+  register_callbacks();
+  
+  TaskGraph* graph = make_task_graph(buffer);  
   mTask = graph->task(this->thisIndex);
 
   mInputs.resize(mTask.fanin());
@@ -60,7 +91,14 @@ CharmTask::CharmTask(Payload buffer)
 
 void CharmTask::exec()
 {
+  mainProxyStatusMgr.start();
+  
   //fprintf(stderr,"CharmTask<TaskGraphClass, CallbackClass>::exec() %d  fanout %d\n",mTask.id(),mTask.fanout());
+
+  /////
+  // std::cout << "CharmTask::exec -- start -- " << mTask.id() << " fanout " << mTask.fanout() << std::endl;
+  /////
+
   std::vector<Payload> outputs(mTask.fanout());
 
   mTask.callbackFunc()( mInputs, outputs, mTask.id() );
@@ -76,7 +114,10 @@ void CharmTask::exec()
     {
       //fprintf(stderr,"\nProcessing output from %d to %d\n",mTask.id(),mOutputs[i][j]);
       if (mOutputs[i][j] != (uint64_t)-1)
-        this->thisProxy[mOutputs[i][j]].addInput(mTask.id(),buffer);
+      {
+        CharmTaskId ch_tid(mTask.id());
+        this->thisProxy[mOutputs[i][j]].addInput(ch_tid,buffer);
+      }
     }
   }
 
@@ -91,19 +132,25 @@ void CharmTask::exec()
     outputs[i].reset();
 
   outputs.clear();
+
+  /////
+  // std::cout << "CharmTask::exec -- end -- " << mTask.id() << " fanout " << mTask.fanout() << std::endl;
+  /////
+
+  mainProxyStatusMgr.done();
 }
 
-void CharmTask::addInput(TaskId source, Buffer buffer)
+void CharmTask::addInput(CharmTaskId source, Buffer buffer)
 {
-  TaskId i;
+  TaskId src_tsk( source.tid(), source.graphId() );
   bool is_ready = true;
   bool input_added = false;
 
   //fprintf(stderr,"CharmTask<TaskGraphClass, CallbackClass>::addInput id %d source %d \n", mTask.id(),source);
 
-  for (i=0;i<mTask.fanin();i++) {
+  for (uint32_t i=0; i < mTask.fanin(); i++) {
     //fprintf(stderr,"\t %d incoming %d\n",mTask.id(),mTask.incoming()[i]);
-    if (mTask.incoming()[i] == source) {
+    if (mTask.incoming()[i] == src_tsk) {
       assert(mInputs[i].buffer() == NULL);
 
       // Not clear whether we need to copy the data here
@@ -118,7 +165,7 @@ void CharmTask::addInput(TaskId source, Buffer buffer)
   }
 
   if (!input_added) {
-    fprintf(stderr,"Unknown sender %d in CharmTask::addInput for task %d\n",source,mTask.id());
+    std::cerr << "Unknown sender " << src_tsk << " in CharmTask::addInput for task " << mTask.id() << std::endl;
     assert (false);
   }
   else{

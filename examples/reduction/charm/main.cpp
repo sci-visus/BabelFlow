@@ -53,6 +53,13 @@ BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload buffer)
 }
 
 
+void register_callbacks()
+{
+  TaskGraph::registerCallback( 0, ReductionGraph::RED_TASK_CB, add_int );
+  TaskGraph::registerCallback( 0, ReductionGraph::ROOT_TASK_CB, report_sum );
+}
+
+
 class Main : public CBase_Main
 {
 public:
@@ -75,8 +82,7 @@ public:
     uint32_t valence = atoi(m->argv[2]);
 
     ReductionGraph graph(leafs,valence);
-    graph.registerCallback( ReductionGraph::RED_TASK_CB, add_int );
-    graph.registerCallback( ReductionGraph::ROOT_TASK_CB, report_sum );
+    register_callbacks();
 
     // Output the graph for testing
     ModuloMap task_map(1,graph.size());
@@ -89,7 +95,7 @@ public:
     
     uint32_t count=1;
     mSum = 0;
-    for (TaskId i=graph.size()-graph.leafCount();i<graph.size();i++) {
+    for (TaskId i=graph.size()-graph.numOfLeafs();i<graph.size();i++) {
 
       std::vector<char> buffer(sizeof(uint32_t));
 

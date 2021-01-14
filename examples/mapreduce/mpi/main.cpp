@@ -36,10 +36,10 @@ int main(int argc, char *argv[])
   size_t arr_len = 50;
 
   MapReduceGraph graph(n_workers);
-  graph.registerCallback( MapReduceGraph::SPLIT_LOAD, split_load );
-  graph.registerCallback( MapReduceGraph::MAP_FUNC, map_func );
-  graph.registerCallback( MapReduceGraph::RED_FUNC, reduce_func );
-  graph.registerCallback( MapReduceGraph::PRINT_FUNC, print_func );
+  TaskGraph::registerCallback( 0, MapReduceGraph::SPLIT_LOAD, split_load );
+  TaskGraph::registerCallback( 0, MapReduceGraph::MAP_FUNC, map_func );
+  TaskGraph::registerCallback( 0, MapReduceGraph::RED_FUNC, reduce_func );
+  TaskGraph::registerCallback( 0, MapReduceGraph::PRINT_FUNC, print_func );
 
   ModuloMap task_map(mpi_size, graph.size());
   Controller master;

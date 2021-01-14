@@ -218,8 +218,7 @@ Task KWayReduction::task(uint64_t gId) const {
 
 //-----------------------------------------------------------------------------
 
-std::vector<Task> KWayReduction::localGraph(ShardId id,
-                                        const TaskMap* task_map) const
+std::vector<Task> KWayReduction::localGraph(ShardId id, const TaskMap* task_map) const
 {
   // Get all the ids we need from the TaskMap
   std::vector<TaskId> tids = task_map->tasks( id );

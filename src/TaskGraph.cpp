@@ -37,23 +37,72 @@
 namespace BabelFlow 
 {
 
+std::unordered_map< uint32_t, std::vector<Callback> > TaskGraph::s_callbackMap;
+std::unordered_map< std::string, uint32_t > TaskGraph::s_typeIdsMap;
+
 //-----------------------------------------------------------------------------
 
-void TaskGraph::registerCallback( CallbackId id, Callback func )
+void TaskGraph::registerCallback( uint32_t graph_id, CallbackId id, Callback func )
 {
-  if( m_callbackVec.size() <= id )
-    m_callbackVec.resize( id + 1, nullptr );
+  std::vector<Callback>& cb_v = s_callbackMap[graph_id];
+  if( cb_v.size() <= id )
+    cb_v.resize( id + 1, nullptr );
 
-  m_callbackVec[id] = func;
+  cb_v[id] = func;
 }
 
 //-----------------------------------------------------------------------------
 
-Callback TaskGraph::queryCallback( CallbackId id ) const
+Callback TaskGraph::queryCallback( uint32_t graph_id, CallbackId id  )
 {
-  assert( id < m_callbackVec.size() );
+  auto iter = s_callbackMap.find( graph_id );
+  
+  // assert( iter != s_callbackMap.end() );
+  if( iter == s_callbackMap.end() )
+  {
+    std::cerr << "TaskGraph::queryCallback - graph id " << graph_id << " not found!" << std::endl;
+    exit( -1 );
+  }
 
-  return m_callbackVec[ id ];
+  std::vector<Callback>& cb_v = iter->second;
+
+  assert( id < cb_v.size() );
+
+  return cb_v[ id ];
+}
+
+//-----------------------------------------------------------------------------
+
+uint32_t TaskGraph::graphNameToTypeId( const char* gr_type_name )
+{
+  std::string tname( gr_type_name );
+  auto iter = s_typeIdsMap.find( tname );
+  uint32_t id = 0;
+  if( iter == s_typeIdsMap.end() )
+  {
+    id = s_typeIdsMap.size() + 1;
+    s_typeIdsMap[tname] = id;
+  }
+  else
+  {
+    id = iter->second;
+  }
+
+  return id; 
+}
+
+//-----------------------------------------------------------------------------
+
+uint32_t TaskGraph::type() const
+{
+  return graphNameToTypeId( typeid(*this).name() );
+}
+
+//-----------------------------------------------------------------------------
+
+Callback TaskGraph::queryCallback( CallbackId cb_id ) const
+{
+  return TaskGraph::queryCallback( graphId(), cb_id );
 }
 
 //-----------------------------------------------------------------------------

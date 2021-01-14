@@ -1,0 +1,12 @@
+mainmodule radixk {
+
+  extern module charm_babelflow;
+
+  readonly CProxy_Main mainProxy;
+ 
+   mainchare Main {
+      entry Main(CkArgMsg* m);
+      entry void done();
+  };          
+  
+};

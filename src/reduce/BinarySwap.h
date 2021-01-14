@@ -61,6 +61,18 @@ public:
    */
   virtual uint32_t size() const override { return (mRounds+1)*n_blocks; }
 
+  //! Return the total number of leaf tasks
+  virtual uint32_t numOfLeafs() const override { return n_blocks; }
+
+  //! Return the total number of root tasks
+  virtual uint32_t numOfRoots() const override { return n_blocks; }
+
+  //! Return the id for a leaf at the given index
+  virtual TaskId leaf(uint32_t idx) const override { return idx; }
+
+  //! Return the id for a root at the given index
+  virtual TaskId root(uint32_t idx) const override { return idx + mRounds*n_blocks; }
+
   //! Return the total number of rounds needed to merge
   uint8_t rounds() const {return mRounds;}
 

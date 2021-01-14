@@ -59,23 +59,35 @@ public:
   virtual ~BroadcastGraph() {}
 
   //! Return the taskId for the given global task id
-  virtual BabelFlow::Task task(uint64_t gId) const;
+  virtual BabelFlow::Task task(uint64_t gId) const override;
 
   //! Return the global id of the given task id
-  virtual uint64_t gId(BabelFlow::TaskId tId) const {return tId;}
+  virtual uint64_t gId(BabelFlow::TaskId tId) const override {return tId;}
 
   //! Compute the fully specified tasks for the
   //! given controller and task map
-  virtual std::vector<BabelFlow::Task> localGraph(BabelFlow::ShardId id, const BabelFlow::TaskMap* task_map) const;
+  virtual std::vector<BabelFlow::Task> localGraph(BabelFlow::ShardId id, const BabelFlow::TaskMap* task_map) const override;
 
   //! Return the total number of tasks
-  uint32_t size() const {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
+  virtual uint32_t size() const override {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
+
+  //! Return the total number of leaf tasks
+  virtual uint32_t numOfLeafs() const override { 1; }
+
+  //! Return the total number of root tasks
+  virtual uint32_t numOfRoots() const override { return pow(mValence, mLevels); }
+
+  //! Return the id for a leaf at the given index
+  virtual BabelFlow::TaskId leaf(uint32_t idx) const override { return 0; }
+
+  //! Return the id for a root at the given index
+  virtual BabelFlow::TaskId root(uint32_t idx) const override { return size() - numOfRoots() + idx; }
 
   //! Serialize a task graph
-  virtual BabelFlow::Payload serialize() const;
+  virtual BabelFlow::Payload serialize() const override;
 
   //! Deserialize a task graph. This will consume the payload
-  virtual void deserialize(BabelFlow::Payload buffer);
+  virtual void deserialize(BabelFlow::Payload buffer) override;
 
 private:
 

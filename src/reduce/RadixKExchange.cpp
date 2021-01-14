@@ -91,7 +91,7 @@ void RadixKExchange::deserialize(Payload buffer)
   RadixKExchange::sDATASET_DIMS[0] = buff_ptr[1];
   RadixKExchange::sDATASET_DIMS[1] = buff_ptr[2];
   RadixKExchange::sDATASET_DIMS[2] = buff_ptr[3];
-  
+
   std::vector<uint32_t> radix_v(buff_ptr[4]);
   
   for( uint32_t i=0; i < radix_v.size(); ++i ) radix_v[i] = buff_ptr[rad_offset + i];
@@ -100,6 +100,8 @@ void RadixKExchange::deserialize(Payload buffer)
 
   delete[] buffer.buffer();
 }
+
+//-----------------------------------------------------------------------------
 
 Task RadixKExchange::task(uint64_t gId) const
 {
@@ -140,6 +142,10 @@ Task RadixKExchange::task(uint64_t gId) const
     std::vector<TaskId> out_neighbors;
     getRadixNeighbors( it->id(), lvl, true, out_neighbors );
     
+    /////
+    // std::cout << "RadixKExchange::task num out neighbors " << out_neighbors.size() << std::endl;
+    /////
+
     outgoing.resize( out_neighbors.size() );
     
     for( uint32_t i = 0; i < outgoing.size(); ++i )

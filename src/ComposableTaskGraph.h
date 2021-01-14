@@ -31,13 +31,25 @@ public:
   virtual std::vector<Task> localGraph( ShardId id, const TaskMap* task_map ) const override;
 
   //! Return the task for the given global task id
-  virtual Task task( uint64_t gId ) const override { assert(false); return Task(); }
+  virtual Task task( uint64_t gId ) const override;
 
   //! Return the global id of the given task id
-  virtual uint64_t gId( TaskId tId ) const override { return TaskId::InnerTaskId(tId); }
+  virtual uint64_t gId( TaskId tId ) const override;
 
   //! Return the total number of tasks (or some reasonable upper bound)
   virtual uint32_t size() const override;
+
+  //! Return the total number of leaf tasks
+  virtual uint32_t numOfLeafs() const override;
+
+  //! Return the total number of root tasks
+  virtual uint32_t numOfRoots() const override;
+
+  //! Return the id for a leaf at the given index
+  virtual TaskId leaf( uint32_t idx ) const override;
+
+  //! Return the id for a root at the given index
+  virtual TaskId root( uint32_t idx ) const override;
 
   //! Serialize a task graph
   virtual Payload serialize() const override;

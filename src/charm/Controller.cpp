@@ -27,18 +27,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "CharmTask.h"
 #include "Controller.h"
 
 namespace BabelFlow {
 namespace charm {
 
 
-CProxy_CharmTask Controller::initialize(Payload buffer, TaskId size)
+
+CProxy_CharmTask Controller::initialize(Payload buffer, uint32_t size)
 {
   //fprintf(stderr,"Trying to create %d tasks\n", graph.size());
 
   // Create an array to hold all tasks
-  ProxyType tasks = ProxyType::ckNew(buffer, size);
+  CharmPayload ch_payl(buffer);
+  ProxyType tasks = ProxyType::ckNew(ch_payl, size);
+ 
+  // Create the status mgr chare
+  CharmTask::initStatusMgr(size);
 
   // As per convention, this function now owns the buffer and must
   // free the memory

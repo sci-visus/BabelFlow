@@ -37,6 +37,7 @@
 #include <string>
 #include <typeinfo>
 #include <ostream>
+#include <unordered_map>
 
 #include "Task.h"
 #include "Payload.h"
@@ -61,10 +62,12 @@ class TaskGraph
 public:
 
   //! Default constructor
-  TaskGraph(std::string config = "") {}
+  TaskGraph(std::string config = "") : m_graphId( 0 ) {}
 
   //! Default destructor
   virtual ~TaskGraph() {}
+
+  virtual uint32_t type() const;
 
   //! Compute the fully specified tasks for the given controller
   virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const = 0;
@@ -78,6 +81,18 @@ public:
   //! Return the global id of the given leaf id
   //virtual uint64_t leaf(uint64_t lId) const = 0;
 
+  //! Return the total number of leaf tasks
+  virtual uint32_t numOfLeafs() const = 0;
+
+  //! Return the total number of root tasks
+  virtual uint32_t numOfRoots() const = 0;
+
+  //! Return the id for a leaf at the given index
+  virtual TaskId leaf(uint32_t idx) const = 0;
+
+  //! Return the id for a root at the given index
+  virtual TaskId root(uint32_t idx) const = 0;
+
   //! Return the total number of tasks (or some reasonable upper bound)
   virtual uint32_t size() const = 0;
 
@@ -87,11 +102,12 @@ public:
   //! Deserialize a task graph. This will consume the payload
   virtual void deserialize(Payload buffer) {assert(false);}
 
-  //! Register a callback for the given id
-  virtual void registerCallback( CallbackId id, Callback func );
+  virtual void setGraphId( uint32_t gr_id ) { m_graphId = gr_id; }
 
-  //! Returns the callback func pointer for the given id
-  virtual Callback queryCallback( CallbackId id ) const;
+  virtual uint32_t graphId() const { return m_graphId; }
+
+  //! Returns the callback func pointer for this graph and callback id
+  virtual Callback queryCallback( CallbackId cb_id ) const;
 
   //! Output the entire graph as dot file
   virtual void outputGraph( ShardId count, const TaskMap* task_map, const std::string& filename ) const;
@@ -101,13 +117,23 @@ public:
 
   virtual void outputTasksHtml( const std::vector<Task>& tasks_v, const std::string& filename ) const;
 
+  //! Register a callback for the given graph id and callback id
+  static void registerCallback( uint32_t graph_id, CallbackId id, Callback func );
+
+  //! Returns the callback func pointer for the given graph id and callback id
+  static Callback queryCallback( uint32_t graph_id, CallbackId id );
+
 protected:
+  uint32_t m_graphId;
+
   void outputHelper( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, bool incl_html ) const;
 
   virtual void outputDot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const;
 
-  //! A list of registered callbacks
-  std::vector<Callback> m_callbackVec;
+  static uint32_t graphNameToTypeId( const char* gr_type_name );
+
+  static std::unordered_map< uint32_t, std::vector<Callback> > s_callbackMap;
+  static std::unordered_map< std::string, uint32_t > s_typeIdsMap;
 };
 
 

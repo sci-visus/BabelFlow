@@ -52,6 +52,14 @@ BabelFlow::TaskGraph* make_task_graph(BabelFlow::Payload buffer)
   return BabelFlow::charm::make_task_graph_template<BroadcastGraph>(buffer);
 }
 
+
+void register_callbacks()
+{
+  TaskGraph::registerCallback( 0, BroadcastGraph::LEAF_TASK_CB, print_message );
+  TaskGraph::registerCallback( 0, BroadcastGraph::BCAST_TASK_CB, relay_message );
+}
+
+
 class Main : public CBase_Main
 {
 public:
@@ -73,8 +81,7 @@ public:
     uint32_t valence = atoi(m->argv[2]);
 
     BroadcastGraph graph(leafs,valence);
-    graph.registerCallback( BroadcastGraph::LEAF_TASK_CB, print_message );
-    graph.registerCallback( BroadcastGraph::BCAST_TASK_CB, relay_message );
+    register_callbacks();
 
     // Output the graph for testing
     ModuloMap task_map(1,graph.size());

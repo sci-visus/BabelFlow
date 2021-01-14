@@ -22,7 +22,12 @@ class SingleTaskGraph : public TaskGraph
 public:
   enum TaskCB { SINGLE_TASK_CB = 11 };
 
-  SingleTaskGraph() {}
+  SingleTaskGraph( uint32_t n_ranks = 1 ) 
+  : m_nRanks( n_ranks ), m_numInputSrcs( 1 ), m_numOutputData( 1 ), m_numOutputDest( 1 ) {}
+
+  SingleTaskGraph( uint32_t n_ranks, uint32_t input_srcs, uint32_t output_data_items, uint32_t output_dest )
+  : m_nRanks( n_ranks ), m_numInputSrcs( input_srcs ), 
+    m_numOutputData( output_data_items ), m_numOutputDest( output_dest ) {}
 
   //! Destructor
   virtual ~SingleTaskGraph() {}
@@ -36,14 +41,32 @@ public:
   //! Return the global id of the given task id
   virtual uint64_t gId(TaskId tId) const override { return tId; }
 
+  //! Return the total number of leaf tasks
+  virtual uint32_t numOfLeafs() const override { return size(); }
+
+  //! Return the total number of root tasks
+  virtual uint32_t numOfRoots() const override { return size(); }
+
+  //! Return the id for a leaf at the given index
+  virtual TaskId leaf(uint32_t idx) const override { return idx; }
+
+  //! Return the id for a root at the given index
+  virtual TaskId root(uint32_t idx) const override { return idx; }
+
   //! Return the total number of tasks (or some reasonable upper bound)
-  virtual uint32_t size() const override { return 1; }
+  virtual uint32_t size() const override { return m_nRanks; }
 
   //! Serialize a task graph
   virtual Payload serialize() const override;
 
   //! Deserialize a task graph. This will consume the payload
   virtual void deserialize(Payload buffer) override;
+
+protected:
+  uint32_t m_nRanks;
+  uint32_t m_numInputSrcs;
+  uint32_t m_numOutputData;
+  uint32_t m_numOutputDest;
 
 };  // end class SingleTaskGraph
 
