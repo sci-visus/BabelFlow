@@ -29,6 +29,6 @@ INSTALL(FILES ${LEGION_CONTROLLER_HEADERS}
         )
 
 install(TARGETS babelflow_legion
-        EXPORT BabelFlowConfig
+        EXPORT BabelFlow
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
         )

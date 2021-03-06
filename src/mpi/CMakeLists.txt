@@ -23,9 +23,6 @@ install(FILES ${MPI_HEADERS}
 )
 
 install(TARGETS babelflow_mpi
-        EXPORT BabelFlowConfig
+        EXPORT BabelFlow
         LIBRARY DESTINATION lib
 )
-
-export(TARGETS babelflow_mpi babelflow NAMESPACE BabelFlow::
-  FILE "${CMAKE_CURRENT_BINARY_DIR}/BabelFlowConfig.cmake")
