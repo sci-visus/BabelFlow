@@ -25,11 +25,8 @@ INSTALL(FILES ${CHARM_HEADERS}
 )
 
 INSTALL(TARGETS babelflow_charm 
-        EXPORT BabelFlowConfig
+        EXPORT BabelFlow
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
-
-export(TARGETS babelflow_charm babelflow NAMESPACE BabelFlow::
-        FILE "${CMAKE_CURRENT_BINARY_DIR}/BabelFlowConfig.cmake")
 
 install(FILES ${PROJECT_BINARY_DIR}/src/charm/charm_babelflow.decl.h ${PROJECT_BINARY_DIR}/src/charm/charm_babelflow.def.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include/BabelFlow/charm/)

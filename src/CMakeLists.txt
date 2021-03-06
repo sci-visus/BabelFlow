@@ -107,7 +107,7 @@ target_include_directories(babelflow
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR})
 
-install(TARGETS babelflow EXPORT BabelFlowConfig
+install(TARGETS babelflow EXPORT BabelFlow
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin)  # This is for Windows
@@ -119,5 +119,3 @@ install(FILES ${BASE_BFLOW_HEADERS}
 install(FILES ${RED_HEADERS}
         DESTINATION include/BabelFlow/reduce
 )
-
-install(EXPORT BabelFlowConfig FILE BabelFlowConfig.cmake NAMESPACE BabelFlow:: DESTINATION lib/cmake/BabelFlow)
