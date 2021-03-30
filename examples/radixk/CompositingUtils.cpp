@@ -9,13 +9,11 @@
 #include <algorithm>
 #include <fstream>
 
-#include "CompositingUtils.h"
-
-#include "lodepng.h"
-
-#include "DefGraphConnector.h"
 #include "ComposableTaskGraph.h"
 #include "ComposableTaskMap.h"
+
+#include "CompositingUtils.h"
+#include "lodepng.h"
 
 
 // #define COMP_UTIL_DEBUG
@@ -612,9 +610,6 @@ void BabelCompReduce::Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload>
 {
   uint32_t blks[3] = { m_nRanks, 1, 1 };
   m_graph = BabelFlow::KWayReduction( blks, m_fanin );
-  // BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::KWayReduction::LEAF_TASK_CB, comp_utils::volume_render_red );
-  // BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::KWayReduction::MID_TASK_CB, comp_utils::composite_red) ;
-  // BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::KWayReduction::ROOT_TASK_CB, comp_utils::write_results_red );
 
   m_taskMap = BabelFlow::KWayReductionTaskMap( m_nRanks, &m_graph );
 
@@ -645,9 +640,6 @@ BabelCompBinswap::BabelCompBinswap(int32_t rank_id,
 void BabelCompBinswap::Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload>& inputs)
 {
   m_graph = BabelFlow::BinarySwap( m_nRanks );
-  // BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::BinarySwap::LEAF_TASK_CB, comp_utils::volume_render_binswap );
-  // BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::BinarySwap::MID_TASK_CB, comp_utils::composite_binswap );
-  // BabelFlow::TaskGraph::registerCallback( m_graph.type(), BabelFlow::BinarySwap::ROOT_TASK_CB, comp_utils::write_results_binswap );
 
   m_taskMap = BabelFlow::BinarySwapTaskMap( m_nRanks, &m_graph );
 
@@ -711,13 +703,10 @@ void BabelCompRadixK::Initialize(std::map<BabelFlow::TaskId, BabelFlow::Payload>
 
   register_callbacks();
 
-  m_defGraphConnector = BabelFlow::DefGraphConnector( &m_radixkGr, 0, &m_gatherTaskGr, 1 );
-
-  std::vector<BabelFlow::TaskGraphConnector*> gr_connectors{ &m_defGraphConnector };
   std::vector<BabelFlow::TaskGraph*> gr_vec{ &m_radixkGr, &m_gatherTaskGr };
   std::vector<BabelFlow::TaskMap*> task_maps{ &m_radixkMp, &m_gatherTaskMp }; 
 
-  m_radGatherGraph = BabelFlow::ComposableTaskGraph( gr_vec, gr_connectors );
+  m_radGatherGraph = BabelFlow::ComposableTaskGraph( gr_vec );
   m_radGatherTaskMap = BabelFlow::ComposableTaskMap( task_maps );
   
 #ifdef COMP_UTIL_DEBUG

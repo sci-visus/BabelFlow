@@ -13,6 +13,9 @@
 using namespace BabelFlow;
 
 
+REG_TGRAPH_TYPE(RadixKExchange)
+
+
 uint32_t RadixKExchange::sDATASET_DIMS[3];
 
 

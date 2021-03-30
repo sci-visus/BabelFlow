@@ -11,6 +11,7 @@
 namespace BabelFlow
 {
 
+REG_TGRAPH_TYPE(SingleTaskGraph)
 
 //-----------------------------------------------------------------------------
 

@@ -40,7 +40,7 @@ set(BASE_BFLOW_HEADERS
     ComposableTaskMap.h
 
     TaskGraphConnector.h
-    DefGraphConnector.h
+    MultiGraphConnector.h
 )
 
 set(BASE_BFLOW_SRC
@@ -56,7 +56,7 @@ set(BASE_BFLOW_SRC
     ComposableTaskGraph.cpp
     ComposableTaskMap.cpp
 
-    DefGraphConnector.cpp
+    MultiGraphConnector.cpp
 )
 
 SET(BABELFLOW_HEADERS

@@ -15,6 +15,8 @@
 
 using namespace BabelFlow;
 
+REG_TGRAPH_TYPE(BinarySwap)
+
 
 uint32_t BinarySwap::sDATASET_DIMS[3];
 
