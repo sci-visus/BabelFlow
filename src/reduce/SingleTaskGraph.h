@@ -32,6 +32,8 @@ public:
   //! Destructor
   virtual ~SingleTaskGraph() {}
 
+  virtual uint32_t type() const override { return 3; }
+
   //! Compute the fully specified tasks for the given controller
   virtual std::vector<Task> localGraph(ShardId id, const TaskMap* task_map) const override;
 

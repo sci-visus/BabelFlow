@@ -63,8 +63,11 @@ void CharmTask::initStatusMgr(uint32_t total_tasks)
 }
 
 
-CharmTask::CharmTask(CharmPayload buffer)
+CharmTask::CharmTask(CharmPayload buffer, int status_ep, int status_id)
 {
+  mStatEp = status_ep;
+  mStatId = status_id;
+
   //fprintf(stderr,"Starting Tasks %d\n",this->thisIndex);
   register_callbacks();
   
@@ -91,7 +94,11 @@ CharmTask::CharmTask(CharmPayload buffer)
 
 void CharmTask::exec()
 {
-  mainProxyStatusMgr.start();
+  // mainProxyStatusMgr.start();
+  CkArrayID aid = CkGroupID{mStatId};
+  CkCallback status_cb(mStatEp, CkArrayIndex1D(0), aid);
+  
+  status_cb.send(new StatusMsg(StatusMgr::StatusCode::START));
   
   //fprintf(stderr,"CharmTask<TaskGraphClass, CallbackClass>::exec() %d  fanout %d\n",mTask.id(),mTask.fanout());
 
@@ -137,7 +144,12 @@ void CharmTask::exec()
   // std::cout << "CharmTask::exec -- end -- " << mTask.id() << " fanout " << mTask.fanout() << std::endl;
   /////
 
-  mainProxyStatusMgr.done();
+  // mainProxyStatusMgr.done();
+
+  CkArrayID this_aid = thisProxy;
+  int arr_id = CkGroupID(this_aid).idx;
+
+  status_cb.send(new StatusMsg(StatusMgr::StatusCode::DONE, arr_id));
 }
 
 void CharmTask::addInput(CharmTaskId source, Buffer buffer)

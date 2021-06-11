@@ -14,6 +14,7 @@
 #include "DefGraphConnector.h"
 #include "reduce/RadixKExchange.h"
 #include "reduce/KWayReduction.h"
+#include "reduce/SingleTaskGraph.h"
 
 
 // #define COMPOSABLE_TGRAPH_DEBUG
@@ -319,6 +320,9 @@ void ComposableTaskGraph::deserialize( Payload pl )
         break;
       case 2:
         m_graphs[i] = new KWayReduction();
+        break;
+      case 3:
+        m_graphs[i] = new SingleTaskGraph();
         break;
       default:
         assert(false);

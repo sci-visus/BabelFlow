@@ -38,13 +38,17 @@ namespace charm {
 CProxy_CharmTask Controller::initialize(Payload buffer, uint32_t size)
 {
   //fprintf(stderr,"Trying to create %d tasks\n", graph.size());
+  CProxy_StatusMgr status_mgr = CProxy_StatusMgr::ckNew(size, 1);   // 1 element in StatusMgr array
+  int status_ep = CkIndex_StatusMgr::status(NULL);
+  CkArrayID aid = status_mgr;
+  int status_id = CkGroupID(aid).idx;
 
   // Create an array to hold all tasks
   CharmPayload ch_payl(buffer);
-  ProxyType tasks = ProxyType::ckNew(ch_payl, size);
+  ProxyType tasks = ProxyType::ckNew(ch_payl, status_ep, status_id, size);
  
   // Create the status mgr chare
-  CharmTask::initStatusMgr(size);
+  // CharmTask::initStatusMgr(size);
 
   // As per convention, this function now owns the buffer and must
   // free the memory
@@ -53,7 +57,29 @@ CProxy_CharmTask Controller::initialize(Payload buffer, uint32_t size)
   return tasks;
 }
 
+void Controller::initializeAsync(Payload buffer, uint32_t size, int ep, int aid_v, int status_ep, int status_id)
+{
+  // CProxy_StatusMgr status_mgr = CProxy_StatusMgr::ckNew(1);   // 1 element in StatusMgr array
+  // int status_ep = CkIndex_StatusMgr::status(NULL);
+  // CkArrayID aid = status_mgr;
+  // int status_id = CkGroupID(aid).idx;
 
+  CkArrayID stat_aid = CkGroupID{status_id};
+  CkCallback status_cb(status_ep, CkArrayIndex1D(0), stat_aid);
+  status_cb.send(new StatusMsg(StatusMgr::StatusCode::NCYCLE, size));
+
+  CharmPayload ch_payl(buffer);
+
+  CkArrayID aid = CkGroupID{aid_v};
+  ProxyType::ckNew(ch_payl, status_ep, status_id, size, CkCallback(ep, aid));
+
+  // Create the status mgr chare
+  // CharmTask::initStatusMgr(size);
+
+  // As per convention, this function now owns the buffer and must
+  // free the memory
+  delete[] buffer.buffer();
+}
 
 }
 }

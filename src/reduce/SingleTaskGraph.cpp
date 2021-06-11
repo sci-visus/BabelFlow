@@ -52,14 +52,32 @@ Task SingleTaskGraph::task( uint64_t gId ) const
 
 Payload SingleTaskGraph::serialize() const
 {
-  return Payload();   // Nothing to serialize
+  uint32_t num_elems = 4;
+  uint32_t* buffer = new uint32_t[num_elems];
+
+  buffer[0] = m_nRanks;
+  buffer[1] = m_numInputSrcs;
+  buffer[2] = m_numOutputData;
+  buffer[3] = m_numOutputDest;
+
+  return Payload( num_elems*sizeof(uint32_t), (char*)buffer );
 }
 
 //-----------------------------------------------------------------------------
 
 void SingleTaskGraph::deserialize( Payload buffer )
 {
-  // Nothing to do here since nothing was serialized
+  uint32_t num_elems = 4;
+  assert( buffer.size() == num_elems*sizeof(uint32_t) );
+
+  uint32_t* buff_ptr = (uint32_t *)(buffer.buffer());
+
+  m_nRanks = buff_ptr[0];
+  m_numInputSrcs = buff_ptr[1];
+  m_numOutputData = buff_ptr[2];
+  m_numOutputDest = buff_ptr[3];
+
+  buffer.reset();  
 }
 
 //-----------------------------------------------------------------------------

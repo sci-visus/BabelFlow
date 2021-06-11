@@ -40,7 +40,7 @@ public:
 
   void init(uint32_t nblks, const std::vector<uint32_t>& radix_v);
   
-  // virtual uint32_t type() const override { return 1; };
+  virtual uint32_t type() const override { return 1; };
 
   //! Compute the fully specified tasks for the
   //! given controller id and task map

@@ -3,21 +3,24 @@ module charm_babelflow
   namespace BabelFlow 
   {
     namespace charm 
-    {
-      
+    {      
+      message StatusMsg;
+
       readonly CProxy_StatusMgr mainProxyStatusMgr;
 
       array [1D] CharmTask 
       {
-        entry CharmTask(CharmPayload buffer);
+        entry CharmTask(CharmPayload buffer, int status_ep, int status_id);
         entry void addInput(CharmTaskId source, std::vector<char> input);
       };
 
-      chare StatusMgr
+      array [1D] StatusMgr
       {
         entry StatusMgr(unsigned int);
+        entry void status(StatusMsg* msg);
+        entry void newCycle(int total_tasks);
         entry void start();
-        entry void done();
+        entry void done(int arr_id);
       };
 
     }  

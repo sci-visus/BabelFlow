@@ -85,7 +85,7 @@ public:
   //! Destructor
   virtual ~KWayReduction() {}
 
-  // virtual uint32_t type() const override { return 2; };
+  virtual uint32_t type() const override { return 2; };
 
   //! Compute the fully specified tasks for the
   //! given controller id and task map

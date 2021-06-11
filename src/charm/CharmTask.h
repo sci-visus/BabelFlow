@@ -90,41 +90,93 @@ TaskGraph *make_task_graph_template(Payload payl)
 }
 
 
-class StatusMgr : public Chare
+class StatusMsg : public CMessage_StatusMsg 
 {
 public:
+  StatusMsg(int mid, int mval = 0) : m_msgId(mid), m_msgVal(mval) {}
+
+	int m_msgId;
+  int m_msgVal;
+};
+
+
+class StatusMgr : public CBase_StatusMgr
+{
+public:
+  enum StatusCode {NCYCLE = 0, START = 1, DONE = 2};
+  
   StatusMgr(unsigned int total_tasks)
   {
+    newCycle( total_tasks );
+  }
+
+  void status(StatusMsg* msg)
+  {
+    // CkPrintf("StatusMgr::status msg =  %d\n", msg ? msg->m_msgId : -1);
+
+    if( !msg )
+      return;
+
+    switch(msg->m_msgId)
+    {
+      case StatusCode::NCYCLE:
+        newCycle(msg->m_msgVal);
+        break;
+      case StatusCode::START:
+        start();
+        break;
+      case StatusCode::DONE:
+        done(msg->m_msgVal);
+        break;
+    }
+
+    delete msg;
+  }
+
+  void newCycle(int total_tasks)
+  {
     m_totalTasks = total_tasks;
+    m_startCnt = m_doneCnt = 0;
+
+    // CkPrintf("Starting CharmTask new cycle: %d\n", m_totalTasks);
   }
 
   void start()
   {
-    static std::mutex mtx;
-    static uint32_t checkin_count = 0;
-
-    std::unique_lock<std::mutex> lock(mtx);
-
-    checkin_count++;
-    if( checkin_count == 1 )  // First task started
+    m_startCnt++;
+    if( m_startCnt == 1 )
       m_startTime = CkWallTimer();
+
+    // CkPrintf("Starting CharmTask\n");
   }
 
-  void done()
+  void done(int arr_id)
   {
-    static uint32_t checkin_count = 0;
-
-    checkin_count++;
-    if( m_totalTasks == checkin_count )
+    m_doneCnt++;
+    if( m_totalTasks == m_doneCnt )
     {
-      std::cout << "Finished executing, runtime (sec): " <<  CkWallTimer() - m_startTime << std::endl;
-      CkExit();
+      double duration = CkWallTimer() - m_startTime;
+      CkPrintf("Finished executing CharmTask's, runtime(sec): %f\n", float(duration));
+
+      // All the CharmTask's finished runnning, so we can destroy them
+      CkArrayID aid = CkGroupID{arr_id};
+      CProxy_CharmTask(aid).ckDestroy();
     }
   }
 
+  void pup(PUP::er &p)
+  {
+    p|m_startCnt;
+    p|m_doneCnt;
+    p|m_totalTasks;
+    p|m_startTime;
+  }
+
 private:
+  uint32_t m_startCnt;
+  uint32_t m_doneCnt;
   uint32_t m_totalTasks;
-  uint32_t m_startTime;
+  double m_startTime;
 };
 
 
@@ -136,7 +188,7 @@ class CharmTask : public CBase_CharmTask
 public:
 
   //! Constructor which sets the callback and decodes destinations
-  CharmTask(CharmPayload buffer);
+  CharmTask(CharmPayload buffer, int status_ep, int status_id);
 
   //! Default
   CharmTask(CkMigrateMessage *m) {}
@@ -162,6 +214,10 @@ private:
 
   //! The global charm-ids of all outputs
   std::vector<std::vector<uint64_t> > mOutputs;
+
+  int mStatEp;
+
+  int mStatId;
 
   static CProxy_StatusMgr mainStatusMgr;
 };

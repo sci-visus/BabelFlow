@@ -60,6 +60,8 @@ public:
   //! Initialize the controller with the given graph
   ProxyType initialize(Payload buffer, uint32_t size);
 
+  void initializeAsync(Payload buffer, uint32_t size, int ep, int aid_v, int status_ep, int status_id);
+
 };
 
 
