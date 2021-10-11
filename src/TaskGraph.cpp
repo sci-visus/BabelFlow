@@ -40,6 +40,8 @@ namespace BabelFlow
 std::unordered_map< uint32_t, std::vector<Callback> > TaskGraph::s_callbackMap;
 std::unordered_map< std::string, uint32_t > TaskGraph::s_typeIdsMap;
 
+uint32_t TaskGraph::TypeID::m_counter = 0;
+
 //-----------------------------------------------------------------------------
 
 void TaskGraph::registerCallback( uint32_t graph_id, CallbackId id, Callback func )
@@ -73,29 +75,32 @@ Callback TaskGraph::queryCallback( uint32_t graph_id, CallbackId id  )
 
 //-----------------------------------------------------------------------------
 
-uint32_t TaskGraph::graphNameToTypeId( const char* gr_type_name )
-{
-  std::string tname( gr_type_name );
-  auto iter = s_typeIdsMap.find( tname );
-  uint32_t id = 0;
-  if( iter == s_typeIdsMap.end() )
-  {
-    id = s_typeIdsMap.size() + 1;
-    s_typeIdsMap[tname] = id;
-  }
-  else
-  {
-    id = iter->second;
-  }
+// uint32_t TaskGraph::graphNameToTypeId( const char* gr_type_name )
+// {
+//   std::string tname( gr_type_name );
+//   auto iter = s_typeIdsMap.find( tname );
+//   uint32_t id = 0;
+//   if( iter == s_typeIdsMap.end() )
+//   {
+//     id = s_typeIdsMap.size() + 1;
+//     s_typeIdsMap[tname] = id;
+//   }
+//   else
+//   {
+//     id = iter->second;
+//   }
 
-  return id; 
-}
+//   return id; 
+// }
 
 //-----------------------------------------------------------------------------
 
 uint32_t TaskGraph::type() const
 {
-  return graphNameToTypeId( typeid(*this).name() );
+  auto iter = s_typeIdsMap.find( typeid(*this).name() );
+  assert( iter != s_typeIdsMap.end() );
+
+  return iter->second;
 }
 
 //-----------------------------------------------------------------------------

@@ -72,7 +72,7 @@ public:
   virtual uint32_t size() const override {return (pow(mValence,mLevels+1) - 1) / (mValence-1);}
 
   //! Return the total number of leaf tasks
-  virtual uint32_t numOfLeafs() const override { 1; }
+  virtual uint32_t numOfLeafs() const override { return 1; }
 
   //! Return the total number of root tasks
   virtual uint32_t numOfRoots() const override { return pow(mValence, mLevels); }

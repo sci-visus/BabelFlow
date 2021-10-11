@@ -13,6 +13,7 @@
 
 using namespace BabelFlow;
 
+REG_TGRAPH_TYPE(KWayReduction)
 
 uint32_t KWayReduction::sDATASET_DIMS[3];
 

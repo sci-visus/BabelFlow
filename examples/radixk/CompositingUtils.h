@@ -18,7 +18,6 @@
 #include "reduce/SingleTaskGraph.h"
 #include "ComposableTaskGraph.h"
 #include "ComposableTaskMap.h"
-#include "DefGraphConnector.h"
 #include "ModuloMap.h"
 
 
@@ -49,18 +48,6 @@ struct ImageData
   void deserialize(BabelFlow::Payload buffer);
   void delBuffers();
 };
-  
-// void compose_images(const std::vector<ImageData>& input_images, 
-//                     std::vector<ImageData>& out_images, 
-//                     int id,
-//                     bool flip_split_side,
-//                     bool skip_z_check);
-                        
-// void split_and_blend(const std::vector<ImageData>& input_images,
-//                      std::vector<ImageData>& out_images,
-//                      uint32_t* union_box,
-//                      bool flip_split_side,
-//                      bool skip_z_check);
 
 void register_callbacks();
 
@@ -82,9 +69,6 @@ protected:
   uint32_t m_rankId;
   uint32_t m_nRanks;
   uint32_t m_fanin;
-
-  // BabelFlow::mpi::Controller m_master;
-  // BabelFlow::ControllerMap m_contMap;
 };
 
 //-----------------------------------------------------------------------------
@@ -145,9 +129,6 @@ protected:
 
   BabelFlow::ComposableTaskGraph m_radGatherGraph;
   BabelFlow::ComposableTaskMap m_radGatherTaskMap;
-
-  BabelFlow::DefGraphConnector m_defGraphConnector;
-  BabelFlow::DefGraphConnector m_defGraphConnectorPreProc;
 };
 
 //-----------------------------------------------------------------------------

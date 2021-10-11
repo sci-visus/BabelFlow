@@ -21,12 +21,13 @@ class ComposableTaskGraph : public TaskGraph
 public:
   ComposableTaskGraph() = default;
   
-  ComposableTaskGraph( std::vector<TaskGraph*>& gr_vec, std::vector<TaskGraphConnector*>& gr_connectors );
+  //! Def ctor: All the connectors between the graphs are going to be default connectors
+  ComposableTaskGraph( std::vector<TaskGraph*>& gr_vec );
+
+  ComposableTaskGraph( std::vector<TaskGraph*>& gr_vec, const TaskGraphConnectorPtr& gr_connector );
   
   virtual ~ComposableTaskGraph() {}
-  
-  void init();
-  
+    
   //! Compute the fully specified tasks for the given controller
   virtual std::vector<Task> localGraph( ShardId id, const TaskMap* task_map ) const override;
 
@@ -60,8 +61,8 @@ public:
 private:
   Task task( const TaskId& tid ) const;
   
-  std::vector<TaskGraph*>           m_graphs;
-  std::vector<TaskGraphConnector*>  m_connectors;
+  std::vector<TaskGraph*>     m_graphs;
+  TaskGraphConnectorPtr       m_connector;
 
 };  // class ComposableTaskGraph
 

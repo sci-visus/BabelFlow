@@ -47,6 +47,9 @@
 //static bool cls ## _creator_registered = \
 //TaskGraphFactory::registerCreator( std::string( typeid( cls ).name() ), &TaskGraphFactory::createT< cls > );
 
+#define REG_TGRAPH_TYPE(T)    \
+static const uint32_t _type_id_val_##T = TaskGraph::TypeID::regTGraphType<T>();
+
 
 namespace BabelFlow 
 {
@@ -60,6 +63,27 @@ class TaskMap;
 class TaskGraph
 {
 public:
+
+  class TypeID
+  {
+    static uint32_t m_counter;
+
+    public:
+      template<typename T>
+      static uint32_t value()
+      {
+        static uint32_t type_id = m_counter++;
+        return type_id;
+      }
+
+      template<typename T>
+      static uint32_t regTGraphType()
+      {
+        uint32_t type_id = TypeID::value<T>();
+        TaskGraph::s_typeIdsMap[typeid(T).name()] = type_id;
+        return type_id;
+      }
+  };
 
   //! Default constructor
   TaskGraph(std::string config = "") : m_graphId( 0 ) {}
@@ -122,6 +146,8 @@ public:
 
   //! Returns the callback func pointer for the given graph id and callback id
   static Callback queryCallback( uint32_t graph_id, CallbackId id );
+
+  // static void regTaskGraphType( const std::string& type_name );
 
 protected:
   uint32_t m_graphId;

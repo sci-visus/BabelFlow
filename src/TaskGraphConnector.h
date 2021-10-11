@@ -10,6 +10,7 @@
 
 
 #include <vector>
+#include <memory>
 
 #include "Definitions.h"
 #include "TaskGraph.h"
@@ -22,35 +23,28 @@ namespace BabelFlow
 class TaskGraphConnector
 {
 public:
-  TaskGraphConnector() 
-  : m_srcGraph( nullptr ),
-    m_srcGraphId( 0 ), 
-    m_dstGraph( nullptr ), 
-    m_dstGraphId( 0 ) {}
-
-  TaskGraphConnector( TaskGraph* src_gr, 
-                      uint32_t src_gr_id, 
-                      TaskGraph* dst_gr,
-                      uint32_t dst_gr_id )
-  : m_srcGraph( src_gr ),
-    m_srcGraphId( src_gr_id ), 
-    m_dstGraph( dst_gr ), 
-    m_dstGraphId( dst_gr_id ) {}
+  TaskGraphConnector() {}
 
   virtual ~TaskGraphConnector() {}
 
-  virtual std::vector<TaskId> getOutgoingConnectedTasks( const TaskId& task_id ) const = 0;
+  virtual std::vector<TaskId> getOutgoingConnections( const TaskId& task_id ) const = 0;
 
-  virtual std::vector<TaskId> getIncomingConnectedTasks( const TaskId& task_id ) const = 0;
+  virtual std::vector<TaskId> getIncomingConnections( const TaskId& task_id ) const = 0;
+
+  virtual void connectTasks( const TaskId& from, const TaskId& to ) = 0;
 
   virtual uint32_t type() const = 0;
 
+  //! Serialize this task graph connector
+  virtual Payload serialize() const = 0;
+
+  //! Deserialize this task graph connector
+  virtual void deserialize( Payload buffer ) = 0;
+
 protected:
-  TaskGraph*  m_srcGraph;
-  uint32_t    m_srcGraphId;
-  TaskGraph*  m_dstGraph;
-  uint32_t    m_dstGraphId;
 };  // class TaskGraphConnector
+
+using TaskGraphConnectorPtr = std::shared_ptr<TaskGraphConnector>;
 
 }   // namespace BabelFlow
 
