@@ -51,9 +51,10 @@ BabelFlow::Payload DoNothingTaskGraph::serialize() const {
   return Payload(sizeof(ShardId), buffer);
 }
 
-void DoNothingTaskGraph::deserialize(BabelFlow::Payload buffer) {
+void DoNothingTaskGraph::deserialize(BabelFlow::Payload buffer, bool clean_mem) {
   memcpy(&n_controllers, buffer.buffer(), sizeof(ShardId));
-  delete[] buffer.buffer();
+
+  buffer.reset( clean_mem );
 }
 
 

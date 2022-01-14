@@ -190,7 +190,7 @@ Payload PreProcessInputTaskGraph::serialize() const
   return Payload(buffer_size, buffer);
 }
 
-void PreProcessInputTaskGraph::deserialize(Payload payload)
+void PreProcessInputTaskGraph::deserialize(Payload payload, bool clean_mem)
 {
   char *buffer = payload.buffer();
   // deserialize header

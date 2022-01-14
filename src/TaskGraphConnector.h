@@ -39,7 +39,7 @@ public:
   virtual Payload serialize() const = 0;
 
   //! Deserialize this task graph connector
-  virtual void deserialize( Payload buffer ) = 0;
+  virtual void deserialize( Payload buffer, bool clean_mem = true ) = 0;
 
 protected:
 };  // class TaskGraphConnector

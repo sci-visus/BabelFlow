@@ -71,10 +71,11 @@ BabelFlow::Payload MapReduceGraph::serialize() const
   return Payload(sizeof(int), reinterpret_cast<char *>(buffer));
 }
 
-void MapReduceGraph::deserialize(BabelFlow::Payload buffer)
+void MapReduceGraph::deserialize(BabelFlow::Payload buffer, bool clean_mem)
 {
   assert(buffer.size() == sizeof(int));
   int *tmp = reinterpret_cast<int *>(buffer.buffer());
   n_worker = tmp[0];
-  delete[] buffer.buffer();
+
+  buffer.reset(clean_mem);
 }

@@ -85,6 +85,8 @@ public:
       }
   };
 
+  using OutputsMap = std::map< TaskId, std::vector<Payload> >;
+
   //! Default constructor
   TaskGraph(std::string config = "") : m_graphId( 0 ) {}
 
@@ -124,11 +126,13 @@ public:
   virtual Payload serialize() const {assert(false);return Payload();}
 
   //! Deserialize a task graph. This will consume the payload
-  virtual void deserialize(Payload buffer) {assert(false);}
+  virtual void deserialize(Payload buffer, bool clean_mem = true) {assert(false);}
 
   virtual void setGraphId( uint32_t gr_id ) { m_graphId = gr_id; }
 
   virtual uint32_t graphId() const { return m_graphId; }
+
+  virtual bool extend(const OutputsMap& outputs) { return false; }
 
   //! Returns the callback func pointer for this graph and callback id
   virtual Callback queryCallback( CallbackId cb_id ) const;

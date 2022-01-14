@@ -39,6 +39,8 @@ set(BASE_BFLOW_HEADERS
     ComposableTaskGraph.h
     ComposableTaskMap.h
 
+    DynamicTaskGraph.h
+
     TaskGraphConnector.h
     MultiGraphConnector.h
 )
@@ -55,6 +57,8 @@ set(BASE_BFLOW_SRC
     
     ComposableTaskGraph.cpp
     ComposableTaskMap.cpp
+
+    DynamicTaskGraph.cpp
 
     MultiGraphConnector.cpp
 )

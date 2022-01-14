@@ -78,7 +78,7 @@ Payload BinarySwap::serialize() const
 
 //-----------------------------------------------------------------------------
 
-void BinarySwap::deserialize(Payload buffer)
+void BinarySwap::deserialize(Payload buffer, bool clean_mem)
 {
   uint32_t num_elems_in_buff = 4;
   assert (buffer.size() == num_elems_in_buff*sizeof(uint32_t));
@@ -94,7 +94,7 @@ void BinarySwap::deserialize(Payload buffer)
 
   init(tmp[0]);
 
-  delete[] buffer.buffer();
+  buffer.reset( clean_mem );
 }
 
 //-----------------------------------------------------------------------------

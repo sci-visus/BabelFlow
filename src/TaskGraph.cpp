@@ -75,26 +75,6 @@ Callback TaskGraph::queryCallback( uint32_t graph_id, CallbackId id  )
 
 //-----------------------------------------------------------------------------
 
-// uint32_t TaskGraph::graphNameToTypeId( const char* gr_type_name )
-// {
-//   std::string tname( gr_type_name );
-//   auto iter = s_typeIdsMap.find( tname );
-//   uint32_t id = 0;
-//   if( iter == s_typeIdsMap.end() )
-//   {
-//     id = s_typeIdsMap.size() + 1;
-//     s_typeIdsMap[tname] = id;
-//   }
-//   else
-//   {
-//     id = iter->second;
-//   }
-
-//   return id; 
-// }
-
-//-----------------------------------------------------------------------------
-
 uint32_t TaskGraph::type() const
 {
   auto iter = s_typeIdsMap.find( typeid(*this).name() );
@@ -228,14 +208,5 @@ void TaskGraph::outputDot( const std::vector< std::vector<Task> >& tasks_v, std:
 }
 
 //-----------------------------------------------------------------------------
-
-//bool TaskGraphFactory::registerCreator(const std::string& name, TaskGraphFactory::CreatorFunc func)
-//{
-//  if( m_map.find( name ) != m_map.end() )
-//    return false;
-//
-//  m_map[name] = func;
-//  return true;
-//}
 
 }   // end namespace BabelFlow

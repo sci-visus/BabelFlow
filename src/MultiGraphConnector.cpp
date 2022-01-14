@@ -91,7 +91,7 @@ Payload MultiGraphConnector::serialize() const
 
 //-----------------------------------------------------------------------------
 
-void MultiGraphConnector::deserialize( Payload pl )
+void MultiGraphConnector::deserialize( Payload pl, bool clean_mem )
 {
   uint32_t* buffer = (uint32_t*)(pl.buffer());
 
@@ -102,7 +102,7 @@ void MultiGraphConnector::deserialize( Payload pl )
     m_grPairsVec[i] = std::make_pair( buffer[2*i + 1], buffer[2*i + 2] );
   }
 
-  pl.reset();
+  pl.reset( clean_mem );
 }
 
 //-----------------------------------------------------------------------------

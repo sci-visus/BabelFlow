@@ -82,7 +82,7 @@ Payload RadixKExchange::serialize() const
 
 //-----------------------------------------------------------------------------
 
-void RadixKExchange::deserialize(Payload buffer)
+void RadixKExchange::deserialize(Payload buffer, bool clean_mem)
 {
   // Even if the radices vector is empty, there should be at least 'rad_offset' elements in the buffer
   uint32_t rad_offset = 5;
@@ -101,7 +101,7 @@ void RadixKExchange::deserialize(Payload buffer)
 
   init( buff_ptr[0], radix_v );
 
-  delete[] buffer.buffer();
+  buffer.reset( clean_mem );
 }
 
 //-----------------------------------------------------------------------------

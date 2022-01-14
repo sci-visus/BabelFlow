@@ -34,7 +34,7 @@ public:
 
   Payload serialize() const override;
 
-  void deserialize(Payload payload) override;
+  void deserialize(Payload payload, bool clean_mem = true) override;
     
   TaskId gid2otid(const uint64_t &gid) const;
     

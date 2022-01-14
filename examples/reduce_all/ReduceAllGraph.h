@@ -106,7 +106,7 @@ public:
     virtual BabelFlow::Payload serialize() const override;
 
     //! Deserialize a task graph. This will consume the payload
-    virtual void deserialize(BabelFlow::Payload buffer) override;
+    virtual void deserialize(BabelFlow::Payload buffer, bool clean_mem = true) override;
 
     /*
     int output_local_graph(BabelFlow::ShardId id, const BabelFlow::TaskMap* task_map, FILE* output)

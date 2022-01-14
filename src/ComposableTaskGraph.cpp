@@ -273,53 +273,31 @@ Payload ComposableTaskGraph::serialize() const
   // - Graph connector buffer size
   // - Graph connector type
   // - Graph connector payload
-  uint32_t payl_sz = 0;
-  std::vector<Payload> payloads( m_graphs.size() );
-  
-  // Serialize each graph separately and count the size of the payloads
-  for( uint32_t i = 0; i < m_graphs.size(); ++i )
-  {
-    Payload pl = m_graphs[i]->serialize();
-    payloads[i] = pl;
-    payl_sz += pl.size();
-  }
 
+  Payload gr_vec_pl = serializeGraphVec( m_graphs );
   Payload gr_connector_pl = m_connector->serialize();
   
-  uint32_t total_sz = 
-    (1 + 2 * m_graphs.size() + 2)*sizeof(uint32_t) + payl_sz + gr_connector_pl.size();
+  uint32_t total_sz = (3*sizeof(uint32_t)) + gr_vec_pl.size() + gr_connector_pl.size();
   
   char* buff = new char[total_sz];
   char* bf_ptr = buff;
-  char* bf_pl_ptr = buff + (1 + 2 * m_graphs.size())*sizeof(uint32_t);
   
-  // Write the number of graphs
-  serialize_uint( bf_ptr, m_graphs.size() );
+  serialize_uint( bf_ptr, gr_vec_pl.size() );
+  serialize_payl( bf_ptr, gr_vec_pl );
   
-  // Write the payload sizes and the payloads themselves
-  for( uint32_t i = 0; i < payloads.size(); ++i )
-  {
-    Payload& pl = payloads[i];
-
-    serialize_uint( bf_ptr, pl.size() );
-    serialize_uint( bf_ptr, m_graphs[i]->type() );
-    serialize_payl( bf_pl_ptr, pl );
-    
-    pl.reset();
-  }
-  
-  serialize_uint( bf_pl_ptr, gr_connector_pl.size() );
-  serialize_uint( bf_pl_ptr, m_connector->type() );
-  serialize_payl( bf_pl_ptr, gr_connector_pl );
+  serialize_uint( bf_ptr, gr_connector_pl.size() );
+  serialize_uint( bf_ptr, m_connector->type() );
+  serialize_payl( bf_ptr, gr_connector_pl );
 
   gr_connector_pl.reset();
+  gr_vec_pl.reset();
 
   return Payload( int32_t(total_sz), buff );
 }
 
 //-----------------------------------------------------------------------------
 
-void ComposableTaskGraph::deserialize( Payload pl )
+void ComposableTaskGraph::deserialize( Payload pl, bool clean_mem )
 {
   // Deserialization order:
   // - Num graphs
@@ -328,14 +306,80 @@ void ComposableTaskGraph::deserialize( Payload pl )
   // - Graph connector buffer size
   // - Graph connector type
   // - Graph connector payload
+  char* buff_ptr = pl.buffer();
+  uint32_t gr_vec_sz = *(uint32_t*)( buff_ptr );
+  buff_ptr += sizeof(uint32_t);
+  Payload gr_vec_pl( gr_vec_sz, buff_ptr );
+  buff_ptr += gr_vec_sz;
+  
+  deserializeGraphVec( m_graphs, gr_vec_pl, false );
+
+  uint32_t connector_pl_sz = *(uint32_t*)( buff_ptr );
+  buff_ptr += sizeof(uint32_t);
+  uint32_t connector_type = *(uint32_t*)( buff_ptr );
+  buff_ptr += sizeof(uint32_t);
+  Payload connector_payl( int32_t(connector_pl_sz), buff_ptr );
+
+  if( connector_type == 0 )   // Multigraph
+  {
+    MultiGraphConnector* multi_gr_connector = new MultiGraphConnector();
+    multi_gr_connector->deserialize( connector_payl );
+    multi_gr_connector->init( m_graphs );
+    m_connector = TaskGraphConnectorPtr( multi_gr_connector );
+  }
+  
+  pl.reset( clean_mem );
+}
+
+//-----------------------------------------------------------------------------
+
+Payload ComposableTaskGraph::serializeGraphVec( const std::vector<TaskGraph*>& gr_vec )
+{
+  uint32_t payl_sz = sizeof(uint32_t);    // graph vec size
+  std::vector<Payload> payloads( gr_vec.size() );
+  
+  // Serialize each graph separately and count the size of the payloads
+  for( uint32_t i = 0; i < gr_vec.size(); ++i )
+  {
+    Payload pl = gr_vec[i]->serialize();
+    payloads[i] = pl;
+    payl_sz += pl.size() + (2*sizeof(uint32_t));  // + size + type
+  }
+    
+  char* buff = new char[payl_sz];
+  char* bf_ptr = buff;
+  char* bf_pl_ptr = buff + (1 + 2 * gr_vec.size())*sizeof(uint32_t);
+  
+  // Write the number of graphs
+  serialize_uint( bf_ptr, gr_vec.size() );
+  
+  // Write the payload sizes and the payloads themselves
+  for( uint32_t i = 0; i < payloads.size(); ++i )
+  {
+    Payload& pl = payloads[i];
+
+    serialize_uint( bf_ptr, pl.size() );
+    serialize_uint( bf_ptr, gr_vec[i]->type() );
+    serialize_payl( bf_pl_ptr, pl );
+    
+    pl.reset();
+  }
+  
+  return Payload( int32_t(payl_sz), buff );
+}
+
+//-----------------------------------------------------------------------------
+
+void ComposableTaskGraph::deserializeGraphVec( std::vector<TaskGraph*>& gr_vec, Payload pl, bool clean_mem )
+{
   uint32_t* buff_ptr = (uint32_t*)(pl.buffer());
   
-  m_graphs.resize( buff_ptr[0] );
+  gr_vec.resize( buff_ptr[0] );
   
   // Ptr into the payload part of the buffer
-  char* bf_ptr = pl.buffer() + (1 + 2 * m_graphs.size())*sizeof(uint32_t);
+  char* bf_ptr = pl.buffer() + (1 + 2 * gr_vec.size())*sizeof(uint32_t);
   
-  for( uint32_t i = 0; i < m_graphs.size(); ++i )
+  for( uint32_t i = 0; i < gr_vec.size(); ++i )
   {
     uint32_t pl_size = buff_ptr[2*i+1];
     uint32_t gr_type = buff_ptr[2*i+2];
@@ -347,38 +391,24 @@ void ComposableTaskGraph::deserialize( Payload pl )
 
     if( gr_type == TaskGraph::TypeID::value<RadixKExchange>() )
     {
-      m_graphs[i] = new RadixKExchange();
+      gr_vec[i] = new RadixKExchange();
     }
     else if( gr_type == TaskGraph::TypeID::value<KWayReduction>() )
     {
-      m_graphs[i] = new KWayReduction();
+      gr_vec[i] = new KWayReduction();
     }
     else
     {
       assert( false );
     }
     
-    m_graphs[i]->deserialize( pay_ld );
-    m_graphs[i]->setGraphId( i );
+    gr_vec[i]->deserialize( pay_ld );
+    gr_vec[i]->setGraphId( i );
   }
-  
-  // bf_ptr now points to connector type part
-  uint32_t connector_pl_sz = ((uint32_t*)bf_ptr)[0];
-  uint32_t connector_type = ((uint32_t*)bf_ptr)[1];
-  Payload connector_payl( int32_t(connector_pl_sz), bf_ptr + 2*sizeof(uint32_t) );
 
-  if( connector_type == 0 )   // Multigraph
-  {
-    MultiGraphConnector* multi_gr_connector = new MultiGraphConnector();
-    multi_gr_connector->deserialize( connector_payl );
-    multi_gr_connector->init( m_graphs );
-    m_connector = TaskGraphConnectorPtr( multi_gr_connector );
-  }
-  
-  pl.reset();
+  pl.reset( clean_mem );
 }
 
 //-----------------------------------------------------------------------------
-
 
 }   // namespace BabelFlow

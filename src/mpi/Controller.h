@@ -69,7 +69,7 @@ public:
   int run(std::map<TaskId,Payload>& initial_inputs);
 
   //! Get outputs
-  std::map<TaskId,std::vector<Payload> >& getAllOutputs();
+  TaskGraph::OutputsMap& getAllOutputs();
 
   //! Get output for specific task
   std::vector<Payload>& getOutputsForTask(TaskId tid);
@@ -196,7 +196,7 @@ private:
   std::vector<MPI_Request> mMPIreq;
 
   //! Maps tasks to their stored output data
-  std::map<TaskId,std::vector<Payload> > mOutputs;
+  TaskGraph::OutputsMap mOutputs;
 
   //! Signals whether outputs were extracted from this Controller
   bool mOutputExtracted;

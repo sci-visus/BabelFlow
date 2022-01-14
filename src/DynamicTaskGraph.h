@@ -1,32 +1,32 @@
 /*
- * ComposableTaskGraph.h
+ * DynamicTaskGraph.h
  *
- *  Created on: Jul 7, 2020
+ *  Created on: Dec 14, 2021
  *      Author: sshudler
  */
  
-#ifndef COMPOSABLE_TASK_GRAPH_H__
-#define COMPOSABLE_TASK_GRAPH_H__
+#ifndef DYNAMIC_TASK_GRAPH_H__
+#define DYNAMIC_TASK_GRAPH_H__
 
 #include <vector>
 #include "TaskGraph.h"
-#include "TaskGraphConnector.h"
+#include "ComposableTaskGraph.h"
 
 
 namespace BabelFlow
 {
 
-class ComposableTaskGraph : public TaskGraph
+class DynamicTaskGraph : public TaskGraph
 {
 public:
-  ComposableTaskGraph() = default;
+  // using GraphTerm = std::pair<TaskGraph*, uint32_t>;
+
+  DynamicTaskGraph() = default;
   
   //! Def ctor: All the connectors between the graphs are going to be default connectors
-  ComposableTaskGraph( std::vector<TaskGraph*>& gr_vec );
-
-  ComposableTaskGraph( std::vector<TaskGraph*>& gr_vec, const TaskGraphConnectorPtr& gr_connector );
+  DynamicTaskGraph( std::vector<TaskGraph*>& gr_vec );
   
-  virtual ~ComposableTaskGraph() {}
+  virtual ~DynamicTaskGraph() {}
     
   //! Compute the fully specified tasks for the given controller
   virtual std::vector<Task> localGraph( ShardId id, const TaskMap* task_map ) const override;
@@ -58,21 +58,16 @@ public:
   //! Deserialize a task graph. This will consume the payload
   virtual void deserialize( Payload buffer, bool clean_mem = true ) override;
 
-  std::vector<TaskGraph*>& getGraphs() { return m_graphs; }
-
-  static Payload serializeGraphVec( const std::vector<TaskGraph*>& gr_vec );
-
-  static void deserializeGraphVec( std::vector<TaskGraph*>& gr_vec, Payload buffer, bool clean_mem = true );
+  virtual bool extend(const TaskGraph::OutputsMap& outputs) override;
 
 private:
-  Task task( const TaskId& tid ) const;
   
-  std::vector<TaskGraph*>     m_graphs;
-  TaskGraphConnectorPtr       m_connector;
-
-};  // class ComposableTaskGraph
+  std::vector<TaskGraph*>     m_subGraphs;
+  uint32_t                    m_currGraphIdx;
+  ComposableTaskGraph         m_compGraph;
+};  // class DynamicTaskGraph
 
 }   // namespace BabelFlow
 
 
-#endif    // #ifndef COMPOSABLE_TASK_GRAPH_H__
+#endif    // #ifndef DYNAMIC_TASK_GRAPH_H__

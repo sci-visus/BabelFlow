@@ -124,7 +124,7 @@ public:
   virtual Payload serialize() const override;
 
   //! Deserialize a task graph. This will consume the payload
-  virtual void deserialize(Payload buffer) override;
+  virtual void deserialize(Payload buffer, bool clean_mem = true) override;
 
 protected:
   virtual void outputDot( const std::vector< std::vector<Task> >& tasks_v, std::ostream& outs, const std::string& eol ) const override;

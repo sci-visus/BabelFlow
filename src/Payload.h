@@ -68,7 +68,12 @@ public:
 
   void initialize(int32_t size, char* buffer) {mSize = size; mBuffer = buffer;}
 
-  void reset() {mSize = 0; delete[] mBuffer; mBuffer = NULL;}
+  void reset(bool clean_mem = true) {
+    mSize = 0;
+    if (clean_mem)
+      delete[] mBuffer; 
+    mBuffer = NULL;
+  }
 
   virtual Payload clone() {
     char* buffer = new char[mSize];

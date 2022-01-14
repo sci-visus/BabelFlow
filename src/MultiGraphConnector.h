@@ -44,7 +44,7 @@ public:
   virtual Payload serialize() const override;
 
   //! Deserialize this task graph connector
-  virtual void deserialize( Payload buffer ) override;
+  virtual void deserialize( Payload buffer, bool clean_mem = true ) override;
 
   void init( const std::vector<TaskGraph*>& gr_vec );
 

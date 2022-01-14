@@ -37,7 +37,7 @@ public:
 
   BabelFlow::Payload serialize() const override;
 
-  void deserialize(BabelFlow::Payload buffer) override;
+  void deserialize(BabelFlow::Payload buffer, bool clean_mem = true) override;
 
 private:
   int n_worker;

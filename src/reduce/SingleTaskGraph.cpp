@@ -58,7 +58,7 @@ Payload SingleTaskGraph::serialize() const
 
 //-----------------------------------------------------------------------------
 
-void SingleTaskGraph::deserialize( Payload buffer )
+void SingleTaskGraph::deserialize( Payload buffer, bool clean_mem )
 {
   // Nothing to do here since nothing was serialized
 }

@@ -135,7 +135,7 @@ Controller::~Controller()
 {
   // Free the memory of stored outputs -- this is probably the only place to
   // conveniently release it
-  for (std::map<TaskId,std::vector<Payload> >::iterator outIter = mOutputs.begin();
+  for (TaskGraph::OutputsMap::iterator outIter = mOutputs.begin();
        outIter != mOutputs.end();
        ++outIter)
   {
@@ -199,7 +199,7 @@ int Controller::initialize(const TaskGraph& graph, const BabelFlow::TaskMap* tas
   return 1;
 }
 
-std::map<TaskId,std::vector<Payload> >& Controller::getAllOutputs()
+TaskGraph::OutputsMap& Controller::getAllOutputs()
 {
   return mOutputs;
 }

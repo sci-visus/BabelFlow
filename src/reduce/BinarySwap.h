@@ -84,7 +84,7 @@ public:
   virtual Payload serialize() const override;
 
   //! Deserialize a task graph. This will consume the payload
-  virtual void deserialize(Payload buffer) override;
+  virtual void deserialize(Payload buffer, bool clean_mem = true) override;
 
   virtual uint64_t toTId(TaskId gId) const { return gId; }
 

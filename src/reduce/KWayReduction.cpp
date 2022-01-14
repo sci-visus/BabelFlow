@@ -130,7 +130,9 @@ Payload KWayReduction::serialize() const
   return Payload(8*sizeof(uint32_t),(char*)buffer);
 }
 
-void KWayReduction::deserialize(Payload buffer)
+//-----------------------------------------------------------------------------
+
+void KWayReduction::deserialize(Payload buffer, bool clean_mem)
 {
   assert (buffer.size() == 8*sizeof(uint32_t));
   uint32_t *tmp = (uint32_t *)(buffer.buffer());
@@ -153,7 +155,7 @@ void KWayReduction::deserialize(Payload buffer)
 
   init(decomp, mFactor);
 
-  delete[] buffer.buffer();
+  buffer.reset( clean_mem );
 }
 
 //-----------------------------------------------------------------------------

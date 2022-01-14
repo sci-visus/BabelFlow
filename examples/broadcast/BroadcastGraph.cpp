@@ -131,7 +131,7 @@ BabelFlow::Payload BroadcastGraph::serialize() const
   return Payload(3 * sizeof(uint32_t), (char *) buffer);
 }
 
-void BroadcastGraph::deserialize(BabelFlow::Payload buffer)
+void BroadcastGraph::deserialize(BabelFlow::Payload buffer, bool clean_mem)
 {
   assert (buffer.size() == 3 * sizeof(uint32_t));
   uint32_t *tmp = (uint32_t *) (buffer.buffer());
@@ -140,7 +140,7 @@ void BroadcastGraph::deserialize(BabelFlow::Payload buffer)
   mValence = tmp[1];
   mLevels = tmp[2];
 
-  delete[] buffer.buffer();
+  buffer.reset(clean_mem);
 }
 
 

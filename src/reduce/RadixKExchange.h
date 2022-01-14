@@ -76,7 +76,7 @@ public:
   virtual Payload serialize() const override;
 
   //! Deserialize a task graph. This will consume the payload
-  virtual void deserialize(Payload buffer) override;
+  virtual void deserialize(Payload buffer, bool clean_mem = true) override;
 
   //! Return the total number of levels in the radix-k exchange
   uint32_t totalLevels() const { return m_Radices.size(); }
